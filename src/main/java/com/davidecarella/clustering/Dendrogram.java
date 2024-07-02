@@ -1,10 +1,12 @@
-package com.davidecarella;
+package com.davidecarella.clustering;
+
+import com.davidecarella.data.Data;
 
 /**
  * Classe che rappresenta un dendrogramma, ovvero un albero che rappresenta la composizione dei
  * {@link ClusterSet cluster set}.
  */
-class Dendrogram {
+public class Dendrogram {
     /**
      * La lista di ogni livello dell'albero.
      */
@@ -15,7 +17,7 @@ class Dendrogram {
      *
      * @param depth la profondità del dendrogramma
      */
-    Dendrogram(int depth) {
+    public Dendrogram(int depth) {
         this.tree = new ClusterSet[depth];
     }
 
@@ -25,7 +27,7 @@ class Dendrogram {
      * @param clusterSet il {@link ClusterSet cluster set} che si vuole inserire nel livello {@code level}
      * @param level il livello dell'albero dove si vuole inserire {@code clusterSet}
      */
-    void setClusterSet(ClusterSet clusterSet, int level) {
+    public void setClusterSet(ClusterSet clusterSet, int level) {
         this.tree[level] = clusterSet;
     }
 
@@ -35,7 +37,7 @@ class Dendrogram {
      * @param level il livello del {@link ClusterSet cluster set} che si vuole ottenere
      * @return il {@link ClusterSet cluster set} al livello {@code level}
      */
-    ClusterSet getClusterSet(int level) {
+    public ClusterSet getClusterSet(int level) {
         return this.tree[level];
     }
 
@@ -44,7 +46,7 @@ class Dendrogram {
      *
      * @return la profondità del dendrogramma
      */
-    int getDepth() {
+    public int getDepth() {
         return this.tree.length;
     }
 
@@ -77,7 +79,7 @@ class Dendrogram {
      * @param data i dati che contengono gli esempi
      * @return una rappresentazione testuale del dendrogramma
      */
-    String toString(Data data) {
+    public String toString(Data data) {
         var stringBuilder = new StringBuilder();
 
         for (int i = 0; i < this.tree.length; ++i) {

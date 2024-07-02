@@ -1,9 +1,15 @@
-package com.davidecarella;
+package com.davidecarella.clustering;
+
+import com.davidecarella.data.Data;
+import com.davidecarella.distance.ClusterDistance;
+import com.davidecarella.exceptions.ClusterSetFullException;
+import com.davidecarella.exceptions.ClusterSetTooSmallException;
+import com.davidecarella.exceptions.InvalidSizeException;
 
 /**
  * Classe che rappresenta un insieme di {@link Cluster cluster}.
  */
-class ClusterSet {
+public class ClusterSet {
     /**
      * L'insieme dei cluster.
      */
@@ -19,7 +25,7 @@ class ClusterSet {
      *
      * @param maxSize la dimensione massima dell'insieme
      */
-    ClusterSet(int maxSize) {
+    public ClusterSet(int maxSize) {
         this.clusters = new Cluster[maxSize];
     }
 
@@ -28,14 +34,17 @@ class ClusterSet {
      *
      * @param cluster il {@link Cluster cluster} da aggiungere all'insieme
      */
-    void add(Cluster cluster) {
+    public void add(Cluster cluster) {
+        if (this.lastClusterIndex >= this.clusters.length) {
+            throw new ClusterSetFullException("Il cluster set ha raggiunto la capienza massima");
+        }
+
         for (int i = 0; i < this.lastClusterIndex; ++i) {
             if (cluster == this.clusters[i])
                 return;
         }
 
-        this.clusters[this.lastClusterIndex] = cluster;
-        ++this.lastClusterIndex;
+        this.clusters[this.lastClusterIndex++] = cluster;
     }
 
     /**
@@ -44,7 +53,7 @@ class ClusterSet {
      * @param index l'indice del {@link Cluster cluster} da restituire
      * @return il {@link Cluster cluster} con indice {@code index}
      */
-    Cluster get(int index) {
+    public Cluster get(int index) {
         return this.clusters[index];
     }
 
@@ -57,8 +66,14 @@ class ClusterSet {
      * @param distanceCalculator l'oggetto per il calcolo della distanza tra due {@link Cluster cluster}
      * @param data i dati
      * @return un nuovo cluster set in cui vengono uniti i due {@link Cluster cluster} più vicini fra loro
+     * @throws ClusterSetTooSmallException quando il cluster set ha meno di due {@link Cluster cluster}
+     * @throws InvalidSizeException quando ci sono due esempi con lunghezze diverse
      */
-    ClusterSet mergeClosestClusters(ClusterDistance distanceCalculator, Data data) {
+    public ClusterSet mergeClosestClusters(ClusterDistance distanceCalculator, Data data) throws ClusterSetTooSmallException, InvalidSizeException {
+        if (this.lastClusterIndex < 2) {
+            throw new ClusterSetTooSmallException("Ci devono essere almeno due cluster per poter effettuare l'unione");
+        }
+
         // FIXME: We should check that there are at least two clusters
         Cluster firstCluster = null;
         Cluster secondCluster = null;
@@ -121,7 +136,7 @@ class ClusterSet {
      * @param data i dati che contengono gli esempi
      * @return una rappresentazione testuale del cluster set
      */
-    String toString(Data data) {
+    public String toString(Data data) {
         var stringBuilder = new StringBuilder();
 
         for (int i = 0; i < this.lastClusterIndex; ++i) {

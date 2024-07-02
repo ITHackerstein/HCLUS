@@ -1,4 +1,10 @@
-package com.davidecarella;
+package com.davidecarella.clustering;
+
+import com.davidecarella.data.Data;
+import com.davidecarella.distance.ClusterDistance;
+import com.davidecarella.exceptions.ClusterSetTooSmallException;
+import com.davidecarella.exceptions.InvalidDepthException;
+import com.davidecarella.exceptions.InvalidSizeException;
 
 /**
  * Classe che si occupa di effettuare l'operazione di "mining", ovvero di creare il dendrogramma a partire dai dati
@@ -15,7 +21,7 @@ public class HierarchicalClusterMiner {
      *
      * @param depth la profondità del dendrogramma
      */
-    HierarchicalClusterMiner(int depth) {
+    public HierarchicalClusterMiner(int depth) {
         this.dendrogram = new Dendrogram(depth);
     }
 
@@ -25,8 +31,14 @@ public class HierarchicalClusterMiner {
      *
      * @param data i dati
      * @param distanceCalculator l'oggetto per calcolare la distanza
+     * @throws InvalidDepthException quando la profondità del dendrogramma supera il numero di esempi in {@code data}
+     * @throws InvalidSizeException quando ci sono due esempi con lunghezze diverse
      */
-    void mine(Data data, ClusterDistance distanceCalculator) {
+    public void mine(Data data, ClusterDistance distanceCalculator) throws InvalidDepthException, InvalidSizeException {
+        if (this.dendrogram.getDepth() > data.getNumberOfExamples()) {
+            throw new InvalidDepthException("La profondità del dendrogramma deve essere al massimo pari al numero di esempi nel dataset");
+        }
+
         var firstLevel = new ClusterSet(data.getNumberOfExamples());
         for (int i = 0; i < data.getNumberOfExamples(); i++) {
             var cluster = new Cluster();
@@ -36,8 +48,14 @@ public class HierarchicalClusterMiner {
 
         this.dendrogram.setClusterSet(firstLevel, 0);
 
-        for (int level = 1; level < data.getNumberOfExamples(); ++level) {
-            var newLevel = this.dendrogram.getClusterSet(level - 1).mergeClosestClusters(distanceCalculator, data);
+        for (int level = 1; level < this.dendrogram.getDepth(); ++level) {
+            ClusterSet newLevel = null;
+            try {
+                newLevel = this.dendrogram.getClusterSet(level - 1).mergeClosestClusters(distanceCalculator, data);
+            } catch (ClusterSetTooSmallException ignored) {
+            }
+
+            assert newLevel != null;
             this.dendrogram.setClusterSet(newLevel, level);
         }
     }
@@ -61,7 +79,7 @@ public class HierarchicalClusterMiner {
      * @param data i dati che contengono gli esempi
      * @return una rappresentazione testuale del miner
      */
-    String toString(Data data) {
+    public String toString(Data data) {
         return this.dendrogram.toString(data);
     }
 }

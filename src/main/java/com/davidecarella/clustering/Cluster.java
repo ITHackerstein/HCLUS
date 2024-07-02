@@ -1,13 +1,15 @@
-package com.davidecarella;
+package com.davidecarella.clustering;
+
+import com.davidecarella.data.Data;
 
 /**
  * <p>Classe che rappresenta un cluster, ovvero un insieme di esempi.
  *
  * <p>Internamente non vengono memorizzati gli esempi veri e propri ma i loro indici in una istanza di
- * {@link com.davidecarella.Data}, per questo motivo quando viene utilizzata la parola "esempio" ci si riferisce
+ * {@link Data}, per questo motivo quando viene utilizzata la parola "esempio" ci si riferisce
  * più precisamente al loro indice.
  */
-class Cluster {
+public class Cluster {
     /**
      * L'insieme degli esempi.
      */
@@ -24,7 +26,7 @@ class Cluster {
      *
      * @param exampleIndex l'esempio da inserire all'insieme
      */
-    void addData(int exampleIndex) {
+    public void addData(int exampleIndex) {
         for (int i = 0; i < this.clusteredData.length; ++i) {
             if (exampleIndex == this.clusteredData[i])
                 return;
@@ -41,7 +43,7 @@ class Cluster {
      *
      * @return la dimensione del cluster.
      */
-    int getSize() {
+    public int getSize() {
         return this.clusteredData.length;
     }
 
@@ -51,7 +53,7 @@ class Cluster {
      * @param index l'indice dell'esempio che si vuole ottenere
      * @return l'esempio con indice {@code index}
      */
-    int getElement(int index) {
+    public int getElement(int index) {
         return this.clusteredData[index];
     }
 
@@ -60,7 +62,7 @@ class Cluster {
      *
      * @return una copia del cluster
      */
-    Cluster createACopy() {
+    public Cluster createACopy() {
         var copy = new Cluster();
 
         for (int i = 0; i < this.clusteredData.length; ++i) {
@@ -76,7 +78,7 @@ class Cluster {
      * @param other l'altro esempio con cui si vuole fare l'unione
      * @return un cluster che contiene l'insieme unione del cluster e {@code other}
      */
-    Cluster mergeCluster(Cluster other) {
+    public Cluster mergeCluster(Cluster other) {
         var merged = new Cluster();
 
         for (int i = 0; i < this.clusteredData.length; ++i) {
@@ -118,7 +120,7 @@ class Cluster {
      * @param data i dati che contengono gli esempi
      * @return una rappresentazione testuale del cluster
      */
-    String toString(Data data) {
+    public String toString(Data data) {
         var stringBuilder = new StringBuilder();
 
         for (int i = 0; i < this.clusteredData.length; ++i) {

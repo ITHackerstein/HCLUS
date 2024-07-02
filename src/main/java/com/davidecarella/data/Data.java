@@ -1,9 +1,11 @@
-package com.davidecarella;
+package com.davidecarella.data;
+
+import com.davidecarella.exceptions.InvalidSizeException;
 
 /**
  * Classe che rappresenta dei dati, ovvero una lista di esempi.
  */
-class Data {
+public class Data {
     /**
      * La lista degli esempi.
      */
@@ -16,7 +18,7 @@ class Data {
     /**
      * Costruttore che inizializza dei dati con dei valori di esempio.
      */
-    Data() {
+    public Data() {
         this.data = new Example[5];
 
         Example example;
@@ -59,7 +61,7 @@ class Data {
      *
      * @return il numero di esempi contenuti
      */
-    int getNumberOfExamples() {
+    public int getNumberOfExamples() {
         return this.numberOfExamples;
     }
 
@@ -69,7 +71,7 @@ class Data {
      * @param index l'indice dell'esempio che si vuole ottenere
      * @return l'esempio con indice {@code index}
      */
-    Example getExample(int index) {
+    public Example getExample(int index) {
         return this.data[index];
     }
 
@@ -78,7 +80,7 @@ class Data {
      *
      * @return la matrice triangolare superiore delle distanze
      */
-    double[][] distance() {
+    public double[][] distance() throws InvalidSizeException {
         double[][] distance = new double[this.numberOfExamples][this.numberOfExamples];
 
         for (int i = 0; i < this.numberOfExamples; i++) {

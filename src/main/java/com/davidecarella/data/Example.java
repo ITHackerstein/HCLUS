@@ -1,9 +1,11 @@
-package com.davidecarella;
+package com.davidecarella.data;
+
+import com.davidecarella.exceptions.InvalidSizeException;
 
 /**
  * Classe che rappresenta un esempio, ovvero un vettore di numeri reali.
  */
-class Example {
+public class Example {
     /**
      * I valori memorizzati nell'esempio.
      */
@@ -14,7 +16,7 @@ class Example {
      *
      * @param length lunghezza dell'esempio
      */
-    Example(int length) {
+    public Example(int length) {
         this.example = new double[length];
     }
 
@@ -24,7 +26,7 @@ class Example {
      * @param index l'indice del valore che si vuole impostare
      * @param value il nuovo valore che si vuole impostare
      */
-    void set(int index, double value) {
+    public void set(int index, double value) {
         this.example[index] = value;
     }
 
@@ -34,7 +36,7 @@ class Example {
      * @param index l'indice del valore che si vuole ottenere
      * @return il valore in posizione {@code index}
      */
-    double get(int index) {
+    public double get(int index) {
         return this.example[index];
     }
 
@@ -43,9 +45,13 @@ class Example {
      *
      * @param other l'altro esempio con il quale si vuole calcolare la distanza
      * @return la distanza euclidea tra l'esempio e {@code other}
+     * @throws InvalidSizeException quando questo esempio e {@code other} hanno lunghezza diversa
      */
-    double distance(Example other) {
-        // FIXME: Check that both examples have the same length and throw in case they don't
+    public double distance(Example other) throws InvalidSizeException {
+        if (this.example.length != other.example.length) {
+            throw new InvalidSizeException("Si può calcolare la distanza solo fra esempi con stessa lunghezza");
+        }
+
         double result = 0.0;
 
         for (int i = 0; i < this.example.length; ++i) {
