@@ -1,5 +1,6 @@
 plugins {
     id 'java'
+    id 'application'
 }
 
 group = 'com.davidecarella'
@@ -17,3 +18,12 @@ dependencies {
 test {
     useJUnitPlatform()
 }
+
+application {
+    mainClass = "com.davidecarella.MainTest"
+}
+
+javadoc.options.addBooleanOption("-allow-script-in-comments", true)
+javadoc.options.links "http://docs.oracle.com/javase/21/docs/api/"
+javadoc.options.header "<script id=\"MathJax-script\" async src=\"https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js\"></script>"
+javadoc.options.showFromPrivate()
