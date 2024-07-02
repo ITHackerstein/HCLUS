@@ -1,0 +1,137 @@
+package com.davidecarella;
+
+/**
+ * Classe che rappresenta un insieme di {@link Cluster cluster}.
+ */
+class ClusterSet {
+    /**
+     * L'insieme dei cluster.
+     */
+    private Cluster[] clusters;
+    /**
+     * L'indice successivo all'ultimo {@link Cluster cluster} memorizzato.
+     */
+    private int lastClusterIndex = 0;
+
+    /**
+     * Costruttore che inizializza un insieme di {@link Cluster cluster} con dimensione massima {@code maxSize},
+     * specificata come parametro.
+     *
+     * @param maxSize la dimensione massima dell'insieme
+     */
+    ClusterSet(int maxSize) {
+        this.clusters = new Cluster[maxSize];
+    }
+
+    /**
+     * Aggiunge il {@code cluster} specificato come parametro all'insieme.
+     *
+     * @param cluster il {@link Cluster cluster} da aggiungere all'insieme
+     */
+    void add(Cluster cluster) {
+        for (int i = 0; i < this.lastClusterIndex; ++i) {
+            if (cluster == this.clusters[i])
+                return;
+        }
+
+        this.clusters[this.lastClusterIndex] = cluster;
+        ++this.lastClusterIndex;
+    }
+
+    /**
+     * Restituisce il {@link Cluster cluster} con indice {@code index} specificato come parametro.
+     *
+     * @param index l'indice del {@link Cluster cluster} da restituire
+     * @return il {@link Cluster cluster} con indice {@code index}
+     */
+    Cluster get(int index) {
+        return this.clusters[index];
+    }
+
+    /**
+     * Restituisce un nuovo cluster set che contiene gli stessi cluster fatta eccezione per i due
+     * {@link Cluster cluster} tra loro più vicini che verranno uniti in un unico {@link Cluster cluster}.
+     *
+     * @see Cluster#mergeCluster(Cluster)
+     *
+     * @param distanceCalculator l'oggetto per il calcolo della distanza tra due {@link Cluster cluster}
+     * @param data i dati
+     * @return un nuovo cluster set in cui vengono uniti i due {@link Cluster cluster} più vicini fra loro
+     */
+    ClusterSet mergeClosestClusters(ClusterDistance distanceCalculator, Data data) {
+        // FIXME: We should check that there are at least two clusters
+        Cluster firstCluster = null;
+        Cluster secondCluster = null;
+        var minDistance = Double.MAX_VALUE;
+
+        for (int i = 0; i < this.lastClusterIndex; ++i) {
+            for (int j = i + 1; j < this.lastClusterIndex; ++j) {
+                var distance = distanceCalculator.distance(this.clusters[i], this.clusters[j], data);
+                if (distance < minDistance) {
+                    minDistance = distance;
+                    firstCluster = this.clusters[i];
+                    secondCluster = this.clusters[j];
+                }
+            }
+        }
+
+        assert firstCluster != null && secondCluster != null;
+
+        var merged = firstCluster.mergeCluster(secondCluster);
+        var newClusterSet = new ClusterSet(this.clusters.length - 1);
+        for (int i = 0; i < this.lastClusterIndex; ++i) {
+            if (this.clusters[i] != firstCluster) {
+                if (this.clusters[i] != secondCluster) {
+                    newClusterSet.add(this.clusters[i]);
+                }
+            } else {
+                newClusterSet.add(merged);
+            }
+        }
+
+        return newClusterSet;
+    }
+
+    /**
+     * <p>Restituisce una rappresentazione testuale del cluster set.
+     *
+     * <p><b>NOTA</b>: questa rappresentazione contiene gli indici degli esempi e non gli esempi veri e propri, per una
+     * rappresentazione più utile e accurata vedere {@link ClusterSet#toString(Data)}
+     * @return la rappresentazione testuale del cluster set
+     */
+    @Override
+    public String toString() {
+        var stringBuilder = new StringBuilder();
+
+        for (int i = 0; i < this.lastClusterIndex; ++i) {
+            stringBuilder.append("cluster");
+            stringBuilder.append(i);
+            stringBuilder.append(':');
+            stringBuilder.append(this.clusters[i].toString());
+            stringBuilder.append('\n');
+        }
+
+        return stringBuilder.toString();
+    }
+
+    /**
+     * Restituisce una rappresentazione testuale del cluster set usando {@code data}, specificato come parametro, per
+     * ricevere i valori degli esempi.
+     *
+     * @param data i dati che contengono gli esempi
+     * @return una rappresentazione testuale del cluster set
+     */
+    String toString(Data data) {
+        var stringBuilder = new StringBuilder();
+
+        for (int i = 0; i < this.lastClusterIndex; ++i) {
+            stringBuilder.append("cluster");
+            stringBuilder.append(i);
+            stringBuilder.append(':');
+            stringBuilder.append(this.clusters[i].toString(data));
+            stringBuilder.append('\n');
+        }
+
+        return stringBuilder.toString();
+    }
+}
