@@ -7,6 +7,7 @@ import com.davidecarella.distance.ClusterDistance;
 import com.davidecarella.distance.SingleLinkDistance;
 import com.davidecarella.exceptions.InvalidDepthException;
 import com.davidecarella.exceptions.InvalidSizeException;
+import com.davidecarella.exceptions.NoDataException;
 import com.davidecarella.utils.Keyboard;
 
 import java.io.FileNotFoundException;
@@ -36,6 +37,29 @@ public class MainTest {
         }
 
         return choice;
+    }
+
+    private static Data loadData() {
+        while (true) {
+            System.out.print("Inserisci il nome della tabella dal quale vuoi caricare i dati: ");
+            var tableName = Keyboard.readString();
+
+            try {
+                return new Data(tableName);
+            } catch (NoDataException exception) {
+                System.out.println("Errore durante il caricamento dei dati dalla tabella specificata: ");
+
+                Throwable current = exception;
+                int indent = 2;
+                while (current != null) {
+                    System.out.print(" ".repeat(indent));
+                    System.out.println(current.toString());
+
+                    current = current.getCause();
+                    indent += 2;
+                }
+            }
+        }
     }
 
     private static ClusterDistance chooseDistance() {
@@ -119,7 +143,7 @@ public class MainTest {
      * @param args argomenti forniti a linea di comando
      */
     public static void main(String[] args) {
-        Data data = new Data();
+        var data = loadData();
         System.out.println(data);
 
         try {
