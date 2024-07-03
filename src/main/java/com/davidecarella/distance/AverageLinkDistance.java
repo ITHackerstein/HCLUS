@@ -26,12 +26,15 @@ public class AverageLinkDistance implements ClusterDistance {
     public double distance(Cluster c1, Cluster c2, Data data) throws InvalidSizeException {
         double sum = 0.0;
 
-        for (int i = 0; i < c1.getSize(); ++i) {
-            for (int j = 0; j < c2.getSize(); ++j) {
-                var firstExample = data.getExample(c1.getElement(i));
-                var secondExample = data.getExample(c2.getElement(j));
+        var firstIterator = c1.iterator();
+        while (firstIterator.hasNext()) {
+            var firstExample = data.getExample(firstIterator.next());
 
-                sum += firstExample.distance(secondExample);
+            var secondIterator = c2.iterator();
+            while (secondIterator.hasNext()) {
+                var secondExample = data.getExample(secondIterator.next());
+
+                sum +=firstExample.distance(secondExample);
             }
         }
 

@@ -2,6 +2,10 @@ package com.davidecarella.clustering;
 
 import com.davidecarella.data.Data;
 
+import java.util.Iterator;
+import java.util.Set;
+import java.util.TreeSet;
+
 /**
  * <p>Classe che rappresenta un cluster, ovvero un insieme di esempi.
  *
@@ -9,11 +13,11 @@ import com.davidecarella.data.Data;
  * {@link Data}, per questo motivo quando viene utilizzata la parola "esempio" ci si riferisce
  * più precisamente al loro indice.
  */
-public class Cluster {
+public class Cluster implements Iterable<Integer>, Cloneable {
     /**
      * L'insieme degli esempi.
      */
-    private int[] clusteredData = new int[0];
+    private Set<Integer> clusteredData = new TreeSet<>();
 
     /**
      * Costruttore di default che crea un cluster vuoto.
@@ -21,21 +25,12 @@ public class Cluster {
     public Cluster() {}
 
     /**
-     * Aggiunge un nuovo indice esempio con indice {@code exampleIndex}, specificato come parametro, all'insieme. Se
-     * dovesse essere già presente nell'insieme allora non fa nulla.
+     * Aggiunge un nuovo indice esempio con indice {@code exampleIndex}, specificato come parametro, all'insieme.
      *
      * @param exampleIndex l'esempio da inserire all'insieme
      */
     public void addData(int exampleIndex) {
-        for (int i = 0; i < this.clusteredData.length; ++i) {
-            if (exampleIndex == this.clusteredData[i])
-                return;
-        }
-
-        var newClusteredData = new int[this.clusteredData.length + 1];
-        System.arraycopy(this.clusteredData, 0, newClusteredData, 0, this.clusteredData.length);
-        this.clusteredData = newClusteredData;
-        this.clusteredData[this.clusteredData.length - 1] = exampleIndex;
+        this.clusteredData.add(exampleIndex);
     }
 
     /**
@@ -44,17 +39,7 @@ public class Cluster {
      * @return la dimensione del cluster.
      */
     public int getSize() {
-        return this.clusteredData.length;
-    }
-
-    /**
-     * Restituisce l'esempio con indice {@code index}, specificato come parametro.
-     *
-     * @param index l'indice dell'esempio che si vuole ottenere
-     * @return l'esempio con indice {@code index}
-     */
-    public int getElement(int index) {
-        return this.clusteredData[index];
+        return this.clusteredData.size();
     }
 
     /**
@@ -62,14 +47,16 @@ public class Cluster {
      *
      * @return una copia del cluster
      */
-    public Cluster createACopy() {
-        var copy = new Cluster();
-
-        for (int i = 0; i < this.clusteredData.length; ++i) {
-            copy.addData(this.clusteredData[i]);
+    @SuppressWarnings("unchecked")
+    @Override
+    public Cluster clone() {
+        try {
+            var copy = (Cluster) super.clone();
+            copy.clusteredData = (Set<Integer>) ((TreeSet<Integer>) this.clusteredData).clone();
+            return copy;
+        } catch (CloneNotSupportedException exception) {
+            throw new RuntimeException(exception);
         }
-
-        return copy;
     }
 
     /**
@@ -79,16 +66,8 @@ public class Cluster {
      * @return un cluster che contiene l'insieme unione del cluster e {@code other}
      */
     public Cluster mergeCluster(Cluster other) {
-        var merged = new Cluster();
-
-        for (int i = 0; i < this.clusteredData.length; ++i) {
-            merged.addData(this.clusteredData[i]);
-        }
-
-        for (int i = 0; i < other.clusteredData.length; ++i) {
-            merged.addData(other.clusteredData[i]);
-        }
-
+        var merged = this.clone();
+        merged.clusteredData.addAll(other.clusteredData);
         return merged;
     }
 
@@ -101,13 +80,15 @@ public class Cluster {
      */
     @Override
     public String toString() {
+        if (this.clusteredData.isEmpty())
+            return "";
+
         var stringBuilder = new StringBuilder();
 
-        for (int i = 0; i < this.clusteredData.length; ++i) {
-            stringBuilder.append(this.clusteredData[i]);
-            if (i != this.clusteredData.length - 1) {
-                stringBuilder.append(',');
-            }
+        var iterator = this.iterator();
+        stringBuilder.append(iterator.next());
+        while (iterator.hasNext()) {
+            stringBuilder.append(", ").append(iterator.next());
         }
 
         return stringBuilder.toString();
@@ -123,12 +104,18 @@ public class Cluster {
     public String toString(Data data) {
         var stringBuilder = new StringBuilder();
 
-        for (int i = 0; i < this.clusteredData.length; ++i) {
+        var iterator = this.iterator();
+        while (iterator.hasNext()) {
             stringBuilder.append('<');
-            stringBuilder.append(data.getExample(this.clusteredData[i]));
+            stringBuilder.append(data.getExample(iterator.next()));
             stringBuilder.append('>');
         }
 
         return stringBuilder.toString();
+    }
+
+    @Override
+    public Iterator<Integer> iterator() {
+        return this.clusteredData.iterator();
     }
 }

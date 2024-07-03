@@ -2,6 +2,9 @@ package com.davidecarella.data;
 
 import com.davidecarella.exceptions.InvalidSizeException;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * Classe che rappresenta dei dati, ovvero una lista di esempi.
  */
@@ -9,51 +12,43 @@ public class Data {
     /**
      * La lista degli esempi.
      */
-    private Example[] data;
-    /**
-     * Il numero degli esempi.
-     */
-    private int numberOfExamples;
+    private List<Example> data = new ArrayList<>();
 
     /**
      * Costruttore che inizializza dei dati con dei valori di esempio.
      */
     public Data() {
-        this.data = new Example[5];
-
         Example example;
 
-        example = new Example(3);
-        example.set(0, 1.0);
-        example.set(1, 2.0);
-        example.set(2, 0.0);
-        this.data[0] = example;
+        example = new Example();
+        example.add(1.0);
+        example.add(2.0);
+        example.add(0.0);
+        this.data.add(example);
 
-        example = new Example(3);
-        example.set(0, 0.0);
-        example.set(1, 1.0);
-        example.set(2, -1.0);
-        this.data[1] = example;
+        example = new Example();
+        example.add(0.0);
+        example.add(1.0);
+        example.add(-1.0);
+        this.data.add(example);
 
-        example = new Example(3);
-        example.set(0, 1.0);
-        example.set(1, 3.0);
-        example.set(2, 5.0);
-        this.data[2] = example;
+        example = new Example();
+        example.add(1.0);
+        example.add(3.0);
+        example.add(5.0);
+        this.data.add(example);
 
-        example = new Example(3);
-        example.set(0, 1.0);
-        example.set(1, 3.0);
-        example.set(2, 4.0);
-        this.data[3] = example;
+        example = new Example();
+        example.add(1.0);
+        example.add(3.0);
+        example.add(4.0);
+        this.data.add(example);
 
-        example = new Example(3);
-        example.set(0, 2.0);
-        example.set(1, 2.0);
-        example.set(2, 0.0);
-        this.data[4] = example;
-
-        this.numberOfExamples = 5;
+        example = new Example();
+        example.add(2.0);
+        example.add(2.0);
+        example.add(0.0);
+        this.data.add(example);
     }
 
     /**
@@ -62,7 +57,7 @@ public class Data {
      * @return il numero di esempi contenuti
      */
     public int getNumberOfExamples() {
-        return this.numberOfExamples;
+        return this.data.size();
     }
 
     /**
@@ -72,7 +67,7 @@ public class Data {
      * @return l'esempio con indice {@code index}
      */
     public Example getExample(int index) {
-        return this.data[index];
+        return this.data.get(index);
     }
 
     /**
@@ -81,11 +76,11 @@ public class Data {
      * @return la matrice triangolare superiore delle distanze
      */
     public double[][] distance() throws InvalidSizeException {
-        double[][] distance = new double[this.numberOfExamples][this.numberOfExamples];
+        double[][] distance = new double[this.data.size()][this.data.size()];
 
-        for (int i = 0; i < this.numberOfExamples; i++) {
-            for (int j = 0; j < this.numberOfExamples; j++) {
-                distance[i][j] = j <= i ? 0 : this.data[i].distance(this.data[j]);
+        for (int i = 0; i < this.data.size(); ++i) {
+            for (int j = 0; j < this.data.size(); ++j) {
+                distance[i][j] = j <= i ? 0 : this.data.get(i).distance(this.data.get(j));
             }
         }
 
@@ -99,12 +94,14 @@ public class Data {
      */
     @Override
     public String toString() {
-        StringBuilder stringBuilder = new StringBuilder();
+        var stringBuilder = new StringBuilder();
 
-        for (int i = 0; i < this.numberOfExamples; i++) {
-            stringBuilder.append(i);
+        int index = 0;
+        var iterator = this.data.iterator();
+        while (iterator.hasNext()) {
+            stringBuilder.append(index);
             stringBuilder.append(':');
-            stringBuilder.append(this.data[i]);
+            stringBuilder.append(iterator.next());
             stringBuilder.append('\n');
         }
 

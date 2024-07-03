@@ -2,32 +2,33 @@ package com.davidecarella.data;
 
 import com.davidecarella.exceptions.InvalidSizeException;
 
+import java.util.Iterator;
+import java.util.List;
+import java.util.LinkedList;
+
 /**
- * Classe che rappresenta un esempio, ovvero un vettore di numeri reali.
+ * Classe che rappresenta un esempio, ovvero una lista di numeri reali.
  */
-public class Example {
+public class Example implements Iterable<Double> {
     /**
-     * I valori memorizzati nell'esempio.
+     * La lista di valori memorizzati nell'esempio.
      */
-    private double[] example;
+    private List<Double> example;
 
     /**
-     * Costruttore che inizializza un esempio di lunghezza {@code length} specificata come parametro.
-     *
-     * @param length lunghezza dell'esempio
+     * Costruttore che inizializza un esempio vuoto.
      */
-    public Example(int length) {
-        this.example = new double[length];
+    public Example() {
+        this.example = new LinkedList<>();
     }
 
     /**
-     * Cambia il valore in indice {@code index} con il valore {@code value}, entrambi specificati come parametro.
+     * Aggiunge il valore {@code value}, specificato come parametro.
      *
-     * @param index l'indice del valore che si vuole impostare
-     * @param value il nuovo valore che si vuole impostare
+     * @param value il valore che si vuole aggiungere
      */
-    public void set(int index, double value) {
-        this.example[index] = value;
+    public void add(double value) {
+        this.example.add(value);
     }
 
     /**
@@ -37,7 +38,7 @@ public class Example {
      * @return il valore in posizione {@code index}
      */
     public double get(int index) {
-        return this.example[index];
+        return this.example.get(index);
     }
 
     /**
@@ -48,14 +49,16 @@ public class Example {
      * @throws InvalidSizeException quando questo esempio e {@code other} hanno lunghezza diversa
      */
     public double distance(Example other) throws InvalidSizeException {
-        if (this.example.length != other.example.length) {
+        if (this.example.size() != other.example.size()) {
             throw new InvalidSizeException("Si può calcolare la distanza solo fra esempi con stessa lunghezza");
         }
 
         double result = 0.0;
+        var firstValueIterator = this.iterator();
+        var secondValueIterator = other.iterator();
 
-        for (int i = 0; i < this.example.length; ++i) {
-            double delta = this.example[i] - other.example[i];
+        while (firstValueIterator.hasNext() && secondValueIterator.hasNext()) {
+            double delta = firstValueIterator.next() - secondValueIterator.next();
             result += delta * delta;
         }
 
@@ -69,17 +72,30 @@ public class Example {
      */
     @Override
     public String toString() {
+        if (this.example.isEmpty()) {
+            return "[]";
+        }
+
         var stringBuilder = new StringBuilder();
 
         stringBuilder.append('[');
-        for (int i = 0; i < this.example.length; ++i) {
-            stringBuilder.append(this.example[i]);
-            if (i != this.example.length - 1) {
-                stringBuilder.append(',');
-            }
+        var iterator = this.iterator();
+        stringBuilder.append(iterator.next());
+        while (iterator.hasNext()) {
+            stringBuilder.append(',').append(iterator.next());
         }
         stringBuilder.append(']');
 
         return stringBuilder.toString();
+    }
+
+    /**
+     * Restituisce un {@link java.util.Iterator iteratore} per la lista dei valori memorizzati nell'esempio.
+     *
+     * @return l'iteratore per la lista di valori
+     */
+    @Override
+    public Iterator<Double> iterator() {
+        return this.example.iterator();
     }
 }
