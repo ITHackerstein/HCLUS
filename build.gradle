@@ -1,3 +1,5 @@
+import java.awt.image.DataBufferUShort
+
 plugins {
     id 'java'
     id 'application'
@@ -13,14 +15,30 @@ repositories {
 dependencies {
     testImplementation platform('org.junit:junit-bom:5.10.0')
     testImplementation 'org.junit.jupiter:junit-jupiter'
+
+    implementation "org.mariadb.jdbc:mariadb-java-client:3.4.0"
 }
 
 test {
     useJUnitPlatform()
 }
 
+mainClassName = "com.davidecarella.MainTest"
+
 application {
-    mainClass = "com.davidecarella.MainTest"
+    mainClass = mainClassName
+}
+
+jar {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+
+    manifest {
+        attributes "Main-Class": mainClassName
+    }
+
+    from {
+        configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
+    }
 }
 
 javadoc.options.addBooleanOption("-allow-script-in-comments", true)
