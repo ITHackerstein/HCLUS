@@ -2,11 +2,13 @@ package com.davidecarella.clustering;
 
 import com.davidecarella.data.Data;
 
+import java.io.Serializable;
+
 /**
  * Classe che rappresenta un dendrogramma, ovvero un albero che rappresenta la composizione dei
  * {@link ClusterSet cluster set}.
  */
-public class Dendrogram {
+public class Dendrogram implements Serializable {
     /**
      * La lista di ogni livello dell'albero.
      */

@@ -2,6 +2,7 @@ package com.davidecarella.clustering;
 
 import com.davidecarella.data.Data;
 
+import java.io.Serializable;
 import java.util.Iterator;
 import java.util.Set;
 import java.util.TreeSet;
@@ -13,7 +14,7 @@ import java.util.TreeSet;
  * {@link Data}, per questo motivo quando viene utilizzata la parola "esempio" ci si riferisce
  * più precisamente al loro indice.
  */
-public class Cluster implements Iterable<Integer>, Cloneable {
+public class Cluster implements Iterable<Integer>, Cloneable, Serializable {
     /**
      * L'insieme degli esempi.
      */

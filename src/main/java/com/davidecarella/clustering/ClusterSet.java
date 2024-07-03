@@ -6,10 +6,12 @@ import com.davidecarella.exceptions.ClusterSetFullException;
 import com.davidecarella.exceptions.ClusterSetTooSmallException;
 import com.davidecarella.exceptions.InvalidSizeException;
 
+import java.io.Serializable;
+
 /**
  * Classe che rappresenta un insieme di {@link Cluster cluster}.
  */
-public class ClusterSet {
+public class ClusterSet implements Serializable {
     /**
      * L'insieme dei cluster.
      */

@@ -6,11 +6,13 @@ import com.davidecarella.exceptions.ClusterSetTooSmallException;
 import com.davidecarella.exceptions.InvalidDepthException;
 import com.davidecarella.exceptions.InvalidSizeException;
 
+import java.io.*;
+
 /**
  * Classe che si occupa di effettuare l'operazione di "mining", ovvero di creare il dendrogramma a partire dai dati
  * forniti
  */
-public class HierarchicalClusterMiner {
+public class HierarchicalClusterMiner implements Serializable {
     /**
      * Il dendogramma.
      */
@@ -57,6 +59,30 @@ public class HierarchicalClusterMiner {
 
             assert newLevel != null;
             this.dendrogram.setClusterSet(newLevel, level);
+        }
+    }
+
+    /**
+     * Carica un miner da un file con nome {@code fileName}, specificato come parametro.
+     *
+     * @param fileName il nome del file da cui si vuole caricare il miner
+     * @return l'istanza del miner letta dal file
+     * @throws IOException in caso di errori durante l'apertura/lettura/chiusura del file
+     * @throws ClassNotFoundException in caso in cui nel file non sia salvata un'istanza del miner
+     */
+    public static HierarchicalClusterMiner load(String fileName) throws IOException, ClassNotFoundException {
+        try (FileInputStream fileStream = new FileInputStream(fileName);
+             ObjectInputStream objectStream = new ObjectInputStream(fileStream))
+        {
+            return (HierarchicalClusterMiner) objectStream.readObject();
+        }
+    }
+
+    public void salva(String fileName) throws IOException {
+        try (FileOutputStream fileStream = new FileOutputStream(fileName);
+             ObjectOutputStream objectStream = new ObjectOutputStream(fileStream))
+        {
+            objectStream.writeObject(this);
         }
     }
 

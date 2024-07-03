@@ -9,18 +9,17 @@ import com.davidecarella.exceptions.InvalidDepthException;
 import com.davidecarella.exceptions.InvalidSizeException;
 import com.davidecarella.utils.Keyboard;
 
+import java.io.FileNotFoundException;
+import java.io.IOException;
+
 /**
  * Classe utilizzata per testare le classi realizzate.
  */
 public class MainTest {
-    private static ClusterDistance chooseDistance() {
-        System.out.println("Seleziona il tipo di distanza che si vuole utilizzare:");
-        System.out.println("  1. Single-Link");
-        System.out.println("  2. Average-Link");
-
+    private static int readChoice(String prompt, int minimum, int maximum) {
         int choice;
         while (true) {
-            System.out.print("Scelta: ");
+            System.out.print(prompt);
             var input = Keyboard.readString();
             try {
                 choice = Integer.parseInt(input);
@@ -29,19 +28,89 @@ public class MainTest {
                 continue;
             }
 
-            if (choice < 1 || choice > 2) {
+            if (choice < minimum || choice > maximum) {
                 System.out.println("Scelta non valida!");
             } else {
                 break;
             }
         }
 
-        return switch (choice) {
+        return choice;
+    }
+
+    private static ClusterDistance chooseDistance() {
+        System.out.println("Seleziona il tipo di distanza che si vuole utilizzare:");
+        System.out.println("  1. Single-Link");
+        System.out.println("  2. Average-Link");
+        return switch (readChoice("Scelta: ", 1, 2)) {
             case 1 -> new SingleLinkDistance();
             case 2 -> new AverageLinkDistance();
             // NOTE: This can never happen
             default -> null;
         };
+    }
+
+    private static void loadMinerFromFile(Data data) {
+        while (true) {
+            System.out.print("Inserisci il percorso del miner: ");
+            var fileName = Keyboard.readString();
+
+            try {
+                var miner = HierarchicalClusterMiner.load(fileName);
+                System.out.println(miner);
+                System.out.println(miner.toString(data));
+                return;
+            } catch (FileNotFoundException exception) {
+                System.out.println("Il file inserito non esiste!");
+            } catch (IOException | ClassNotFoundException exception) {
+                System.out.printf("Errore durante la lettura del file: %s!%n", exception.getMessage());
+            }
+        }
+    }
+
+    private static void newMiner(Data data) {
+        var distance = chooseDistance();
+
+        while (true) {
+            System.out.print("Inserisci la profondità del dendrogramma: ");
+            var input = Keyboard.readString();
+            int depth;
+            try {
+                depth = Integer.parseInt(input);
+            } catch (NumberFormatException exception) {
+                System.out.println("Profondità non valida!");
+                continue;
+            }
+
+            if (depth <= 0) {
+                System.out.println("Profondità non valida!");
+                continue;
+            }
+
+            try {
+                var miner = new HierarchicalClusterMiner(depth);
+                miner.mine(data, distance);
+                System.out.println(miner);
+                System.out.println(miner.toString(data));
+
+                while (true) {
+                    System.out.print("Inserisci il percorso dove si vuole salvare il miner: ");
+                    var fileName = Keyboard.readString();
+
+                    try {
+                        miner.salva(fileName);
+                        return;
+                    } catch (IOException exception) {
+                        System.out.printf("Errore durante il salvataggio su file: %s%n", exception.getMessage());
+                    }
+                }
+            } catch (InvalidDepthException exception) {
+                System.out.printf("Profondità non valida: %s!%n", exception.getMessage());
+            } catch (InvalidSizeException exception) {
+                System.out.printf("I dati forniti non sono validi: %s!%n", exception.getMessage());
+                return;
+            }
+        }
     }
 
     /**
@@ -67,35 +136,12 @@ public class MainTest {
             return;
         }
 
-        var distance = chooseDistance();
-        while (true) {
-            System.out.print("Inserisci la profondità del dendrogramma: ");
-            var input = Keyboard.readString();
-            int depth;
-            try {
-                depth = Integer.parseInt(input);
-            } catch (NumberFormatException exception) {
-                System.out.println("Profondità non valida!");
-                continue;
-            }
-
-            if (depth <= 0) {
-                System.out.println("Profondità non valida!");
-                continue;
-            }
-
-            HierarchicalClusterMiner clustering = new HierarchicalClusterMiner(depth);
-            try {
-                clustering.mine(data, distance);
-                System.out.println(clustering);
-                System.out.println(clustering.toString(data));
-                break;
-            } catch (InvalidDepthException exception) {
-                System.out.printf("Profondità non valida: %s!%n", exception.getMessage());
-            } catch (InvalidSizeException exception) {
-                System.out.printf("I dati forniti non sono validi: %s!%n", exception.getMessage());
-                return;
-            }
+        System.out.println("Selezionare da dove si vuole caricare il dendrogramma: ");
+        System.out.println("  1. Da file");
+        System.out.println("  2. Nuovo");
+        switch (readChoice("Scelta: ", 1, 2)) {
+            case 1 -> loadMinerFromFile(data);
+            case 2 -> newMiner(data);
         }
     }
 }
