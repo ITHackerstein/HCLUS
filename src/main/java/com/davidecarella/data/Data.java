@@ -1,7 +1,11 @@
 package com.davidecarella.data;
 
-import com.davidecarella.exceptions.InvalidSizeException;
+import com.davidecarella.database.DbAccess;
+import com.davidecarella.database.TableData;
+import com.davidecarella.database.TableSchema;
+import com.davidecarella.exceptions.*;
 
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -49,6 +53,17 @@ public class Data {
         example.add(2.0);
         example.add(0.0);
         this.data.add(example);
+    }
+
+    public Data(String tableName) throws NoDataException {
+        var db = new DbAccess();
+        var tableData = new TableData(db);
+
+        try {
+            this.data.addAll(tableData.getDistinctTransazioni(tableName));
+        } catch (DatabaseConnectionException | SQLException | EmptySetException | MissingNumberException exception) {
+            throw new NoDataException("Errore durante il caricamento degli esempi!", exception);
+        }
     }
 
     /**
