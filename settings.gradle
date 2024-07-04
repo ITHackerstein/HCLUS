@@ -1,2 +1,4 @@
-rootProject.name = 'agglomerative-clustering'
+rootProject.name = 'HCLUS'
 
+include("server")
+include("client")
