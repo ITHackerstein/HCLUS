@@ -81,6 +81,11 @@ public class MainTest {
 
             try {
                 var miner = HierarchicalClusterMiner.load(fileName);
+                if (miner.getDendrogramDepth() > data.getNumberOfExamples()) {
+                    System.out.println("IL miner inserito ha una profondità non valida!");
+                    continue;
+                }
+
                 System.out.println(miner);
                 System.out.println(miner.toString(data));
                 return;

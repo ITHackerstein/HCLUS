@@ -28,6 +28,13 @@ public class HierarchicalClusterMiner implements Serializable {
     }
 
     /**
+     * Restituisce la profondità del dendrogramma memorizzato.
+     *
+     * @return la profondità del dendrogramma memorizzato
+     */
+    public int getDendrogramDepth() { return this.dendrogram.getDepth(); }
+
+    /**
      * Crea il dendrogramma utilizzando i dati forniti da {@code data} e l'oggetto per calcolare la distanza
      * {@code distanceCalculator}, entrambi forniti come parametro.
      *
