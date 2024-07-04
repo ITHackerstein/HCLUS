@@ -1,5 +1,3 @@
-import java.awt.image.DataBufferUShort
-
 plugins {
     id 'java'
     id 'application'
