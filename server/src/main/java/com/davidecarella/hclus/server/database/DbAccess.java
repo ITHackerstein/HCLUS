@@ -36,7 +36,7 @@ public class DbAccess {
     /**
      * Il nome del database.
      */
-    private final String DATABASE = "MapDB";
+    private final String DATABASE = "hclus_db";
 
     /**
      * La porta utilizzata per la connessione al DBMS.
@@ -46,7 +46,7 @@ public class DbAccess {
     /**
      * Il nome utente del DBMS.
      */
-    private final String USER_ID = "root";
+    private final String USER_ID = "hclus_user";
 
     /**
      * La password dell'utente con nome utente specificato in {@link DbAccess#USER_ID}.

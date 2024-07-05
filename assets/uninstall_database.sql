@@ -1,0 +1,2 @@
+DROP USER IF EXISTS hclus_user;
+DROP DATABASE IF EXISTS hclus_db;
