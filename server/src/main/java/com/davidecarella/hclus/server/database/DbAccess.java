@@ -14,6 +14,11 @@ import java.sql.SQLException;
  */
 public class DbAccess {
     /**
+     * NOTA: Viene aggiunto solo per evitare il warning durante la generazione del JavaDoc.
+     */
+    public DbAccess() {}
+
+    /**
      * Il nome completamente qualificato della classe {@code Driver}.
      */
 	private final String DRIVER_CLASS_NAME = "org.mariadb.jdbc.Driver";

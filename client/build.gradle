@@ -10,7 +10,9 @@ repositories {
     mavenCentral()
 }
 
-dependencies {}
+dependencies {
+    implementation project(":common")
+}
 
 mainClassName = "com.davidecarella.hclus.client.MainTest"
 

@@ -11,7 +11,9 @@ repositories {
 }
 
 dependencies {
+    implementation "org.slf4j:slf4j-nop:2.0.13"
     implementation "org.mariadb.jdbc:mariadb-java-client:3.4.0"
+    implementation project(":common")
 }
 
 mainClassName = "com.davidecarella.hclus.server.MainTest"
@@ -21,6 +23,8 @@ application {
 }
 
 jar {
+    dependsOn ":common:jar"
+
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 
     manifest {
@@ -31,7 +35,3 @@ jar {
         configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
     }
 }
-
-javadoc.options.addBooleanOption("-allow-script-in-comments", true)
-javadoc.options.links "http://docs.oracle.com/javase/22/docs/api/"
-javadoc.options.header "<script id=\"MathJax-script\" async src=\"https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js\"></script>"

@@ -54,6 +54,13 @@ public class Data {
         this.data.add(example);
     }
 
+    /**
+     * Costruisce i dati usando le righe di una tabella (con nome {@code tableName} specificato come parametro) dal
+     * database.
+     *
+     * @param tableName la tabella le cui righe si vogliono usare come esempi
+     * @throws NoDataException se ci dovesse essere un error durante il caricamento della tabella
+     */
     public Data(String tableName) throws NoDataException {
         var db = new DbAccess();
         var tableData = new TableData(db);
@@ -88,6 +95,7 @@ public class Data {
      * Restituisce la matrice triangolare superiore delle distanze euclidee fra gli esempi dei dati.
      *
      * @return la matrice triangolare superiore delle distanze
+     * @throws InvalidSizeException se degli esempi hanno lunghezza diversa
      */
     public double[][] distance() throws InvalidSizeException {
         double[][] distance = new double[this.data.size()][this.data.size()];

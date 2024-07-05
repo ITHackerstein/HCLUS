@@ -44,7 +44,7 @@ public class HierarchicalClusterMiner implements Serializable {
      * @throws InvalidSizeException quando ci sono due esempi con lunghezze diverse
      */
     public void mine(Data data, ClusterDistance distanceCalculator) throws InvalidDepthException, InvalidSizeException {
-        if (this.dendrogram.getDepth() > data.getNumberOfExamples()) {
+        if (this.dendrogram.getDepth() <= 0 || this.dendrogram.getDepth() > data.getNumberOfExamples()) {
             throw new InvalidDepthException("La profondità del dendrogramma deve essere al massimo pari al numero di esempi nel dataset");
         }
 
@@ -85,6 +85,12 @@ public class HierarchicalClusterMiner implements Serializable {
         }
     }
 
+    /**
+     * Salva il miner sul file con percorso {@code fileName}, specificato come parametro.
+     *
+     * @param fileName il percorso del file dove si vuole salvare il miner
+     * @throws IOException in caso di errori durante il salvataggio sul file
+     */
     public void salva(String fileName) throws IOException {
         try (FileOutputStream fileStream = new FileOutputStream(fileName);
              ObjectOutputStream objectStream = new ObjectOutputStream(fileStream))

@@ -1,4 +1,4 @@
-package com.davidecarella.hclus.server.utils;
+package com.davidecarella.hclus.common;
 
 import java.io.*;
 import java.util.*;
@@ -7,6 +7,11 @@ import java.util.*;
  * Classe di utilità fornita dal docente per la gestione dell'input da tastiera.
  */
 public class Keyboard {
+	/**
+	 * NOTA: Viene aggiunto solo per evitare il warning durante la generazione del JavaDoc.
+	 */
+	private Keyboard() {}
+
 	/**
 	 * Flag che indica se bisogna stampare gli errori in output.
 	 */
@@ -28,7 +33,7 @@ public class Keyboard {
 	/**
 	 * Reimposta il numero degli errori incontrati.
 	 */
-	public static void resetErrorCount(int count) {
+	public static void resetErrorCount() {
 		errorCount = 0;
 	}
 

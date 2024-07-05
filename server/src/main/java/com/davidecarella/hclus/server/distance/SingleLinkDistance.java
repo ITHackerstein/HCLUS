@@ -13,6 +13,11 @@ import com.davidecarella.hclus.server.exceptions.InvalidSizeException;
  */
 public class SingleLinkDistance implements ClusterDistance {
     /**
+     * Costruttore di default.
+     */
+    public SingleLinkDistance() {}
+
+    /**
      * Calcola la distanza tra i {@link Cluster cluster} {@code c1} e {@code c2}, specificati come parametri,
      * usando {@code data}, specificata come parametro, per i valori degli esempi.
      *

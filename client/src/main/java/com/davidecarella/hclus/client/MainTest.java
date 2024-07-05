@@ -1,6 +1,6 @@
 package com.davidecarella.hclus.client;
 
-import com.davidecarella.hclus.server.utils.Keyboard;
+import com.davidecarella.hclus.common.Keyboard;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -8,10 +8,36 @@ import java.io.ObjectOutputStream;
 import java.net.InetAddress;
 import java.net.Socket;
 
+/**
+ * <p>Classe principale del progetto.
+ *
+ * <p>Il client si occuperà di connettersi a un server il cui indirizzo e porta sono specificati come argomenti da
+ * linea di comando, manderà una richiesta di caricamento dei dati e in seguito farà scegliere all'utente se caricare
+ * un dendrogramma da file o crearne uno nuova da una tabella del database. Nel primo caso viene inviato il nome del
+ * file da cui si vuole caricare il dendrogramma (scritto da tastiera dall'utente) e il server risponde con una stringa
+ * che rappresenta il dendrogramma. Nel secondo caso, invece, vengono inviate al server profondità e tipo di distanza
+ * (scritte da tastiera dall'utente) e il server creerà il dendrogramma e ne invierà la rappresentazione testuale.
+ * Infine il client esce.
+ */
 public class MainTest {
+    /**
+     * Stream di output del socket.
+     */
     private ObjectOutputStream out;
+
+    /**
+     * Stream di input del socket.
+     */
     private ObjectInputStream in;
 
+    /**
+     * Costruisce la classe connettendosi al server con indirizzo {@code ip} e porta {@code port} (specificate come
+     * parametro).
+     *
+     * @param ip l'indirizzo IP del server
+     * @param port la porta del server
+     * @throws IOException se non si riescono a creare gli stream di IO del socket
+     */
     public MainTest(String ip, int port) throws IOException {
         InetAddress addr = InetAddress.getByName(ip);
         System.out.println("addr = " + addr);
@@ -22,6 +48,11 @@ public class MainTest {
         in = new ObjectInputStream(socket.getInputStream());
     }
 
+    /**
+     * Stampa il menu di selezione dell'operazione dopo aver caricato i dati.
+     *
+     * @return la scelta fatta dall'utente
+     */
     private int menu() {
         int answer;
 
@@ -37,6 +68,13 @@ public class MainTest {
         return answer;
     }
 
+    /**
+     * Manda al server la richiesta del caricamento dei dati.
+     *
+     * @throws IOException se si dovessero verificare errori durante la ricezione/invio di oggetti dagli stream di IO
+     * @throws ClassNotFoundException se si dovessero verificare errori durante la ricezione/invio di oggetti dagli
+     *                                stream di IO
+     */
     private void loadDataOnServer() throws IOException, ClassNotFoundException {
         boolean flag = false;
         do {
@@ -50,9 +88,16 @@ public class MainTest {
             } else {
                 System.out.println(risposta);
             }
-        } while (flag == false);
+        } while (!flag);
     }
 
+    /**
+     * Manda al server la richiesta del caricamento di un dendrogramma dal file.
+     *
+     * @throws IOException se si dovessero verificare errori durante la ricezione/invio di oggetti dagli stream di IO
+     * @throws ClassNotFoundException se si dovessero verificare errori durante la ricezione/invio di oggetti dagli
+     *                                stream di IO
+     */
     private void loadDendrogramFromFileOnServer() throws IOException, ClassNotFoundException {
         System.out.println("Inserire il nome dell'archivio (comprensivo di estensione):");
         String fileName = Keyboard.readString();
@@ -67,6 +112,13 @@ public class MainTest {
         }
     }
 
+    /**
+     * Manda al server la richiesta della creazione di un nuovo dendrogramma a partire da una tabella nel database.
+     *
+     * @throws IOException se si dovessero verificare errori durante la ricezione/invio di oggetti dagli stream di IO
+     * @throws ClassNotFoundException se si dovessero verificare errori durante la ricezione/invio di oggetti dagli
+     *                                stream di IO
+     */
     private void mineDendrogramOnServer() throws IOException, ClassNotFoundException {
         out.writeObject(1);
         System.out.println("Introdurre la profondit  del dendrogramma");
@@ -90,6 +142,11 @@ public class MainTest {
         }
     }
 
+    /**
+     * Metodo principale del progetto.
+     *
+     * @param args argomenti da linea di comando
+     */
     public static void main(String[] args) {
         String ip = args[0];
         int port = Integer.parseInt(args[1]);

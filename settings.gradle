@@ -1,4 +1,5 @@
 rootProject.name = 'HCLUS'
 
-include("server")
-include("client")
+include "server"
+include "client"
+include "common"
