@@ -18,43 +18,6 @@ public class Data {
     private List<Example> data = new ArrayList<>();
 
     /**
-     * Costruttore che inizializza dei dati con dei valori di esempio.
-     */
-    public Data() {
-        Example example;
-
-        example = new Example();
-        example.add(1.0);
-        example.add(2.0);
-        example.add(0.0);
-        this.data.add(example);
-
-        example = new Example();
-        example.add(0.0);
-        example.add(1.0);
-        example.add(-1.0);
-        this.data.add(example);
-
-        example = new Example();
-        example.add(1.0);
-        example.add(3.0);
-        example.add(5.0);
-        this.data.add(example);
-
-        example = new Example();
-        example.add(1.0);
-        example.add(3.0);
-        example.add(4.0);
-        this.data.add(example);
-
-        example = new Example();
-        example.add(2.0);
-        example.add(2.0);
-        example.add(0.0);
-        this.data.add(example);
-    }
-
-    /**
      * Costruisce i dati usando le righe di una tabella (con nome {@code tableName} specificato come parametro) dal
      * database.
      *
