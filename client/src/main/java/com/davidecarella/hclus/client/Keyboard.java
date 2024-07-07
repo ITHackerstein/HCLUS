@@ -1,4 +1,4 @@
-package com.davidecarella.hclus.common;
+package com.davidecarella.hclus.client;
 
 import java.io.*;
 import java.util.*;

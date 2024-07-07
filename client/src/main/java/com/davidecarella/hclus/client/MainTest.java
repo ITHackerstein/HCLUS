@@ -1,7 +1,5 @@
 package com.davidecarella.hclus.client;
 
-import com.davidecarella.hclus.common.Keyboard;
-
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;

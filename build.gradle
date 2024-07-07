@@ -1,4 +1,4 @@
-def projects = [":common", ":server", ":client"]
+def projects = [":server", ":client"]
 
 tasks.register('javadocAll', Javadoc) {
     group = "documentation"
