@@ -13,7 +13,7 @@ public class Example implements Iterable<Double> {
     /**
      * La lista di valori memorizzati nell'esempio.
      */
-    private List<Double> example;
+    private final List<Double> example;
 
     /**
      * Costruttore che inizializza un esempio vuoto.
@@ -29,16 +29,6 @@ public class Example implements Iterable<Double> {
      */
     public void add(double value) {
         this.example.add(value);
-    }
-
-    /**
-     * Restituisce il valore in posizione {@code index}, specificato come parametro.
-     *
-     * @param index l'indice del valore che si vuole ottenere
-     * @return il valore in posizione {@code index}
-     */
-    public double get(int index) {
-        return this.example.get(index);
     }
 
     /**
