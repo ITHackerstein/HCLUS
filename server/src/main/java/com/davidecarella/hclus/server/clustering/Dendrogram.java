@@ -12,7 +12,7 @@ public class Dendrogram implements Serializable {
     /**
      * La lista di ogni livello dell'albero.
      */
-    private ClusterSet[] tree;
+    private final ClusterSet[] tree;
 
     /**
      * Costruttore che inizializza un dendrogramma con profondità {@code depth}, specificata come parametro.
