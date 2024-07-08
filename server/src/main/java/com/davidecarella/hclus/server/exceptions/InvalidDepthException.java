@@ -1,9 +1,9 @@
 package com.davidecarella.hclus.server.exceptions;
 
-import com.davidecarella.hclus.server.clustering.HierarchicalClusterMiner;
+import com.davidecarella.hclus.server.clustering.HierarchicalClustering;
 
 /**
- * Eccezione lanciata quando si utilizza una profondità errata per un {@link HierarchicalClusterMiner miner}.
+ * Eccezione lanciata quando si utilizza una profondità errata per un {@link HierarchicalClustering miner}.
  */
 public class InvalidDepthException extends Exception {
     /**

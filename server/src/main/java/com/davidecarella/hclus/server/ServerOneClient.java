@@ -1,6 +1,7 @@
 package com.davidecarella.hclus.server;
 
-import com.davidecarella.hclus.server.clustering.HierarchicalClusterMiner;
+import com.davidecarella.hclus.server.clustering.Dendrogram;
+import com.davidecarella.hclus.server.clustering.HierarchicalClustering;
 import com.davidecarella.hclus.server.data.Data;
 import com.davidecarella.hclus.server.distance.AverageLinkDistance;
 import com.davidecarella.hclus.server.distance.ClusterDistance;
@@ -184,13 +185,12 @@ public class ServerOneClient extends Thread {
             return;
         }
 
-        var miner = new HierarchicalClusterMiner(depth);
         try {
             try {
-                miner.mine(this.data, distance);
+                var dendrogram = HierarchicalClustering.mine(this.data, distance, depth);
 
                 outputStream.writeObject("OK");
-                outputStream.writeObject(miner.toString(this.data));
+                outputStream.writeObject(dendrogram.toString(this.data));
 
                 var object = inputStream.readObject();
                 if (!(object instanceof String fileName)) {
@@ -199,7 +199,7 @@ public class ServerOneClient extends Thread {
                 }
 
                 try {
-                    miner.salva(fileName);
+                    dendrogram.salva(fileName);
                 } catch (IOException exception) {
                     log(String.format("Errore durante il salvataggio del dendrogramma: %s!", exception.getMessage()));
                 }
@@ -249,18 +249,18 @@ public class ServerOneClient extends Thread {
             return;
         }
 
-        HierarchicalClusterMiner miner = null;
+        Dendrogram dendrogram = null;
         try {
             try {
-                miner = HierarchicalClusterMiner.load(fileName);
+                dendrogram = Dendrogram.load(fileName);
 
-                if (miner.getDendrogramDepth() > this.data.getNumberOfExamples()) {
+                if (dendrogram.getDepth() > this.data.getNumberOfExamples()) {
                     outputStream.writeObject("Profondità del dendrogramma non valida!");
                     return;
                 }
 
                 outputStream.writeObject("OK");
-                outputStream.writeObject(miner.toString(this.data));
+                outputStream.writeObject(dendrogram.toString(this.data));
             } catch (FileNotFoundException exception) {
                 outputStream.writeObject("Il file inserito non esiste!");
             } catch (IOException | ClassNotFoundException exception) {
@@ -290,8 +290,7 @@ public class ServerOneClient extends Thread {
      *
      * @param message il messaggio che si vuole stampare
      */
-    private void log(String message) {
-        // FIXME: We should have synchronized logging since we are using concurrent threads
+    synchronized private void log(String message) {
         System.out.printf("[%s] %s%n", this.getName(), message);
     }
 

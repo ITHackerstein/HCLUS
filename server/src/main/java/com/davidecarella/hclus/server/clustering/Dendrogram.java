@@ -2,7 +2,7 @@ package com.davidecarella.hclus.server.clustering;
 
 import com.davidecarella.hclus.server.data.Data;
 
-import java.io.Serializable;
+import java.io.*;
 
 /**
  * Classe che rappresenta un dendrogramma, ovvero un albero che rappresenta la composizione dei
@@ -93,5 +93,35 @@ public class Dendrogram implements Serializable {
         }
 
         return stringBuilder.toString();
+    }
+
+    /**
+     * Carica un dendrogramma da un file con nome {@code fileName}, specificato come parametro.
+     *
+     * @param fileName il nome del file da cui si vuole caricare il dendrogramma
+     * @return il dendrogramma letto dal file
+     * @throws IOException in caso di errori durante l'apertura/lettura/chiusura del file
+     * @throws ClassNotFoundException in caso in cui nel file non sia salvato un dendrogramma
+     */
+    public static Dendrogram load(String fileName) throws IOException, ClassNotFoundException {
+        try (FileInputStream fileStream = new FileInputStream(fileName);
+             ObjectInputStream objectStream = new ObjectInputStream(fileStream))
+        {
+            return (Dendrogram) objectStream.readObject();
+        }
+    }
+
+    /**
+     * Salva il dendrogramma sul file con percorso {@code fileName}, specificato come parametro.
+     *
+     * @param fileName il percorso del file dove si vuole salvare il dendrogramma
+     * @throws IOException in caso di errori durante il salvataggio sul file
+     */
+    public void salva(String fileName) throws IOException {
+        try (FileOutputStream fileStream = new FileOutputStream(fileName);
+             ObjectOutputStream objectStream = new ObjectOutputStream(fileStream))
+        {
+            objectStream.writeObject(this);
+        }
     }
 }
