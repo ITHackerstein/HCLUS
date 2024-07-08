@@ -5,13 +5,13 @@ package com.davidecarella.hclus.server;
  *
  * <p>Si occupa di creare un server in ascolto sulla porta specificata come argomento da linea di comando.
  *
- * @see MultiServer
+ * @see Server
  */
-public class MainTest {
+public class Main {
     /**
      * Costruttore di default.
      */
-    private MainTest() {}
+    private Main() {}
 
     /**
      * Metodo principale del progetto.
@@ -31,7 +31,7 @@ public class MainTest {
                return;
            }
 
-           var server = new MultiServer(port);
+           var server = new Server(port);
            server.loop();
         } catch (NumberFormatException exception) {
             System.out.println("Porta non valida!");

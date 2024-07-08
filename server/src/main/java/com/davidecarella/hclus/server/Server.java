@@ -7,9 +7,9 @@ import java.net.ServerSocket;
  * Il server vero e proprio che si occuperà di mettersi in ascolto su una porta specificata e creare un gestore per ogni
  * client.
  *
- * @see ServerOneClient
+ * @see ClientHandler
  */
-public class MultiServer {
+public class Server {
     /**
      * La porta su cui il server si mette in ascolto
      */
@@ -20,13 +20,13 @@ public class MultiServer {
      *
      * @param port la porta su cui si mette in ascolto il server
      */
-    public MultiServer(int port) {
+    public Server(int port) {
         this.port = port;
     }
 
     /**
      * Metodo che mette in ascolto il server per connessioni da parte di altri client. Per ogni nuova connessione
-     * creerà un'istanza di {@link ServerOneClient} per gestire le sue richieste.
+     * creerà un'istanza di {@link ClientHandler} per gestire le sue richieste.
      */
     public void loop() {
         try (var serverSocket = new ServerSocket(this.port)) {
@@ -35,7 +35,7 @@ public class MultiServer {
             while (true) {
                 try {
                     var clientSocket = serverSocket.accept();
-                    new ServerOneClient(clientSocket);
+                    new ClientHandler(clientSocket);
                 } catch (IOException exception) {
                     System.out.println("Errore durante l'attesa per una connessione di un client!");
                     break;

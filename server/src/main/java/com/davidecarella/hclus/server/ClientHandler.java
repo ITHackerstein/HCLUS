@@ -17,7 +17,7 @@ import java.net.SocketException;
 /**
  * Classe che gestisce la connessione con un client.
  */
-public class ServerOneClient extends Thread {
+public class ClientHandler extends Thread {
     /**
      * Il socket per la connessione con il client.
      */
@@ -34,7 +34,7 @@ public class ServerOneClient extends Thread {
      *
      * @param clientSocket il socket la connessione con il client
      */
-    public ServerOneClient(Socket clientSocket) {
+    public ClientHandler(Socket clientSocket) {
         super(String.format("HCLUS-Client(%s, %d)",
             clientSocket.getInetAddress().getHostAddress(),
             clientSocket.getPort()
