@@ -290,8 +290,7 @@ public class ServerOneClient extends Thread {
      *
      * @param message il messaggio che si vuole stampare
      */
-    private void log(String message) {
-        // FIXME: We should have synchronized logging since we are using concurrent threads
+    synchronized private void log(String message) {
         System.out.printf("[%s] %s%n", this.getName(), message);
     }
 
