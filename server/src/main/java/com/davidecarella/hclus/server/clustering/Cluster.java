@@ -18,7 +18,7 @@ public class Cluster implements Iterable<Integer>, Cloneable, Serializable {
     /**
      * L'insieme degli esempi.
      */
-    private Set<Integer> clusteredData = new TreeSet<>();
+    private Set<Integer> exampleIndices = new TreeSet<>();
 
     /**
      * Costruttore di default che crea un cluster vuoto.
@@ -31,7 +31,7 @@ public class Cluster implements Iterable<Integer>, Cloneable, Serializable {
      * @param exampleIndex l'esempio da inserire all'insieme
      */
     public void addData(int exampleIndex) {
-        this.clusteredData.add(exampleIndex);
+        this.exampleIndices.add(exampleIndex);
     }
 
     /**
@@ -40,7 +40,7 @@ public class Cluster implements Iterable<Integer>, Cloneable, Serializable {
      * @return la dimensione del cluster.
      */
     public int getSize() {
-        return this.clusteredData.size();
+        return this.exampleIndices.size();
     }
 
     /**
@@ -53,7 +53,7 @@ public class Cluster implements Iterable<Integer>, Cloneable, Serializable {
     public Cluster clone() {
         try {
             var copy = (Cluster) super.clone();
-            copy.clusteredData = (Set<Integer>) ((TreeSet<Integer>) this.clusteredData).clone();
+            copy.exampleIndices = (Set<Integer>) ((TreeSet<Integer>) this.exampleIndices).clone();
             return copy;
         } catch (CloneNotSupportedException exception) {
             throw new RuntimeException(exception);
@@ -68,7 +68,7 @@ public class Cluster implements Iterable<Integer>, Cloneable, Serializable {
      */
     public Cluster mergeCluster(Cluster other) {
         var merged = this.clone();
-        merged.clusteredData.addAll(other.clusteredData);
+        merged.exampleIndices.addAll(other.exampleIndices);
         return merged;
     }
 
@@ -81,7 +81,7 @@ public class Cluster implements Iterable<Integer>, Cloneable, Serializable {
      */
     @Override
     public String toString() {
-        if (this.clusteredData.isEmpty())
+        if (this.exampleIndices.isEmpty())
             return "";
 
         var stringBuilder = new StringBuilder();
@@ -105,10 +105,9 @@ public class Cluster implements Iterable<Integer>, Cloneable, Serializable {
     public String toString(Data data) {
         var stringBuilder = new StringBuilder();
 
-        var iterator = this.iterator();
-        while (iterator.hasNext()) {
+        for (var exampleIndex : this) {
             stringBuilder.append('<');
-            stringBuilder.append(data.getExample(iterator.next()));
+            stringBuilder.append(data.getExample(exampleIndex));
             stringBuilder.append('>');
         }
 
@@ -117,6 +116,6 @@ public class Cluster implements Iterable<Integer>, Cloneable, Serializable {
 
     @Override
     public Iterator<Integer> iterator() {
-        return this.clusteredData.iterator();
+        return this.exampleIndices.iterator();
     }
 }
