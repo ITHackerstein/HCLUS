@@ -15,7 +15,8 @@ public class ClusterSet implements Serializable {
     /**
      * L'insieme dei cluster.
      */
-    private Cluster[] clusters;
+    private final Cluster[] clusters;
+
     /**
      * L'indice successivo all'ultimo {@link Cluster cluster} memorizzato.
      */
@@ -50,16 +51,6 @@ public class ClusterSet implements Serializable {
     }
 
     /**
-     * Restituisce il {@link Cluster cluster} con indice {@code index} specificato come parametro.
-     *
-     * @param index l'indice del {@link Cluster cluster} da restituire
-     * @return il {@link Cluster cluster} con indice {@code index}
-     */
-    public Cluster get(int index) {
-        return this.clusters[index];
-    }
-
-    /**
      * Restituisce un nuovo cluster set che contiene gli stessi cluster fatta eccezione per i due
      * {@link Cluster cluster} tra loro più vicini che verranno uniti in un unico {@link Cluster cluster}.
      *
@@ -76,7 +67,6 @@ public class ClusterSet implements Serializable {
             throw new ClusterSetTooSmallException("Ci devono essere almeno due cluster per poter effettuare l'unione");
         }
 
-        // FIXME: We should check that there are at least two clusters
         Cluster firstCluster = null;
         Cluster secondCluster = null;
         var minDistance = Double.MAX_VALUE;
