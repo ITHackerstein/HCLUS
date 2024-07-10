@@ -3,12 +3,14 @@ package com.davidecarella.hclus.server.clustering;
 import com.davidecarella.hclus.server.data.Data;
 
 import java.io.*;
+import java.util.Arrays;
+import java.util.Iterator;
 
 /**
  * Classe che rappresenta un dendrogramma, ovvero un albero che rappresenta la composizione dei
  * {@link ClusterSet cluster set}.
  */
-public class Dendrogram implements Serializable {
+public class Dendrogram implements Iterable<ClusterSet>, Serializable {
     /**
      * La lista di ogni livello dell'albero.
      */
@@ -123,5 +125,10 @@ public class Dendrogram implements Serializable {
         {
             objectStream.writeObject(this);
         }
+    }
+
+    @Override
+    public Iterator<ClusterSet> iterator() {
+        return Arrays.stream(this.tree).iterator();
     }
 }

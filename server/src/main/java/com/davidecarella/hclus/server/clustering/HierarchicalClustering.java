@@ -23,6 +23,7 @@ public class HierarchicalClustering {
      *
      * @param data i dati
      * @param distanceCalculator l'oggetto per calcolare la distanza
+     * @param depth la profondità del dendrogramma
      * @throws InvalidDepthException quando la profondità del dendrogramma supera il numero di esempi in {@code data}
      * @throws InvalidSizeException quando ci sono due esempi con lunghezze diverse
      */

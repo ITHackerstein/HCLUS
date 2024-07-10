@@ -7,11 +7,13 @@ import com.davidecarella.hclus.server.exceptions.ClusterSetTooSmallException;
 import com.davidecarella.hclus.server.exceptions.InvalidSizeException;
 
 import java.io.Serializable;
+import java.util.Arrays;
+import java.util.Iterator;
 
 /**
  * Classe che rappresenta un insieme di {@link Cluster cluster}.
  */
-public class ClusterSet implements Serializable {
+public class ClusterSet implements Iterable<Cluster>, Serializable {
     /**
      * L'insieme dei cluster.
      */
@@ -30,6 +32,15 @@ public class ClusterSet implements Serializable {
      */
     public ClusterSet(int maxSize) {
         this.clusters = new Cluster[maxSize];
+    }
+
+    /**
+     * Restituisce la dimensione del cluster set.
+     *
+     * @return la dimensione del cluster set
+     */
+    public int getSize() {
+        return this.lastClusterIndex;
     }
 
     /**
@@ -140,5 +151,10 @@ public class ClusterSet implements Serializable {
         }
 
         return stringBuilder.toString();
+    }
+
+    @Override
+    public Iterator<Cluster> iterator() {
+        return Arrays.stream(this.clusters).limit(this.lastClusterIndex).iterator();
     }
 }

@@ -3,6 +3,7 @@ package com.davidecarella.hclus.server;
 import com.davidecarella.hclus.server.clustering.Dendrogram;
 import com.davidecarella.hclus.server.clustering.HierarchicalClustering;
 import com.davidecarella.hclus.server.data.Data;
+import com.davidecarella.hclus.server.data.Example;
 import com.davidecarella.hclus.server.distance.AverageLinkDistance;
 import com.davidecarella.hclus.server.distance.ClusterDistance;
 import com.davidecarella.hclus.server.distance.SingleLinkDistance;
@@ -13,11 +14,15 @@ import com.davidecarella.hclus.server.exceptions.NoDataException;
 import java.io.*;
 import java.net.Socket;
 import java.net.SocketException;
+import java.util.ArrayList;
 
 /**
  * Classe che gestisce la connessione con un client.
  */
 public class ClientHandler extends Thread {
+    private final int SUCCESS = 0;
+    private final int ERROR = 1;
+
     /**
      * Il socket per la connessione con il client.
      */
@@ -51,40 +56,27 @@ public class ClientHandler extends Thread {
     public void run() {
         log("Connesso");
 
-        try (var inputStream = new ObjectInputStream(this.clientSocket.getInputStream());
-             var outputStream = new ObjectOutputStream(this.clientSocket.getOutputStream()))
+        try (var dataDeserializer = new DataDeserializer(this.clientSocket.getInputStream());
+             var dataSerializer = new DataSerializer(this.clientSocket.getOutputStream()))
         {
-            while (true) {
-                int requestType = -1;
+            while (!this.clientSocket.isClosed()) {
                 try {
-                    var object = inputStream.readObject();
-                    if (!(object instanceof Integer)) {
-                        log("Tipo di richiesta non valido!");
-                        continue;
-                    }
-
-                    requestType = (int) object;
-                } catch (SocketException | EOFException ignored) {
-                    return;
-                } catch (IOException | ClassNotFoundException exception) {
-                    log(String.format("Errore durante la lettura del tipo di richiesta: %s!", exception.getMessage()));
-                    return;
-                }
-
-                switch (requestType) {
-                    case 0 -> loadDataRequest(inputStream, outputStream);
-                    case 1 -> mineRequest(inputStream, outputStream);
-                    case 2 -> loadDendrogramFromFileRequest(inputStream, outputStream);
-                    default -> {
-                        try {
-                            outputStream.writeObject("Richiesta sconosciuta!");
-                        } catch (SocketException | EOFException ignored) {
-                            return;
-                        } catch (IOException exception) {
-                            log(String.format("Errore durante la scrittura del messaggio: %s!", exception.getMessage()));
-                            return;
+                    var requestType = dataDeserializer.deserializeInt();
+                    switch (requestType) {
+                        case 0 -> loadDataRequest(dataDeserializer, dataSerializer);
+                        case 1 -> newDendrogramRequest(dataDeserializer, dataSerializer);
+                        case 2 -> loadDendrogramRequest(dataDeserializer, dataSerializer);
+                        case 3 -> getExamplesRequest(dataDeserializer, dataSerializer);
+                        case 4 -> closeConnectionRequest(dataDeserializer, dataSerializer);
+                        default -> {
+                            dataSerializer.serializeInt(ERROR);
+                            dataSerializer.serializeString("Richiesta non valida!");
                         }
                     }
+                } catch (SocketException | EOFException ignored) {
+                    return;
+                } catch (IOException exception) {
+                    log(String.format("Errore durante la comunicazione: %s!", exception.getMessage()));
                 }
             }
         } catch (IOException exception) {
@@ -95,181 +87,151 @@ public class ClientHandler extends Thread {
     }
 
     /**
-     * Gestisce la richiesta del caricamento dei dati da una tabella il cui nome viene inviato dal client.
+     * Gestisce la richiesta del caricamento dei dati.
      *
-     * @param inputStream lo stream di input del socket
-     * @param outputStream lo stream di output del socket
+     * @param dataDeserializer il <i>deserializzatore</i> dei dati inviati dal client
+     * @param dataSerializer il <i>serializzatore</i> dei dati inviati dal server
      */
-    private void loadDataRequest(ObjectInputStream inputStream, ObjectOutputStream outputStream) {
-        String tableName = null;
-        try {
-            var object = inputStream.readObject();
-            if (!(object instanceof String)) {
-                log("Nome della tabella non valido!");
-                return;
-            }
-
-            tableName = (String) object;
-        } catch (SocketException | EOFException ignored) {
-        } catch (IOException | ClassNotFoundException exception) {
-            log(String.format("Errore durante la lettura/scrittura di oggetti: %s!", exception.getMessage()));
-        }
+    private void loadDataRequest(DataDeserializer dataDeserializer, DataSerializer dataSerializer) throws IOException {
+        String tableName = dataDeserializer.deserializeString();
 
         try {
-            try {
-                this.data = new Data(tableName);
-                outputStream.writeObject("OK");
-            } catch (NoDataException exception) {
-                outputStream.writeObject(walkThrowable(exception));
-            }
-        } catch (SocketException | EOFException ignored) {
-        } catch (IOException exception) {
-            log(String.format("Errore durante la scrittura del messaggio: %s!", exception.getMessage()));
+            this.data = new Data(tableName);
+            dataSerializer.serializeInt(SUCCESS);
+        } catch (NoDataException exception) {
+            dataSerializer.serializeInt(ERROR);
+            dataSerializer.serializeString(walkThrowable(exception));
         }
     }
 
     /**
-     * <p>Gestisce la richiesta di mining dei dati.
+     * Gestisce la richiesta per la creazione di nuovo dendrogramma.
      *
-     * <p>Il client dovrà inviare la profondità del dendrogramma seguita dal tipo di distanza:
-     * <ul>
-     *     <li>{@code 1}: single-link</li>
-     *     <li>{@code 2}: average-link</li>
-     * </ul>
-     * A quel punto se tutto va a buon fine il server manda una stringa che rappresenta il dendrogramma generato
-     * e il client invia il percorso del file dove si salverà il dendrogramma generato.
-     *
-     * @param inputStream lo stream di input del socket
-     * @param outputStream lo stream di output del socket
+     * @param dataDeserializer il <i>deserializzatore</i> dei dati inviati dal client
+     * @param dataSerializer il <i>serializzatore</i> dei dati inviati dal server
      */
-    private void mineRequest(ObjectInputStream inputStream, ObjectOutputStream outputStream) {
+    private void newDendrogramRequest(DataDeserializer dataDeserializer, DataSerializer dataSerializer) throws IOException {
         if (this.data == null) {
-            try {
-                outputStream.writeObject("I dati non sono stati ancora caricati!");
-            } catch (SocketException | EOFException ignored) {
-            } catch (IOException exception) {
-                log(String.format("Errore durante la scrittura del messaggio: %s!", exception.getMessage()));
-            }
-
+            dataSerializer.serializeInt(ERROR);
+            dataSerializer.serializeString("I dati non sono stati ancora caricati!");
             return;
         }
 
-        int depth = 0;
-        ClusterDistance distance = null;
-        try {
-            Object object;
+        var depth = dataDeserializer.deserializeInt();
+        ClusterDistance distance = switch (dataDeserializer.deserializeInt()) {
+            case 0 -> new SingleLinkDistance();
+            case 1 -> new AverageLinkDistance();
+            default -> null;
+        };
 
-            object = inputStream.readObject();
-            if (!(object instanceof Integer)) {
-                outputStream.writeObject("Profondità del dendrogramma non valida!");
-                return;
-            }
-
-            depth = (int) object;
-
-            object = inputStream.readObject();
-            if (!(object instanceof Integer distanceType) || distanceType < 1 || distanceType > 2) {
-                outputStream.writeObject("Tipo di distanza non valida!");
-                return;
-            }
-
-            distance = switch (distanceType) {
-                case 1 -> new SingleLinkDistance();
-                case 2 -> new AverageLinkDistance();
-                default -> throw new IllegalStateException("Valore inaspettato: " + distanceType);
-            };
-        } catch (SocketException | EOFException ignored) {
+        if (distance == null) {
+            dataSerializer.serializeInt(ERROR);
+            dataSerializer.serializeString("Tipo di distanza non valida!");
             return;
-        } catch (IOException | ClassNotFoundException exception) {
-            log(String.format("Errore durante la lettura/scrittura di oggetti: %s!", exception.getMessage()));
+        }
+
+        String fileName = dataDeserializer.deserializeString();
+
+        Dendrogram dendrogram;
+        try {
+            dendrogram = HierarchicalClustering.mine(this.data, distance, depth);
+        } catch (InvalidDepthException | InvalidSizeException exception) {
+            dataSerializer.serializeInt(ERROR);
+            dataSerializer.serializeString(walkThrowable(exception));
             return;
         }
 
         try {
-            try {
-                var dendrogram = HierarchicalClustering.mine(this.data, distance, depth);
+            dendrogram.salva(fileName);
+        } catch (IOException exception) {
+            dataSerializer.serializeInt(ERROR);
+            dataSerializer.serializeString(String.format("Errore durante il salvataggio del dendrogramma: %s!", exception.getMessage()));
+            return;
+        }
 
-                outputStream.writeObject("OK");
-                outputStream.writeObject(dendrogram.toString(this.data));
+        dataSerializer.serializeInt(SUCCESS);
+        dataSerializer.serializeDendrogram(dendrogram);
+    }
 
-                var object = inputStream.readObject();
-                if (!(object instanceof String fileName)) {
-                    outputStream.writeObject("Percorso del file non valido!");
-                    return;
-                }
+    /**
+     * Gestisce la richiesta di caricamento di un dendrogramma da un file.
+     *
+     * @param dataDeserializer il <i>deserializzatore</i> dei dati inviati dal client
+     * @param dataSerializer il <i>serializzatore</i> dei dati inviati dal server
+     */
+    private void loadDendrogramRequest(DataDeserializer dataDeserializer, DataSerializer dataSerializer) throws IOException {
+        if (this.data == null) {
+            dataSerializer.serializeInt(ERROR);
+            dataSerializer.serializeString("I dati non sono stati ancora caricati!");
+            return;
+        }
 
-                try {
-                    dendrogram.salva(fileName);
-                } catch (IOException exception) {
-                    log(String.format("Errore durante il salvataggio del dendrogramma: %s!", exception.getMessage()));
-                }
-            } catch (InvalidDepthException | InvalidSizeException exception) {
-                outputStream.writeObject(walkThrowable(exception));
-            }
-        } catch (SocketException | EOFException ignored) {
+        String fileName = dataDeserializer.deserializeString();
+
+        Dendrogram dendrogram;
+        try {
+            dendrogram = Dendrogram.load(fileName);
+        } catch (FileNotFoundException exception) {
+            dataSerializer.serializeInt(ERROR);
+            dataSerializer.serializeString("Il file inserito non esiste!");
+            return;
         } catch (IOException | ClassNotFoundException exception) {
-            log(String.format("Errore durante la lettura/scrittura del percorso del file dove salvare il dendrogramma: %s!", exception.getMessage()));
+            dataSerializer.serializeInt(ERROR);
+            dataSerializer.serializeString(String.format("Errore durante il caricamento del dendrogramma: %s!", exception.getMessage()));
+            return;
+        }
+
+        if (dendrogram.getDepth() > this.data.getNumberOfExamples()) {
+            dataSerializer.serializeInt(ERROR);
+            dataSerializer.serializeString("Profondità non valida!");
+            return;
+        }
+
+        dataSerializer.serializeInt(SUCCESS);
+        dataSerializer.serializeDendrogram(dendrogram);
+    }
+
+    /**
+     * Gestisce la richiesta di recupero degli esempi.
+     *
+     * @param dataDeserializer il <i>deserializzatore</i> dei dati inviati dal client
+     * @param dataSerializer il <i>serializzatore</i> dei dati inviati dal server
+     */
+    private void getExamplesRequest(DataDeserializer dataDeserializer, DataSerializer dataSerializer) throws IOException {
+        if (this.data == null) {
+            dataSerializer.serializeInt(ERROR);
+            dataSerializer.serializeString("I dati non sono stati ancora caricati!");
+            return;
+        }
+
+        var examples = new ArrayList<Example>();
+        var indexCount = dataDeserializer.deserializeInt();
+        while (indexCount-- > 0) {
+            var index = dataDeserializer.deserializeInt();
+            if (index < 0 || index >= data.getNumberOfExamples()) {
+                dataSerializer.serializeInt(ERROR);
+                dataSerializer.serializeString("Uno o più indici non validi!");
+                return;
+            }
+
+            examples.add(data.getExample(index));
+        }
+
+        dataSerializer.serializeInt(SUCCESS);
+        for (var example : examples) {
+            dataSerializer.serializeExample(example);
         }
     }
 
     /**
-     * <p>Gestisce la richiesta di caricamento di un dendrogramma da un file presente sul server.
+     * Gestisce la richiesta di chiusura della connessione.
      *
-     * <p>Il client caricherà il percorso del file che desidera caricare e il server proverà a inviare come risposta
-     * la stringa che rappresenta il dendrogramma contenuto nel file.
-     *
-     * @param inputStream lo stream di input del socket
-     * @param outputStream lo stream di output del socket
+     * @param dataDeserializer il <i>deserializzatore</i> dei dati inviati dal client
+     * @param dataSerializer il <i>serializzatore</i> dei dati inviati dal server
      */
-    private void loadDendrogramFromFileRequest(ObjectInputStream inputStream, ObjectOutputStream outputStream) {
-        if (this.data == null) {
-            try {
-                outputStream.writeObject("I dati non sono stati ancora caricati!");
-            } catch (SocketException | EOFException ignored) {
-            } catch (IOException exception) {
-                log(String.format("Errore durante la scrittura del messaggio: %s!", exception.getMessage()));
-            }
-
-            return;
-        }
-
-        String fileName = null;
-        try {
-            var object = inputStream.readObject();
-            if (!(object instanceof String)) {
-                outputStream.writeObject("Nome del file non valido!");
-                return;
-            }
-
-            fileName = (String) object;
-        } catch (SocketException | EOFException ignored) {
-            return;
-        } catch (IOException | ClassNotFoundException exception) {
-            log(String.format("Errore durante la lettura/scrittura di oggetti: %s!", exception.getMessage()));
-            return;
-        }
-
-        Dendrogram dendrogram = null;
-        try {
-            try {
-                dendrogram = Dendrogram.load(fileName);
-
-                if (dendrogram.getDepth() > this.data.getNumberOfExamples()) {
-                    outputStream.writeObject("Profondità del dendrogramma non valida!");
-                    return;
-                }
-
-                outputStream.writeObject("OK");
-                outputStream.writeObject(dendrogram.toString(this.data));
-            } catch (FileNotFoundException exception) {
-                outputStream.writeObject("Il file inserito non esiste!");
-            } catch (IOException | ClassNotFoundException exception) {
-                outputStream.writeObject(String.format("Errore durante il caricamento del dendrogramma: %s!", exception.getMessage()));
-            }
-        } catch (SocketException | EOFException ignored) {
-        } catch (IOException exception) {
-            log(String.format("Errore durante la scrittura di oggetti: %s!", exception.getMessage()));
-        }
+    private void closeConnectionRequest(DataDeserializer dataDeserializer, DataSerializer dataSerializer) throws IOException {
+        dataSerializer.serializeInt(SUCCESS);
+        tryCloseSocket();
     }
 
     /**

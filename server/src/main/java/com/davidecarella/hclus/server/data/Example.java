@@ -23,6 +23,13 @@ public class Example implements Iterable<Double> {
     }
 
     /**
+     * Restituisce la dimensione dell'esempio
+     *
+     * @return la dimensione dell'esempio
+     */
+    public int getSize() { return this.example.size(); }
+
+    /**
      * Aggiunge il valore {@code value}, specificato come parametro.
      *
      * @param value il valore che si vuole aggiungere
