@@ -1,29 +1,107 @@
 package com.davidecarella.hclus.client.gui;
 
+import com.davidecarella.hclus.client.ServerConnection;
 
 import javax.swing.*;
 import java.awt.*;
+import java.io.IOException;
 
+/**
+ * <p>La finestra principale del client.
+ *
+ * <p>È divisa in 4 sezioni:
+ * <ul>
+ *     <li>la sezione di connessione: consente all'utente di inserire i dati necessari per connettersi al server;</li>
+ *     <li>
+ *         la sezione dei dati: consente all'utente, connesso al server, di inserire il nome della tabella del server da
+ *                              cui caricare i dati;
+ *     </li>
+ *     <li>
+ *         la sezione delle impostazioni: consente all'utente, connesso al server, di inserire le impostazioni per poter
+ *                                        creare un nuovo dendrogramma;
+ *     </li>
+ *     <li>
+ *         la sezione di visualizzazione: in cui viene visualizzato il dendrogramma.
+ *     </li>
+ * </ul>
+ */
 public class MainWindow extends JFrame {
+    /**
+     * Il campo di testo per l'inserimento dell'indirizzo del server.
+     */
     private JTextField txt_address;
+
+    /**
+     * Il campo di testo per l'inserimento della porta del server.
+     */
     private JTextField txt_port;
+
+    /**
+     * Il widget dello stato di connessione al server.
+     */
     private ConnectionStatusWidget connectionStatusWidget;
+
+    /**
+     * Il pulsante per connettersi al server.
+     */
     private JButton btn_connect;
 
+    /**
+     * Il campo di testo per l'inserimento del nome della tabella da cui caricare i dati.
+     */
     private JTextField txt_tableName;
+
+    /**
+     * Il pulsante per caricare i dati dal server.
+     */
     private JButton btn_loadData;
 
+    /**
+     * L'opzione per il selezionamento della distanza single-link.
+     */
     private JRadioButton rdb_singleLinkDistance;
+
+    /**
+     * L'opzione per il selezionamento della distanza average-link.
+     */
     private JRadioButton rdb_averageLinkDistance;
+
+    /**
+     * Il modello dati di {@link MainWindow#spn_depth}.
+     */
     private SpinnerNumberModel depthModel;
+
+    /**
+     * Il campo numerico per l'inserimento della profondità.
+     */
     private JSpinner spn_depth;
+
+    /**
+     * Il campo di testo per l'inserimento del nome del file.
+     */
+    private JTextField txt_fileName;
+
+    /**
+     * IL pulsante per creare un nuovo dendrogramma.
+     */
     private JButton btn_mine;
 
+    /**
+     * La connessione al server.
+     */
+    private ServerConnection serverConnection;
+
+    /**
+     * <p>Costruttore della finestra.
+     *
+     * <p>Crea la finestra impostandone il suo layout e la visualizza.
+     */
     public MainWindow() {
         super("HCLUS - Client");
         this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
         this.initializeComponents();
+        this.initializeListeners();
 
         var pnl_main = new JPanel();
         pnl_main.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
@@ -42,6 +120,9 @@ public class MainWindow extends JFrame {
         this.setVisible(true);
     }
 
+    /**
+     * Metodo utilizzato per inizializzare ogni componente della finestra.
+     */
     private void initializeComponents() {
         this.txt_address = new JTextField();
         this.txt_port = new JTextField();
@@ -64,10 +145,97 @@ public class MainWindow extends JFrame {
         this.depthModel = new SpinnerNumberModel(1, 1, Integer.MAX_VALUE, 1);
         this.spn_depth = new JSpinner(this.depthModel);
         this.spn_depth.setEnabled(false);
+        this.txt_fileName = new JTextField();
+        this.txt_fileName.setEnabled(false);
         this.btn_mine = new JButton("Estrai");
         this.btn_mine.setEnabled(false);
     }
 
+    /**
+     * Metodo utilizzato per inizializzare gli ascoltatori degli eventi per ogni elemento.
+     */
+    private void initializeListeners() {
+        this.btn_connect.addActionListener(event -> {
+            this.btn_connect.setEnabled(false);
+            this.connectionStatusWidget.setStatus(ConnectionStatusWidget.Status.CONNECTING);
+
+            var address = this.txt_address.getText();
+            var portString = this.txt_port.getText();
+            int port;
+            try {
+                port = Integer.parseInt(portString);
+
+                if (port < 1 || port > 65535) {
+                    this.connectionStatusWidget.setStatus(ConnectionStatusWidget.Status.NOT_CONNECTED);
+                    this.btn_connect.setEnabled(true);
+                    JOptionPane.showMessageDialog(this, "Porta non valida!", this.getTitle(), JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+            } catch (NumberFormatException exception) {
+                this.connectionStatusWidget.setStatus(ConnectionStatusWidget.Status.NOT_CONNECTED);
+                this.btn_connect.setEnabled(true);
+                JOptionPane.showMessageDialog(this, "Porta non valida!", this.getTitle(), JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
+            try {
+                this.serverConnection = new ServerConnection(address, port);
+                this.connectionStatusWidget.setStatus(ConnectionStatusWidget.Status.CONNECTED);
+                this.btn_connect.setEnabled(false);
+                this.txt_tableName.setEnabled(true);
+                this.btn_loadData.setEnabled(true);
+            } catch (IOException exception) {
+                this.connectionStatusWidget.setStatus(ConnectionStatusWidget.Status.NOT_CONNECTED);
+                this.btn_connect.setEnabled(true);
+                JOptionPane.showMessageDialog(this, "Errore durante la connessione: " + exception.getMessage(), this.getTitle(), JOptionPane.ERROR_MESSAGE);
+            }
+        });
+
+        this.btn_loadData.addActionListener(event -> {
+            this.btn_loadData.setEnabled(false);
+
+            try {
+                this.serverConnection.loadData(this.txt_tableName.getText());
+                JOptionPane.showMessageDialog(this, "Dati caricati con successo!", this.getTitle(), JOptionPane.INFORMATION_MESSAGE);
+
+                this.rdb_singleLinkDistance.setEnabled(true);
+                this.rdb_averageLinkDistance.setEnabled(true);
+                this.spn_depth.setEnabled(true);
+                this.txt_fileName.setEnabled(true);
+                this.btn_mine.setEnabled(true);
+            } catch (IOException exception) {
+                JOptionPane.showMessageDialog(this, "Errore durante il caricamento dei dati: " + exception.getMessage(), this.getTitle(), JOptionPane.ERROR_MESSAGE);
+            }
+
+            this.btn_loadData.setEnabled(true);
+        });
+
+        this.btn_mine.addActionListener(event -> {
+            this.btn_mine.setEnabled(false);
+
+            try {
+                if (!this.rdb_singleLinkDistance.isSelected() && !this.rdb_averageLinkDistance.isSelected()) {
+                    JOptionPane.showMessageDialog(this, "Bisogna selezionare un tipo di distanza!", this.getTitle(), JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+
+                int depth = (int) this.depthModel.getValue();
+                int distanceType = this.rdb_singleLinkDistance.isSelected() ? 0 : 1;
+                var dendrogram = this.serverConnection.newDendrogram(depth, distanceType, this.txt_fileName.getText());
+                JOptionPane.showMessageDialog(this, "Dendrogramma creato con successo!", this.getTitle(), JOptionPane.INFORMATION_MESSAGE);
+            } catch (IOException exception) {
+                JOptionPane.showMessageDialog(this, "Errore durante la creazione del dendrogramma: " + exception.getMessage(), this.getTitle(), JOptionPane.ERROR_MESSAGE);
+            }
+
+            this.btn_mine.setEnabled(true);
+        });
+    }
+
+    /**
+     * Metodo per la creazione della sezione di connessione.
+     *
+     * @return la sezione di connessione
+     */
     private JPanel createConnectionPanel() {
         var pnl_address = new JPanel();
         pnl_address.setLayout(new BoxLayout(pnl_address, BoxLayout.LINE_AXIS));
@@ -110,6 +278,11 @@ public class MainWindow extends JFrame {
         return pnl_connection;
     }
 
+    /**
+     * Metodo per la creazione della sezione dei dati.
+     *
+     * @return la sezione dei dati
+     */
     private JPanel createDataSourcePanel() {
         this.txt_tableName.setMaximumSize(new Dimension(Integer.MAX_VALUE, this.txt_tableName.getPreferredSize().height));
 
@@ -126,6 +299,11 @@ public class MainWindow extends JFrame {
         return pnl_dataSource;
     }
 
+    /**
+     * Metodo per la creazione della sezione delle impostazioni.
+     *
+     * @return la sezione delle impostazioni
+     */
     private JPanel createMineSettingsPanel() {
         this.spn_depth.setMaximumSize(new Dimension(Integer.MAX_VALUE, this.spn_depth.getPreferredSize().height));
 
@@ -143,11 +321,19 @@ public class MainWindow extends JFrame {
         pnl_depth.add(Box.createRigidArea(new Dimension(5, 0)));
         pnl_depth.add(this.spn_depth);
 
+        var pnl_fileName = new JPanel();
+        pnl_fileName.setLayout(new BoxLayout(pnl_fileName, BoxLayout.LINE_AXIS));
+
+        pnl_fileName.add(new JLabel("File"));
+        pnl_fileName.add(Box.createRigidArea(new Dimension(5, 0)));
+        pnl_fileName.add(this.txt_fileName);
+
         var pnl_settings = new JPanel();
         pnl_settings.setLayout(new BoxLayout(pnl_settings, BoxLayout.PAGE_AXIS));
 
         pnl_settings.add(pnl_distance);
         pnl_settings.add(pnl_depth);
+        pnl_settings.add(pnl_fileName);
 
         var pnl_mineSettings = new JPanel();
         pnl_mineSettings.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(), "Impostazioni"));
@@ -163,11 +349,21 @@ public class MainWindow extends JFrame {
         return pnl_mineSettings;
     }
 
+    /**
+     * Metodo per la creazione della sezione di visualizzazione.
+     *
+     * @return la sezione di visualizzazione
+     */
     private JPanel createGraphPanel() {
         // TODO
         return new JPanel();
     }
 
+    /**
+     * Metodo principale dell'applicazione che crea un'istanza della finestra.
+     *
+     * @param args argomenti da linea di comando
+     */
     public static void main(String[] args) {
         SwingUtilities.invokeLater(MainWindow::new);
     }

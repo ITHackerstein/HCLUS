@@ -3,22 +3,67 @@ package com.davidecarella.hclus.client.gui;
 import javax.swing.*;
 import java.awt.*;
 
-public class ConnectionStatusWidget extends JPanel {
+/**
+ * <p>Widget per la visualizzazione dello stato della connessione con il server.
+ *
+ * <p>È un piccolo {@link JPanel <i>panel</i>} che mostra un cerchio il cui colore indica lo stato della connessione:
+ * <ul>
+ *     <li>Rosso: il client non è connesso al server;</li>
+ *     <li>Giallo: un tentativo di connessione al server è in corso;</li>
+ *     <li>Verde: il client è connesso.</li>
+ * </ul>
+ */
+class ConnectionStatusWidget extends JPanel {
+    /**
+     * I possibili stati della connessione.
+     */
     public enum Status {
+        /**
+         * Non connesso.
+         */
         NOT_CONNECTED,
+
+        /**
+         * Connessione in corso.
+         */
         CONNECTING,
+
+        /**
+         * Connesso.
+         */
         CONNECTED,
     }
 
+    /**
+     * La dimensione (in pixel) del cerchio mostrato.
+     */
     private static final int SIZE = 12;
 
+    /**
+     * Lo stato attuale della connessione.
+     */
     private Status status = Status.NOT_CONNECTED;
 
-    public Status getStatus() {
+    /**
+     * Costruttore di default.
+     */
+    ConnectionStatusWidget() {}
+
+    /**
+     * Restituisce lo stato attuale della connessione.
+     *
+     * @return lo stato attuale della connessione.
+     */
+    Status getStatus() {
         return this.status;
     }
 
-    public void setStatus(Status status) {
+    /**
+     * Imposta lo stato della connessione.
+     *
+     * @param status il nuovo stato della connessione.
+     */
+    void setStatus(Status status) {
         this.status = status;
         this.repaint();
     }
