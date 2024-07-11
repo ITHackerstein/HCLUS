@@ -1,15 +1,20 @@
 package com.davidecarella.hclus.server.clustering;
 
-import com.davidecarella.hclus.server.data.Data;
+import com.davidecarella.hclus.common.ClusteringStep;
+import com.davidecarella.hclus.common.exceptions.ExampleSizeMismatchException;
 import com.davidecarella.hclus.server.distance.ClusterDistance;
-import com.davidecarella.hclus.server.exceptions.ClusterSetTooSmallException;
+import com.davidecarella.hclus.server.exceptions.InvalidClusterIndexException;
 import com.davidecarella.hclus.server.exceptions.InvalidDepthException;
-import com.davidecarella.hclus.server.exceptions.InvalidSizeException;
+import com.davidecarella.hclus.common.serialization.DataDeserializer;
+import com.davidecarella.hclus.common.serialization.DataSerializer;
 
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
 
 /**
- * Classe che si occupa di effettuare l'operazione di "mining", ovvero di creare il dendrogramma a partire dai dati
- * forniti
+ * Classe che si occupa di effettuare l'operazione di estrazione, ovvero di creare il dendrogramma a partire dai dati
+ * forniti.
  */
 public class HierarchicalClustering {
     /**
@@ -18,41 +23,118 @@ public class HierarchicalClustering {
     private HierarchicalClustering() {}
 
     /**
-     * Crea il dendrogramma utilizzando i dati forniti da {@code data} e l'oggetto per calcolare la distanza
-     * {@code distanceCalculator}, entrambi forniti come parametro.
+     * Crea il dendrogramma utilizzando il dataset ({@code dataset}), l'oggetto per calcolare la distanza
+     * ({@code distanceCalculator}) e la profondità ({@code depth}), forniti come parametro.
      *
-     * @param data i dati
+     * @param dataset il dataset
      * @param distanceCalculator l'oggetto per calcolare la distanza
      * @param depth la profondità del dendrogramma
      * @throws InvalidDepthException quando la profondità del dendrogramma supera il numero di esempi in {@code data}
-     * @throws InvalidSizeException quando ci sono due esempi con lunghezze diverse
+     * @throws ExampleSizeMismatchException quando ci sono due esempi con lunghezze diverse
      */
-    public static Dendrogram mine(Data data, ClusterDistance distanceCalculator, int depth) throws InvalidDepthException, InvalidSizeException {
-        if (depth <= 0 || depth > data.getNumberOfExamples()) {
+    public static ClusteringStep[] mine(Dataset dataset, ClusterDistance distanceCalculator, int depth) throws InvalidDepthException, ExampleSizeMismatchException {
+        final int n = dataset.getNumberOfExamples();
+
+        if (depth <= 0 || depth > n) {
             throw new InvalidDepthException("La profondità del dendrogramma deve essere al massimo pari al numero di esempi nel dataset");
         }
 
-        var firstLevel = new ClusterSet(data.getNumberOfExamples());
-        for (int i = 0; i < data.getNumberOfExamples(); i++) {
-            var cluster = new Cluster();
-            cluster.addData(i);
-            firstLevel.add(cluster);
+        var distancesBetweenClusters = dataset.computeDistanceMatrix();
+        var steps = new ClusteringStep[depth - 1];
+        var indexMap = new int[dataset.getNumberOfExamples()];
+        for (int i = 0; i < n; i++) {
+            indexMap[i] = i;
         }
 
-        var dendrogram = new Dendrogram(depth);
-        dendrogram.setClusterSet(firstLevel, 0);
+        for (int k = 0; k < depth - 1; ++k) {
+            var minDistance = Double.MAX_VALUE;
+            int firstCluster = 0;
+            int secondCluster = 0;
 
-        for (int level = 1; level < depth; ++level) {
-            ClusterSet newLevel = null;
-            try {
-                newLevel = dendrogram.getClusterSet(level - 1).mergeClosestClusters(distanceCalculator, data);
-            } catch (ClusterSetTooSmallException ignored) {
+            for (int i = 0; i < n - 1; ++i) {
+                if (indexMap[i] == -1) {
+                    continue;
+                }
+
+                for (int j = i + 1; j < n; ++j) {
+                    if (distancesBetweenClusters[i][j] < minDistance) {
+                        minDistance = distancesBetweenClusters[i][j];
+                        firstCluster = i;
+                        secondCluster = j;
+                    }
+                }
             }
 
-            assert newLevel != null;
-            dendrogram.setClusterSet(newLevel, level);
+            var firstClusterSize = indexMap[firstCluster] < dataset.getNumberOfExamples() ? 1 : steps[indexMap[firstCluster] - n].newClusterSize();
+            var secondClusterSize = indexMap[secondCluster] < dataset.getNumberOfExamples() ? 1 : steps[indexMap[secondCluster] - n].newClusterSize();
+
+            steps[k] = new ClusteringStep(
+                Math.min(indexMap[firstCluster], indexMap[secondCluster]),
+                Math.max(indexMap[firstCluster], indexMap[secondCluster]),
+                minDistance,
+                firstClusterSize + secondClusterSize
+            );
+
+            indexMap[firstCluster] = -1;
+            indexMap[secondCluster] = n + k;
+
+            for (int i = 0; i < n; ++i) {
+                if (indexMap[i] == -1 || indexMap[i] == n + k) {
+                    continue;
+                }
+
+                var iSize = indexMap[i] < n ? 1 : steps[indexMap[i] - n].newClusterSize();
+                distancesBetweenClusters[i][secondCluster] = distanceCalculator.distance(
+                    distancesBetweenClusters[i][firstCluster],
+                    distancesBetweenClusters[i][secondCluster],
+                    minDistance,
+                    firstClusterSize,
+                    secondClusterSize,
+                    iSize
+                );
+
+                if (i < firstCluster) {
+                    distancesBetweenClusters[i][firstCluster] = Double.MAX_VALUE;
+                }
+            }
         }
 
-        return dendrogram;
+        return steps;
+    }
+
+    public static ClusteringStep[] load(String fileName, Dataset dataset) throws IOException, InvalidDepthException, InvalidClusterIndexException {
+        try (var fileInputStream = new FileInputStream(fileName);
+             var dataDeserializer = new DataDeserializer(fileInputStream))
+        {
+            var depth = dataDeserializer.deserializeInt();
+            if (depth <= 0) {
+                throw new InvalidDepthException("Profondità non valida!");
+            }
+
+            var steps = new ClusteringStep[depth - 1];
+            for (int i = 0; i < depth - 1; ++i) {
+                var step = dataDeserializer.deserializeClusteringStep();
+                // NOTE: Two cluster cannot be joined if they haven't been generated yet.
+                if (step.firstClusterIndex() < 0 || step.firstClusterIndex() > i + dataset.getNumberOfExamples() - 1 ||
+                    step.secondClusterIndex() < 0 || step.secondClusterIndex() > i + dataset.getNumberOfExamples() - 1)
+                {
+                    throw new InvalidClusterIndexException("Indice del cluster non valido!");
+                }
+                steps[i] = step;
+            }
+
+            return steps;
+        }
+    }
+
+    public static void save(ClusteringStep[] clusteringSteps, String fileName) throws IOException {
+        try (var fileOutputStream = new FileOutputStream(fileName);
+             var dataSerializer = new DataSerializer(fileOutputStream))
+        {
+            dataSerializer.serializeInt(clusteringSteps.length + 1);
+            for (var step : clusteringSteps) {
+                dataSerializer.serializeClusteringStep(step);
+            }
+        }
     }
 }

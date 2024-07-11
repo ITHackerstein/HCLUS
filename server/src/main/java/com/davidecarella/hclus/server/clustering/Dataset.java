@@ -1,5 +1,7 @@
-package com.davidecarella.hclus.server.data;
+package com.davidecarella.hclus.server.clustering;
 
+import com.davidecarella.hclus.common.Example;
+import com.davidecarella.hclus.common.exceptions.ExampleSizeMismatchException;
 import com.davidecarella.hclus.server.database.DatabaseService;
 import com.davidecarella.hclus.server.exceptions.*;
 
@@ -10,7 +12,7 @@ import java.util.List;
 /**
  * Classe che rappresenta dei dati, ovvero una lista di esempi.
  */
-public class Data {
+public class Dataset {
     /**
      * La lista degli esempi.
      */
@@ -23,7 +25,7 @@ public class Data {
      * @param tableName la tabella le cui righe si vogliono usare come esempi
      * @throws NoDataException se ci dovesse essere un error durante il caricamento della tabella
      */
-    public Data(String tableName) throws NoDataException {
+    public Dataset(String tableName) throws NoDataException {
         try {
             this.data.addAll(DatabaseService.getExamples(tableName));
         } catch (DatabaseConnectionException | SQLException | EmptySetException | MissingNumberException exception) {
@@ -48,6 +50,26 @@ public class Data {
      */
     public Example getExample(int index) {
         return this.data.get(index);
+    }
+
+    /**
+     * <p>Calcola la matrice delle distanze tra coppie di esempi.
+     *
+     * <p>Ogni elemento in posizione \((i, j)\) contiene la distanza tra gli esempi in posizione \(i\) e \(j\).
+     *
+     * @return la matrice delle distanze
+     */
+    public double[][] computeDistanceMatrix() throws ExampleSizeMismatchException {
+        var distances = new double[this.data.size()][this.data.size()];
+
+        for (int i = 0; i < this.data.size(); i++) {
+            distances[i][i] = 0.0;
+            for (int j = i + 1; j < this.data.size(); j++) {
+                distances[i][j] = distances[j][i] = this.data.get(i).distance(this.data.get(j));
+            }
+        }
+
+        return distances;
     }
 
     /**

@@ -1,6 +1,6 @@
 package com.davidecarella.hclus.server.database;
 
-import com.davidecarella.hclus.server.data.Example;
+import com.davidecarella.hclus.common.Example;
 import com.davidecarella.hclus.server.exceptions.DatabaseConnectionException;
 import com.davidecarella.hclus.server.exceptions.EmptySetException;
 import com.davidecarella.hclus.server.exceptions.MissingNumberException;

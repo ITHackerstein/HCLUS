@@ -1,10 +1,10 @@
-package com.davidecarella.hclus.server.data;
+package com.davidecarella.hclus.common;
 
-import com.davidecarella.hclus.server.exceptions.InvalidSizeException;
+import com.davidecarella.hclus.common.exceptions.ExampleSizeMismatchException;
 
+import java.util.LinkedList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.LinkedList;
 
 /**
  * Classe che rappresenta un esempio, ovvero una lista di numeri reali.
@@ -43,23 +43,22 @@ public class Example implements Iterable<Double> {
      *
      * @param other l'altro esempio con il quale si vuole calcolare la distanza
      * @return la distanza euclidea tra l'esempio e {@code other}
-     * @throws InvalidSizeException quando questo esempio e {@code other} hanno lunghezza diversa
      */
-    public double distance(Example other) throws InvalidSizeException {
-        if (this.example.size() != other.example.size()) {
-            throw new InvalidSizeException("Si può calcolare la distanza solo fra esempi con stessa lunghezza");
+    public double distance(Example other) throws ExampleSizeMismatchException {
+        if (this.getSize() != other.getSize()) {
+            throw new ExampleSizeMismatchException("Gli esempi hanno dimensione diversa!");
         }
 
-        double result = 0.0;
-        var firstValueIterator = this.iterator();
-        var secondValueIterator = other.iterator();
+        double dist = 0.0;
 
-        while (firstValueIterator.hasNext() && secondValueIterator.hasNext()) {
-            double delta = firstValueIterator.next() - secondValueIterator.next();
-            result += delta * delta;
+        var thisIterator = this.iterator();
+        var otherIterator = other.iterator();
+        while (thisIterator.hasNext() && otherIterator.hasNext()) {
+            var delta = thisIterator.next() - otherIterator.next();
+            dist += delta * delta;
         }
 
-        return result;
+        return dist;
     }
 
     /**

@@ -1,0 +1,13 @@
+plugins {
+    id 'java'
+}
+
+group = 'com.davidecarella.hclus.common'
+version = '1.0'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+}

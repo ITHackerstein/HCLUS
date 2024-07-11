@@ -1,15 +1,18 @@
 package com.davidecarella.hclus.server;
 
-import com.davidecarella.hclus.server.clustering.Dendrogram;
+import com.davidecarella.hclus.common.ClusteringStep;
+import com.davidecarella.hclus.common.exceptions.ExampleSizeMismatchException;
+import com.davidecarella.hclus.server.clustering.Dataset;
 import com.davidecarella.hclus.server.clustering.HierarchicalClustering;
-import com.davidecarella.hclus.server.data.Data;
-import com.davidecarella.hclus.server.data.Example;
+import com.davidecarella.hclus.common.Example;
 import com.davidecarella.hclus.server.distance.AverageLinkDistance;
 import com.davidecarella.hclus.server.distance.ClusterDistance;
 import com.davidecarella.hclus.server.distance.SingleLinkDistance;
+import com.davidecarella.hclus.server.exceptions.InvalidClusterIndexException;
 import com.davidecarella.hclus.server.exceptions.InvalidDepthException;
-import com.davidecarella.hclus.server.exceptions.InvalidSizeException;
 import com.davidecarella.hclus.server.exceptions.NoDataException;
+import com.davidecarella.hclus.common.serialization.DataDeserializer;
+import com.davidecarella.hclus.common.serialization.DataSerializer;
 
 import java.io.*;
 import java.net.Socket;
@@ -31,7 +34,7 @@ public class ClientHandler extends Thread {
     /**
      * I dati eventualmente caricati dal server.
      */
-    private Data data = null;
+    private Dataset dataset = null;
 
     /**
      * Costruisce il gestore del client e lancia il thread associato a esso a partire da {@code clientSocket}, fornito
@@ -64,8 +67,8 @@ public class ClientHandler extends Thread {
                     var requestType = dataDeserializer.deserializeInt();
                     switch (requestType) {
                         case 0 -> loadDataRequest(dataDeserializer, dataSerializer);
-                        case 1 -> newDendrogramRequest(dataDeserializer, dataSerializer);
-                        case 2 -> loadDendrogramRequest(dataDeserializer, dataSerializer);
+                        case 1 -> newClusteringRequest(dataDeserializer, dataSerializer);
+                        case 2 -> loadClusteringRequest(dataDeserializer, dataSerializer);
                         case 3 -> getExamplesRequest(dataDeserializer, dataSerializer);
                         case 4 -> closeConnectionRequest(dataDeserializer, dataSerializer);
                         default -> {
@@ -96,7 +99,7 @@ public class ClientHandler extends Thread {
         String tableName = dataDeserializer.deserializeString();
 
         try {
-            this.data = new Data(tableName);
+            this.dataset = new Dataset(tableName);
             dataSerializer.serializeInt(SUCCESS);
         } catch (NoDataException exception) {
             dataSerializer.serializeInt(ERROR);
@@ -105,13 +108,13 @@ public class ClientHandler extends Thread {
     }
 
     /**
-     * Gestisce la richiesta per la creazione di nuovo dendrogramma.
+     * Gestisce la richiesta per la creazione di un nuovo clustering dei dati.
      *
      * @param dataDeserializer il <i>deserializzatore</i> dei dati inviati dal client
      * @param dataSerializer il <i>serializzatore</i> dei dati inviati dal server
      */
-    private void newDendrogramRequest(DataDeserializer dataDeserializer, DataSerializer dataSerializer) throws IOException {
-        if (this.data == null) {
+    private void newClusteringRequest(DataDeserializer dataDeserializer, DataSerializer dataSerializer) throws IOException {
+        if (this.dataset == null) {
             dataSerializer.serializeInt(ERROR);
             dataSerializer.serializeString("I dati non sono stati ancora caricati!");
             return;
@@ -132,17 +135,17 @@ public class ClientHandler extends Thread {
 
         String fileName = dataDeserializer.deserializeString();
 
-        Dendrogram dendrogram;
+        ClusteringStep[] clusteringSteps;
         try {
-            dendrogram = HierarchicalClustering.mine(this.data, distance, depth);
-        } catch (InvalidDepthException | InvalidSizeException exception) {
+            clusteringSteps = HierarchicalClustering.mine(this.dataset, distance, depth);
+        } catch (InvalidDepthException | ExampleSizeMismatchException exception) {
             dataSerializer.serializeInt(ERROR);
             dataSerializer.serializeString(walkThrowable(exception));
             return;
         }
 
         try {
-            dendrogram.salva(fileName);
+            HierarchicalClustering.save(clusteringSteps, fileName);
         } catch (IOException exception) {
             dataSerializer.serializeInt(ERROR);
             dataSerializer.serializeString(String.format("Errore durante il salvataggio del dendrogramma: %s!", exception.getMessage()));
@@ -150,17 +153,20 @@ public class ClientHandler extends Thread {
         }
 
         dataSerializer.serializeInt(SUCCESS);
-        dataSerializer.serializeDendrogram(dendrogram);
+        dataSerializer.serializeInt(clusteringSteps.length + 1);
+        for (var step : clusteringSteps) {
+            dataSerializer.serializeClusteringStep(step);
+        }
     }
 
     /**
-     * Gestisce la richiesta di caricamento di un dendrogramma da un file.
+     * Gestisce la richiesta di caricamento di un clustering da un file.
      *
      * @param dataDeserializer il <i>deserializzatore</i> dei dati inviati dal client
      * @param dataSerializer il <i>serializzatore</i> dei dati inviati dal server
      */
-    private void loadDendrogramRequest(DataDeserializer dataDeserializer, DataSerializer dataSerializer) throws IOException {
-        if (this.data == null) {
+    private void loadClusteringRequest(DataDeserializer dataDeserializer, DataSerializer dataSerializer) throws IOException {
+        if (this.dataset == null) {
             dataSerializer.serializeInt(ERROR);
             dataSerializer.serializeString("I dati non sono stati ancora caricati!");
             return;
@@ -168,27 +174,28 @@ public class ClientHandler extends Thread {
 
         String fileName = dataDeserializer.deserializeString();
 
-        Dendrogram dendrogram;
+        ClusteringStep[] clusteringSteps;
         try {
-            dendrogram = Dendrogram.load(fileName);
+            clusteringSteps = HierarchicalClustering.load(fileName, this.dataset);
         } catch (FileNotFoundException exception) {
             dataSerializer.serializeInt(ERROR);
             dataSerializer.serializeString("Il file inserito non esiste!");
             return;
-        } catch (IOException | ClassNotFoundException exception) {
+        } catch (IOException exception) {
             dataSerializer.serializeInt(ERROR);
             dataSerializer.serializeString(String.format("Errore durante il caricamento del dendrogramma: %s!", exception.getMessage()));
             return;
-        }
-
-        if (dendrogram.getDepth() > this.data.getNumberOfExamples()) {
+        } catch (InvalidDepthException | InvalidClusterIndexException exception) {
             dataSerializer.serializeInt(ERROR);
-            dataSerializer.serializeString("Profondità non valida!");
+            dataSerializer.serializeString(exception.getMessage());
             return;
         }
 
         dataSerializer.serializeInt(SUCCESS);
-        dataSerializer.serializeDendrogram(dendrogram);
+        dataSerializer.serializeInt(clusteringSteps.length + 1);
+        for (var step : clusteringSteps) {
+            dataSerializer.serializeClusteringStep(step);
+        }
     }
 
     /**
@@ -198,7 +205,7 @@ public class ClientHandler extends Thread {
      * @param dataSerializer il <i>serializzatore</i> dei dati inviati dal server
      */
     private void getExamplesRequest(DataDeserializer dataDeserializer, DataSerializer dataSerializer) throws IOException {
-        if (this.data == null) {
+        if (this.dataset == null) {
             dataSerializer.serializeInt(ERROR);
             dataSerializer.serializeString("I dati non sono stati ancora caricati!");
             return;
@@ -208,13 +215,13 @@ public class ClientHandler extends Thread {
         var indexCount = dataDeserializer.deserializeInt();
         while (indexCount-- > 0) {
             var index = dataDeserializer.deserializeInt();
-            if (index < 0 || index >= data.getNumberOfExamples()) {
+            if (index < 0 || index >= dataset.getNumberOfExamples()) {
                 dataSerializer.serializeInt(ERROR);
                 dataSerializer.serializeString("Uno o più indici non validi!");
                 return;
             }
 
-            examples.add(data.getExample(index));
+            examples.add(dataset.getExample(index));
         }
 
         dataSerializer.serializeInt(SUCCESS);

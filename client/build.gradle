@@ -11,6 +11,7 @@ repositories {
 }
 
 dependencies {
+    implementation project(":common")
 }
 
 mainClassName = "com.davidecarella.hclus.client.MainTest"
@@ -20,6 +21,8 @@ application {
 }
 
 jar {
+    dependsOn ":common:jar"
+
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 
     manifest {

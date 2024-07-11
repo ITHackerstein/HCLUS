@@ -13,6 +13,8 @@ repositories {
 dependencies {
     implementation "org.slf4j:slf4j-nop:2.0.13"
     implementation "org.mariadb.jdbc:mariadb-java-client:3.4.0"
+
+    implementation project(":common")
 }
 
 mainClassName = "com.davidecarella.hclus.server.Main"
@@ -22,6 +24,8 @@ application {
 }
 
 jar {
+    dependsOn ":common:jar"
+
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 
     manifest {

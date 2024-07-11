@@ -1,7 +1,9 @@
-package com.davidecarella.hclus.client;
+package com.davidecarella.hclus.client.communication;
 
-import com.davidecarella.hclus.client.data.Dendrogram;
-import com.davidecarella.hclus.client.data.Example;
+import com.davidecarella.hclus.common.ClusteringStep;
+import com.davidecarella.hclus.common.Example;
+import com.davidecarella.hclus.common.serialization.DataDeserializer;
+import com.davidecarella.hclus.common.serialization.DataSerializer;
 
 import java.io.IOException;
 import java.net.Socket;
@@ -67,7 +69,7 @@ public class ServerConnection {
     }
 
     /**
-     * Invia la richiesta di creazione di un dendrogramma dati come parametro: profondità del dendrogramma
+     * Invia la richiesta di creazione di un clustering dati come parametro: profondità del dendrogramma
      * ({@code depth}), tipo di distanza da utilizzare ({@code distanceType}) e nome del file dove salvare il
      * dendrogramma ({@code fileName}).
      *
@@ -77,7 +79,7 @@ public class ServerConnection {
      * @return il dendrogramma creato dal server
      * @throws IOException in caso di errori di durante la comunicazione
      */
-    public Dendrogram newDendrogram(int depth, int distanceType, String fileName) throws IOException {
+    public ClusteringStep[] newClustering(int depth, int distanceType, String fileName) throws IOException {
         this.dataSerializer.serializeInt(1);
         this.dataSerializer.serializeInt(depth);
         this.dataSerializer.serializeInt(distanceType);
@@ -85,7 +87,12 @@ public class ServerConnection {
 
         var responseType = this.dataDeserializer.deserializeInt();
         if (responseType == 0) {
-            return this.dataDeserializer.deserializeDendrogram();
+            var receivedDepth = this.dataDeserializer.deserializeInt();
+            var steps = new ClusteringStep[receivedDepth - 1];
+            for (int i = 0; i < receivedDepth - 1; ++i) {
+                steps[i] = this.dataDeserializer.deserializeClusteringStep();
+            }
+            return steps;
         }
 
         if (responseType == 1) {
@@ -96,20 +103,25 @@ public class ServerConnection {
     }
 
     /**
-     * Invia la richiesta del caricamento del dendrogramma memorizzato sul file il cui nome, {@code fileName}, è
+     * Invia la richiesta del caricamento del clustering memorizzato sul file il cui nome, {@code fileName}, è
      * specificato come parametro
      *
      * @param fileName il nome del file da cui caricare il dendrogramma
      * @return il dendrogramma caricato dal file
      * @throws IOException in caso di errori durante la comunicazione
      */
-    public Dendrogram loadDendrogram(String fileName) throws IOException {
+    public ClusteringStep[] loadDendrogram(String fileName) throws IOException {
         this.dataSerializer.serializeInt(2);
         this.dataSerializer.serializeString(fileName);
 
         var responseType = this.dataDeserializer.deserializeInt();
         if (responseType == 0) {
-            return this.dataDeserializer.deserializeDendrogram();
+            var depth = this.dataDeserializer.deserializeInt();
+            var steps = new ClusteringStep[depth - 1];
+            for (int i = 0; i < depth - 1; ++i) {
+                steps[i] = this.dataDeserializer.deserializeClusteringStep();
+            }
+            return steps;
         }
 
         if (responseType == 1) {

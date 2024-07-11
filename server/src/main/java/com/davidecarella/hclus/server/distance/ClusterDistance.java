@@ -1,11 +1,7 @@
 package com.davidecarella.hclus.server.distance;
 
-import com.davidecarella.hclus.server.clustering.Cluster;
-import com.davidecarella.hclus.server.data.Data;
-import com.davidecarella.hclus.server.exceptions.InvalidSizeException;
-
 /**
- * <p>Interfaccia funzionale per il calcolo generico della distanza tra due {@link Cluster cluster}.
+ * <p>Interfaccia funzionale per il calcolo generico della distanza tra due cluster.
  *
  * <p>Le due metriche fornite dal progetto sono
  * <ul>
@@ -15,14 +11,14 @@ import com.davidecarella.hclus.server.exceptions.InvalidSizeException;
  */
 public interface ClusterDistance {
     /**
-     * Calcola la distanza tra i {@link Cluster cluster} {@code c1} e {@code c2}, specificati come parametri,
-     * usando {@code data}, specificata come parametro, per i valori degli esempi.
+     * Calcola la distanza tra il cluster \(i\) e il nuovo cluster \(xy\) ottenuto unendo i cluster \(x\) e \(y\).
      *
-     * @param c1 il primo {@link Cluster cluster} su cui calcolare la distanza
-     * @param c2 il second {@link Cluster cluster} su cui calcolare la distanza
-     * @param data i dati
-     * @return la distanza tra i {@link Cluster cluster} {@code c1} e {@code c2}
-     * @throws InvalidSizeException se degli esempi nei {@link Cluster cluster} hanno lunghezze diverse
+     * @param dxi la distanza tra il cluster \(x\) e il cluster \(i\)
+     * @param dyi la distanza tra il cluster \(y\) e il cluster \(i\)
+     * @param dxy la distanza tra il cluster \(x\) e il cluster \(y\)
+     * @param xSize la dimensione del cluster \(x\)
+     * @param ySize la dimensione del cluster \(y\)
+     * @param iSize la dimensione del cluster \(i\)
      */
-    double distance(Cluster c1, Cluster c2, Data data) throws InvalidSizeException;
+    double distance(double dxi, double dyi, double dxy, int xSize, int ySize, int iSize);
 }
