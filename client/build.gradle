@@ -14,7 +14,7 @@ dependencies {
     implementation project(":common")
 }
 
-mainClassName = "com.davidecarella.hclus.client.MainTest"
+mainClassName = "com.davidecarella.hclus.client.gui.MainWindow"
 
 application {
     mainClass = mainClassName

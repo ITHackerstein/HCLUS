@@ -1,6 +1,6 @@
 package com.davidecarella.hclus.client.communication;
 
-import com.davidecarella.hclus.common.ClusteringStep;
+import com.davidecarella.hclus.common.Clustering;
 import com.davidecarella.hclus.common.Example;
 import com.davidecarella.hclus.common.serialization.DataDeserializer;
 import com.davidecarella.hclus.common.serialization.DataSerializer;
@@ -79,7 +79,7 @@ public class ServerConnection {
      * @return il dendrogramma creato dal server
      * @throws IOException in caso di errori di durante la comunicazione
      */
-    public ClusteringStep[] newClustering(int depth, int distanceType, String fileName) throws IOException {
+    public Clustering newClustering(int depth, int distanceType, String fileName) throws IOException {
         this.dataSerializer.serializeInt(1);
         this.dataSerializer.serializeInt(depth);
         this.dataSerializer.serializeInt(distanceType);
@@ -87,12 +87,7 @@ public class ServerConnection {
 
         var responseType = this.dataDeserializer.deserializeInt();
         if (responseType == 0) {
-            var receivedDepth = this.dataDeserializer.deserializeInt();
-            var steps = new ClusteringStep[receivedDepth - 1];
-            for (int i = 0; i < receivedDepth - 1; ++i) {
-                steps[i] = this.dataDeserializer.deserializeClusteringStep();
-            }
-            return steps;
+            return this.dataDeserializer.deserializeClustering();
         }
 
         if (responseType == 1) {
@@ -110,18 +105,13 @@ public class ServerConnection {
      * @return il dendrogramma caricato dal file
      * @throws IOException in caso di errori durante la comunicazione
      */
-    public ClusteringStep[] loadDendrogram(String fileName) throws IOException {
+    public Clustering loadDendrogram(String fileName) throws IOException {
         this.dataSerializer.serializeInt(2);
         this.dataSerializer.serializeString(fileName);
 
         var responseType = this.dataDeserializer.deserializeInt();
         if (responseType == 0) {
-            var depth = this.dataDeserializer.deserializeInt();
-            var steps = new ClusteringStep[depth - 1];
-            for (int i = 0; i < depth - 1; ++i) {
-                steps[i] = this.dataDeserializer.deserializeClusteringStep();
-            }
-            return steps;
+            return this.dataDeserializer.deserializeClustering();
         }
 
         if (responseType == 1) {

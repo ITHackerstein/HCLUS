@@ -1,12 +1,19 @@
 package com.davidecarella.hclus.client.gui;
 
-import com.davidecarella.hclus.client.ServerConnection;
+import com.davidecarella.hclus.client.communication.ServerConnection;
 
 import javax.swing.*;
 import java.awt.*;
 import java.io.IOException;
 
 /**
+ * TODO: Do the actual drawing
+ * TODO: Load from file
+ * TODO: Avoid saving using actual path (maybe use the actual database or store using a generated file name in a
+ *       specific folder and maybe new request to list saved dendrograms)
+ * TODO: New distances (add a method to get the possible distances)
+ * TODO: Fix comments all around the code
+ *
  * <p>La finestra principale del client.
  *
  * <p>È divisa in 4 sezioni:
@@ -87,6 +94,11 @@ public class MainWindow extends JFrame {
     private JButton btn_mine;
 
     /**
+     * IL widget per la visualizzazione del dendrogramma.
+     */
+    private DendrogramViewerWidget dendrogramViewerWidget;
+
+    /**
      * La connessione al server.
      */
     private ServerConnection serverConnection;
@@ -110,12 +122,13 @@ public class MainWindow extends JFrame {
         pnl_main.add(createConnectionPanel());
         pnl_main.add(createDataSourcePanel());
         pnl_main.add(createMineSettingsPanel());
-        pnl_main.add(createGraphPanel());
+        pnl_main.add(this.dendrogramViewerWidget);
 
         this.add(pnl_main);
         this.pack();
 
-        this.setResizable(false);
+        this.setMinimumSize(this.getPreferredSize());
+        this.setResizable(true);
         this.setLocationRelativeTo(null);
         this.setVisible(true);
     }
@@ -149,6 +162,8 @@ public class MainWindow extends JFrame {
         this.txt_fileName.setEnabled(false);
         this.btn_mine = new JButton("Estrai");
         this.btn_mine.setEnabled(false);
+
+        this.dendrogramViewerWidget = new DendrogramViewerWidget();
     }
 
     /**
@@ -221,7 +236,8 @@ public class MainWindow extends JFrame {
 
                 int depth = (int) this.depthModel.getValue();
                 int distanceType = this.rdb_singleLinkDistance.isSelected() ? 0 : 1;
-                var dendrogram = this.serverConnection.newDendrogram(depth, distanceType, this.txt_fileName.getText());
+                var clustering = this.serverConnection.newClustering(depth, distanceType, this.txt_fileName.getText());
+                this.dendrogramViewerWidget.setClustering(clustering);
                 JOptionPane.showMessageDialog(this, "Dendrogramma creato con successo!", this.getTitle(), JOptionPane.INFORMATION_MESSAGE);
             } catch (IOException exception) {
                 JOptionPane.showMessageDialog(this, "Errore durante la creazione del dendrogramma: " + exception.getMessage(), this.getTitle(), JOptionPane.ERROR_MESSAGE);
@@ -237,6 +253,9 @@ public class MainWindow extends JFrame {
      * @return la sezione di connessione
      */
     private JPanel createConnectionPanel() {
+        this.txt_address.setMaximumSize(new Dimension(Integer.MAX_VALUE, this.txt_address.getPreferredSize().height));
+        this.txt_port.setMaximumSize(new Dimension(Integer.MAX_VALUE, this.txt_port.getPreferredSize().height));
+
         var pnl_address = new JPanel();
         pnl_address.setLayout(new BoxLayout(pnl_address, BoxLayout.LINE_AXIS));
 
@@ -306,11 +325,13 @@ public class MainWindow extends JFrame {
      */
     private JPanel createMineSettingsPanel() {
         this.spn_depth.setMaximumSize(new Dimension(Integer.MAX_VALUE, this.spn_depth.getPreferredSize().height));
+        this.txt_fileName.setMaximumSize(new Dimension(Integer.MAX_VALUE, this.txt_address.getPreferredSize().height));
 
         var pnl_distance = new JPanel();
         pnl_distance.setLayout(new BoxLayout(pnl_distance, BoxLayout.LINE_AXIS));
 
-        pnl_distance.add(new JLabel("Distanza: "));
+        pnl_distance.add(new JLabel("Distanza"));
+        pnl_distance.add(Box.createRigidArea(new Dimension(5, 0)));
         pnl_distance.add(this.rdb_singleLinkDistance);
         pnl_distance.add(this.rdb_averageLinkDistance);
 
@@ -331,6 +352,10 @@ public class MainWindow extends JFrame {
         var pnl_settings = new JPanel();
         pnl_settings.setLayout(new BoxLayout(pnl_settings, BoxLayout.PAGE_AXIS));
 
+        pnl_distance.setAlignmentX(Component.LEFT_ALIGNMENT);
+        pnl_depth.setAlignmentX(Component.LEFT_ALIGNMENT);
+        pnl_fileName.setAlignmentX(Component.LEFT_ALIGNMENT);
+
         pnl_settings.add(pnl_distance);
         pnl_settings.add(pnl_depth);
         pnl_settings.add(pnl_fileName);
@@ -347,16 +372,6 @@ public class MainWindow extends JFrame {
         pnl_mineSettings.add(this.btn_mine);
 
         return pnl_mineSettings;
-    }
-
-    /**
-     * Metodo per la creazione della sezione di visualizzazione.
-     *
-     * @return la sezione di visualizzazione
-     */
-    private JPanel createGraphPanel() {
-        // TODO
-        return new JPanel();
     }
 
     /**
