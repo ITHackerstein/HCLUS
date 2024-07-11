@@ -1,5 +1,6 @@
 package com.davidecarella.hclus.common.serialization;
 
+import com.davidecarella.hclus.common.Clustering;
 import com.davidecarella.hclus.common.ClusteringStep;
 import com.davidecarella.hclus.common.Example;
 
@@ -51,6 +52,16 @@ public class DataDeserializer implements AutoCloseable {
             this.dataInputStream.readDouble(),
             this.dataInputStream.readInt()
         );
+    }
+
+    public Clustering deserializeClustering() throws IOException {
+        var exampleCount = this.dataInputStream.readInt();
+        var depth = this.dataInputStream.readInt();
+        var steps = new ClusteringStep[depth - 1];
+        for (int i = 0; i < depth - 1; ++i) {
+            steps[i] = this.deserializeClusteringStep();
+        }
+        return new Clustering(exampleCount, steps);
     }
 
     @Override

@@ -1,5 +1,6 @@
 package com.davidecarella.hclus.server.clustering;
 
+import com.davidecarella.hclus.common.Clustering;
 import com.davidecarella.hclus.common.ClusteringStep;
 import com.davidecarella.hclus.common.exceptions.ExampleSizeMismatchException;
 import com.davidecarella.hclus.server.distance.ClusterDistance;
@@ -29,10 +30,11 @@ public class HierarchicalClustering {
      * @param dataset il dataset
      * @param distanceCalculator l'oggetto per calcolare la distanza
      * @param depth la profondità del dendrogramma
+     * @return il clustering creato sul dataset
      * @throws InvalidDepthException quando la profondità del dendrogramma supera il numero di esempi in {@code data}
      * @throws ExampleSizeMismatchException quando ci sono due esempi con lunghezze diverse
      */
-    public static ClusteringStep[] mine(Dataset dataset, ClusterDistance distanceCalculator, int depth) throws InvalidDepthException, ExampleSizeMismatchException {
+    public static Clustering mine(Dataset dataset, ClusterDistance distanceCalculator, int depth) throws InvalidDepthException, ExampleSizeMismatchException {
         final int n = dataset.getNumberOfExamples();
 
         if (depth <= 0 || depth > n) {
@@ -99,15 +101,25 @@ public class HierarchicalClustering {
             }
         }
 
-        return steps;
+        return new Clustering(dataset.getNumberOfExamples(), steps);
     }
 
-    public static ClusteringStep[] load(String fileName, Dataset dataset) throws IOException, InvalidDepthException, InvalidClusterIndexException {
+    /**
+     * Carica un clustering sui dati {@code dataset} dal file con nome {@code fileName}, specificati come parametri.
+     *
+     * @param fileName il nome del file da cui caricare il clustering
+     * @param dataset il dataset a cui fa riferimento il clustering
+     * @return il clustering caricato dal file
+     * @throws IOException in caso di errori di I/O durante la lettura dal file
+     * @throws InvalidDepthException in caso la profondità non sia valida
+     * @throws InvalidClusterIndexException in caso degli indici dei cluster non siano validi
+     */
+    public static Clustering load(String fileName, Dataset dataset) throws IOException, InvalidDepthException, InvalidClusterIndexException {
         try (var fileInputStream = new FileInputStream(fileName);
              var dataDeserializer = new DataDeserializer(fileInputStream))
         {
             var depth = dataDeserializer.deserializeInt();
-            if (depth <= 0) {
+            if (depth <= 0 || depth > dataset.getNumberOfExamples()) {
                 throw new InvalidDepthException("Profondità non valida!");
             }
 
@@ -123,16 +135,23 @@ public class HierarchicalClustering {
                 steps[i] = step;
             }
 
-            return steps;
+            return new Clustering(dataset.getNumberOfExamples(), steps);
         }
     }
 
-    public static void save(ClusteringStep[] clusteringSteps, String fileName) throws IOException {
+    /**
+     * Salva il clustering {@code clustering} nel file con nome {@code fileName}, specificato come parametro.
+     *
+     * @param clustering il clustering che si vuole salvare sul file
+     * @param fileName il file su cui salvare il clustering
+     * @throws IOException in caso di errori di I/O durante la scrittura sul file
+     */
+    public static void save(Clustering clustering, String fileName) throws IOException {
         try (var fileOutputStream = new FileOutputStream(fileName);
              var dataSerializer = new DataSerializer(fileOutputStream))
         {
-            dataSerializer.serializeInt(clusteringSteps.length + 1);
-            for (var step : clusteringSteps) {
+            dataSerializer.serializeInt(clustering.steps().length + 1);
+            for (var step : clustering.steps()) {
                 dataSerializer.serializeClusteringStep(step);
             }
         }

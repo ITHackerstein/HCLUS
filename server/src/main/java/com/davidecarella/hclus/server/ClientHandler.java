@@ -1,5 +1,6 @@
 package com.davidecarella.hclus.server;
 
+import com.davidecarella.hclus.common.Clustering;
 import com.davidecarella.hclus.common.ClusteringStep;
 import com.davidecarella.hclus.common.exceptions.ExampleSizeMismatchException;
 import com.davidecarella.hclus.server.clustering.Dataset;
@@ -135,9 +136,9 @@ public class ClientHandler extends Thread {
 
         String fileName = dataDeserializer.deserializeString();
 
-        ClusteringStep[] clusteringSteps;
+        Clustering clustering;
         try {
-            clusteringSteps = HierarchicalClustering.mine(this.dataset, distance, depth);
+            clustering = HierarchicalClustering.mine(this.dataset, distance, depth);
         } catch (InvalidDepthException | ExampleSizeMismatchException exception) {
             dataSerializer.serializeInt(ERROR);
             dataSerializer.serializeString(walkThrowable(exception));
@@ -145,7 +146,7 @@ public class ClientHandler extends Thread {
         }
 
         try {
-            HierarchicalClustering.save(clusteringSteps, fileName);
+            HierarchicalClustering.save(clustering, fileName);
         } catch (IOException exception) {
             dataSerializer.serializeInt(ERROR);
             dataSerializer.serializeString(String.format("Errore durante il salvataggio del dendrogramma: %s!", exception.getMessage()));
@@ -153,10 +154,7 @@ public class ClientHandler extends Thread {
         }
 
         dataSerializer.serializeInt(SUCCESS);
-        dataSerializer.serializeInt(clusteringSteps.length + 1);
-        for (var step : clusteringSteps) {
-            dataSerializer.serializeClusteringStep(step);
-        }
+        dataSerializer.serializeClustering(clustering);
     }
 
     /**
@@ -174,9 +172,9 @@ public class ClientHandler extends Thread {
 
         String fileName = dataDeserializer.deserializeString();
 
-        ClusteringStep[] clusteringSteps;
+        Clustering clustering;
         try {
-            clusteringSteps = HierarchicalClustering.load(fileName, this.dataset);
+            clustering = HierarchicalClustering.load(fileName, this.dataset);
         } catch (FileNotFoundException exception) {
             dataSerializer.serializeInt(ERROR);
             dataSerializer.serializeString("Il file inserito non esiste!");
@@ -192,10 +190,7 @@ public class ClientHandler extends Thread {
         }
 
         dataSerializer.serializeInt(SUCCESS);
-        dataSerializer.serializeInt(clusteringSteps.length + 1);
-        for (var step : clusteringSteps) {
-            dataSerializer.serializeClusteringStep(step);
-        }
+        dataSerializer.serializeClustering(clustering);
     }
 
     /**
