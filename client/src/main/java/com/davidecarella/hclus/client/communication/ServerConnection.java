@@ -14,6 +14,30 @@ import java.util.List;
  * Classe che rappresenta la connessione con il server.
  */
 public class ServerConnection {
+    private static ServerConnection instance;
+
+    public static ServerConnection the() {
+        return instance;
+    }
+
+    /**
+     * <p>Apre la connessione con il server in ascolto sull'indirizzo, {@code address}, e porta, {@code port}, entrambi
+     * specificati come parametro.
+     *
+     * <p>Se una connessione era già aperta allora la chiude e ne apre un'altra.
+     *
+     * @param address l'indirizzo del server
+     * @param port la porta del server
+     * @throws IOException in caso di errori di I/O durante la connessione
+     */
+    public static void open(String address, int port) throws IOException {
+        if (instance != null) {
+            instance.closeConnection();
+        }
+
+        instance = new ServerConnection(address, port);
+    }
+
     /**
      * Il socket per la connessione.
      */
@@ -37,7 +61,7 @@ public class ServerConnection {
      * @param port la porta del server
      * @throws IOException in caso di errori di I/O durante la connessione
      */
-    public ServerConnection(String address, int port) throws IOException {
+    private ServerConnection(String address, int port) throws IOException {
         this.socket = new Socket(address, port);
 
         // NOTE: NEVER, ever, swap this two lines here. Doing that will cause the application to block on the
