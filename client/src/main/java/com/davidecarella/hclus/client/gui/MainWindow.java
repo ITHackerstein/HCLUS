@@ -4,6 +4,8 @@ import com.davidecarella.hclus.client.communication.ServerConnection;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.io.IOException;
 
 /**
@@ -99,11 +101,6 @@ public class MainWindow extends JFrame {
     private DendrogramViewerWidget dendrogramViewerWidget;
 
     /**
-     * La connessione al server.
-     */
-    private ServerConnection serverConnection;
-
-    /**
      * <p>Costruttore della finestra.
      *
      * <p>Crea la finestra impostandone il suo layout e la visualizza.
@@ -194,7 +191,7 @@ public class MainWindow extends JFrame {
             }
 
             try {
-                this.serverConnection = new ServerConnection(address, port);
+                ServerConnection.open(address, port);
                 this.connectionStatusWidget.setStatus(ConnectionStatusWidget.Status.CONNECTED);
                 this.btn_connect.setEnabled(false);
                 this.txt_tableName.setEnabled(true);
@@ -210,7 +207,7 @@ public class MainWindow extends JFrame {
             this.btn_loadData.setEnabled(false);
 
             try {
-                this.serverConnection.loadData(this.txt_tableName.getText());
+                ServerConnection.the().loadData(this.txt_tableName.getText());
                 JOptionPane.showMessageDialog(this, "Dati caricati con successo!", this.getTitle(), JOptionPane.INFORMATION_MESSAGE);
 
                 this.rdb_singleLinkDistance.setEnabled(true);
@@ -236,7 +233,7 @@ public class MainWindow extends JFrame {
 
                 int depth = (int) this.depthModel.getValue();
                 int distanceType = this.rdb_singleLinkDistance.isSelected() ? 0 : 1;
-                var clustering = this.serverConnection.newClustering(depth, distanceType, this.txt_fileName.getText());
+                var clustering = ServerConnection.the().newClustering(depth, distanceType, this.txt_fileName.getText());
                 this.dendrogramViewerWidget.setClustering(clustering);
                 JOptionPane.showMessageDialog(this, "Dendrogramma creato con successo!", this.getTitle(), JOptionPane.INFORMATION_MESSAGE);
             } catch (IOException exception) {
@@ -244,6 +241,17 @@ public class MainWindow extends JFrame {
             }
 
             this.btn_mine.setEnabled(true);
+        });
+
+        this.addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosed(WindowEvent event) {
+                try {
+                    ServerConnection.the().closeConnection();
+                } catch (IOException ignored) {
+                    // NOTE: At this point there's not much we can do
+                }
+            }
         });
     }
 
