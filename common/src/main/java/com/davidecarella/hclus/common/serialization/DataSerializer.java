@@ -42,7 +42,6 @@ public class DataSerializer implements AutoCloseable {
     public void serializeClusteringStep(ClusteringStep clusteringStep) throws IOException {
         this.dataOutputStream.writeInt(clusteringStep.firstClusterIndex());
         this.dataOutputStream.writeInt(clusteringStep.secondClusterIndex());
-        this.dataOutputStream.writeDouble(clusteringStep.distance());
         this.dataOutputStream.writeInt(clusteringStep.newClusterSize());
     }
 

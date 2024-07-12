@@ -49,7 +49,6 @@ public class DataDeserializer implements AutoCloseable {
         return new ClusteringStep(
             this.dataInputStream.readInt(),
             this.dataInputStream.readInt(),
-            this.dataInputStream.readDouble(),
             this.dataInputStream.readInt()
         );
     }

@@ -73,7 +73,6 @@ public class HierarchicalClustering {
             steps[k] = new ClusteringStep(
                 Math.min(indexMap[firstCluster], indexMap[secondCluster]),
                 Math.max(indexMap[firstCluster], indexMap[secondCluster]),
-                minDistance,
                 firstClusterSize + secondClusterSize
             );
 

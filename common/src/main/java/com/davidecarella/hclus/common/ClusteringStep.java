@@ -5,8 +5,7 @@ package com.davidecarella.hclus.common;
  *
  * @param firstClusterIndex l'indice del primo cluster che viene unito
  * @param secondClusterIndex l'indice del second cluster che viene unito
- * @param distance la distanza tra i due cluster
  * @param newClusterSize la dimensione del nuovo cluster
  */
-public record ClusteringStep(int firstClusterIndex, int secondClusterIndex, double distance, int newClusterSize) {
+public record ClusteringStep(int firstClusterIndex, int secondClusterIndex, int newClusterSize) {
 }
