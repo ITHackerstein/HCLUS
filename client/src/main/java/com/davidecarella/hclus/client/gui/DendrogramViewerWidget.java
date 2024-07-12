@@ -17,14 +17,12 @@ class Dendrogram {
     static final Color CLUSTER_COLOR = new Color(138, 43, 216);
     static final Color EDGE_COLOR = Color.black;
 
-    private Clustering clustering = null;
-    private final int[] leafClusterIndexMap;
+    private final Clustering clustering;
     private final Point[] clusterPositions;
     private final int[][] edges;
 
     Dendrogram(Clustering clustering) {
         this.clustering = clustering;
-        this.leafClusterIndexMap = new int[this.clustering.exampleCount()];
         this.clusterPositions = new Point[this.clustering.exampleCount() + this.clustering.steps().length];
         this.edges = new int[this.clusterPositions.length * 2][2];
         this.initializeArrays();
@@ -34,14 +32,13 @@ class Dendrogram {
         var stack = new Stack<Integer>();
         stack.push(this.clusterPositions.length - 1);
 
-        int leafIndex = 0;
+        int offset = 0;
         int edgeIndex = 0;
         while (!stack.empty()) {
             var clusterIndex = stack.pop();
             if (clusterIndex < this.clustering.exampleCount()) {
-                this.leafClusterIndexMap[clusterIndex] = leafIndex;
-                this.clusterPositions[leafIndex] = new Point((CLUSTER_SPACING + CLUSTER_SIZE * 2) * (leafIndex - this.clustering.exampleCount() / 2), 0);
-                ++leafIndex;
+                this.clusterPositions[clusterIndex] = new Point((CLUSTER_SPACING + CLUSTER_SIZE * 2) * (offset - this.clustering.exampleCount() / 2), 0);
+                ++offset;
                 continue;
             }
 
@@ -61,21 +58,13 @@ class Dendrogram {
 
         for (int i = 0; i < this.clustering.steps().length; ++i) {
             var step = this.clustering.steps()[i];
-            var firstClusterPosition = this.clusterPositions[getActualClusterIndex(step.firstClusterIndex())];
-            var secondClusterPosition = this.clusterPositions[getActualClusterIndex(step.secondClusterIndex())];
+            var firstClusterPosition = this.clusterPositions[step.firstClusterIndex()];
+            var secondClusterPosition = this.clusterPositions[step.secondClusterIndex()];
             this.clusterPositions[this.clustering.exampleCount() + i] = new Point(
                 (int) ((firstClusterPosition.getX() + secondClusterPosition.getX()) / 2),
                 (int) (Math.min(firstClusterPosition.getY(), secondClusterPosition.getY()) - CLUSTER_SPACING - CLUSTER_SIZE * 2)
             );
         }
-    }
-
-    int getActualClusterIndex(int clusterIndex) {
-        var result = clusterIndex;
-        if (result < this.clustering.exampleCount()) {
-            result = this.leafClusterIndexMap[result];
-        }
-        return result;
     }
 
     int getClusterCount() {
@@ -175,12 +164,8 @@ public class DendrogramViewerWidget extends JPanel implements MouseListener, Mou
 
         for (int i = 0; i < this.dendrogram.getEdgeCount(); ++i) {
             var edge = this.dendrogram.getEdge(i);
-
-            var firstIndex = this.dendrogram.getActualClusterIndex(edge[0]);
-            var firstPosition = this.dendrogram.getClusterPosition(firstIndex);
-
-            var secondIndex = this.dendrogram.getActualClusterIndex(edge[1]);
-            var secondPosition = this.dendrogram.getClusterPosition(secondIndex);
+            var firstPosition = this.dendrogram.getClusterPosition(edge[0]);
+            var secondPosition = this.dendrogram.getClusterPosition(edge[1]);
 
             g2d.setColor(Dendrogram.EDGE_COLOR);
             g2d.setStroke(new BasicStroke(Dendrogram.EDGE_LINE_WIDTH));
@@ -188,12 +173,11 @@ public class DendrogramViewerWidget extends JPanel implements MouseListener, Mou
         }
 
         for (int i = 0; i < this.dendrogram.getClusterCount(); ++i) {
-            var index = this.dendrogram.getActualClusterIndex(i);
-            var clusterPosition = this.dendrogram.getClusterPosition(index);
+            var clusterPosition = this.dendrogram.getClusterPosition(i);
 
             var color1 = Dendrogram.CLUSTER_COLOR.darker();
             var color2 = Dendrogram.CLUSTER_COLOR;
-            if (this.selectedClusterIndex == index || this.hoveredClusterIndex == index)
+            if (this.selectedClusterIndex == i || this.hoveredClusterIndex == i)
             {
                 color1 = color1.brighter();
                 color2 = color2.brighter();
@@ -234,10 +218,13 @@ public class DendrogramViewerWidget extends JPanel implements MouseListener, Mou
 
         var mousePosition = this.inverseTransformPoint(event.getPoint());
         for (int i = 0; i < this.dendrogram.getClusterCount(); ++i) {
-            var index = this.dendrogram.getActualClusterIndex(i);
-            var clusterPosition = this.dendrogram.getClusterPosition(index);
+            var clusterPosition = this.dendrogram.getClusterPosition(i);
             if (mousePosition.distance(clusterPosition) <= Dendrogram.CLUSTER_SIZE) {
-                this.hoveredClusterIndex = index;
+                if (i == this.hoveredClusterIndex) {
+                    return;
+                }
+
+                this.hoveredClusterIndex = i;
                 this.repaint();
                 return;
             }
@@ -255,10 +242,13 @@ public class DendrogramViewerWidget extends JPanel implements MouseListener, Mou
 
         var mousePosition = this.inverseTransformPoint(event.getPoint());
         for (int i = 0; i < this.dendrogram.getClusterCount(); ++i) {
-            var index = this.dendrogram.getActualClusterIndex(i);
-            var clusterPosition = this.dendrogram.getClusterPosition(index);
+            var clusterPosition = this.dendrogram.getClusterPosition(i);
             if (mousePosition.distance(clusterPosition) <= Dendrogram.CLUSTER_SIZE) {
-                this.selectedClusterIndex = index;
+                if (i == this.selectedClusterIndex) {
+                    return;
+                }
+
+                this.selectedClusterIndex = i;
                 this.repaint();
                 return;
             }
