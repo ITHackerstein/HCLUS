@@ -1,8 +1,13 @@
 package com.davidecarella.hclus.client.gui;
 
+import com.davidecarella.hclus.client.communication.ServerConnection;
 import com.davidecarella.hclus.common.Clustering;
+import com.davidecarella.hclus.common.Example;
 
 import javax.swing.*;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.geom.AffineTransform;
@@ -16,6 +21,9 @@ class Dendrogram {
     static final int EDGE_LINE_WIDTH = 1;
     static final Color CLUSTER_COLOR = new Color(138, 43, 216);
     static final Color EDGE_COLOR = Color.black;
+    static final Color TOOLTIP_BACKGROUND_COLOR = new Color(200, 200, 200);
+    static final int TOOLTIP_PADDING = 8;
+    static final int TOOLTIP_BORDER_SIZE = 2;
 
     private final Clustering clustering;
     private final Point[] clusterPositions;
@@ -82,12 +90,37 @@ class Dendrogram {
     int[] getEdge(int edgeIndex) {
         return this.edges[edgeIndex];
     }
+
+    List<Integer> getExamplesInCluster(int clusterIndex) {
+        var exampleIndices = new ArrayList<Integer>();
+        var stack = new Stack<Integer>();
+        stack.push(clusterIndex);
+
+        while (!stack.empty()) {
+            int index = stack.pop();
+            if (index < this.clustering.exampleCount()) {
+                exampleIndices.add(index);
+                continue;
+            }
+
+            var createStep = this.clustering.steps()[index - this.clustering.exampleCount()];
+
+            stack.add(createStep.firstClusterIndex());
+            stack.add(createStep.secondClusterIndex());
+        }
+
+        exampleIndices.sort(Integer::compareTo);
+        return exampleIndices;
+    }
 }
 
 public class DendrogramViewerWidget extends JPanel implements MouseListener, MouseMotionListener, MouseWheelListener {
     private Dendrogram dendrogram = null;
     private int selectedClusterIndex = -1;
     private int hoveredClusterIndex = -1;
+    private List<Integer> selectedClusterExampleIndices = null;
+    private List<Example> selectedClusterExamples = null;
+    private String clusterTooltipError = null;
 
     private AffineTransform transform = null;
 
@@ -99,15 +132,17 @@ public class DendrogramViewerWidget extends JPanel implements MouseListener, Mou
         this.addMouseListener(this);
         this.addMouseMotionListener(this);
         this.addMouseWheelListener(this);
+        this.addComponentListener(new ComponentAdapter() {
+            @Override
+            public void componentResized(ComponentEvent e) {
+                repaint();
+            }
+        });
     }
 
     public void setClustering(Clustering clustering) {
         this.dendrogram = new Dendrogram(clustering);
-        repaint();
-    }
-
-    private void fillCenteredCircle(Graphics2D g2d, int x, int y, int radius) {
-        g2d.fillArc(x - radius, y - radius, radius * 2, radius * 2, 0, 360);
+        this.repaint();
     }
 
     private Point inverseTransformPoint(Point point) {
@@ -189,9 +224,95 @@ public class DendrogramViewerWidget extends JPanel implements MouseListener, Mou
             fillCenteredCircle(g2d, clusterPosition.x, clusterPosition.y, Dendrogram.CLUSTER_SIZE - Dendrogram.CLUSTER_BORDER_SIZE);
         }
 
-        // paintClusterInfoTooltip();
         g2d.setTransform(new AffineTransform());
+
+        var normalFont = g2d.getFont();
+        var normalFontMetrics = g2d.getFontMetrics(normalFont);
+        var boldFont = normalFont.deriveFont(Font.BOLD);
+        var boldFontMetrics = g2d.getFontMetrics(boldFont);
+
+        if (this.clusterTooltipError != null) {
+            var width = normalFontMetrics.stringWidth(this.clusterTooltipError);
+            var height = normalFontMetrics.getHeight();
+
+            var borderRectangle = getTooltipRectangleWithBorder(canvasRectangle, width, height);
+            var rectangle = getTooltipRectangle(canvasRectangle, width, height);
+
+            g2d.setColor(Dendrogram.TOOLTIP_BACKGROUND_COLOR.darker());
+            g2d.fill(borderRectangle);
+
+            g2d.setColor(Dendrogram.TOOLTIP_BACKGROUND_COLOR);
+            g2d.fill(rectangle);
+
+            g2d.setColor(Color.RED);
+            g2d.drawString(
+                this.clusterTooltipError,
+                rectangle.x + Dendrogram.TOOLTIP_PADDING, rectangle.y + normalFontMetrics.getHeight()
+            );
+        } else if (this.selectedClusterExampleIndices != null && this.selectedClusterExamples != null) {
+            var title = "Esempi nel cluster selezionato";
+
+            var width = boldFontMetrics.stringWidth(title);
+            var height = boldFontMetrics.getHeight();
+
+            for (int i = 0; i < this.selectedClusterExampleIndices.size(); ++i) {
+                var exampleString = String.format("%d: %s", this.selectedClusterExampleIndices.get(i), this.selectedClusterExamples.get(i));
+                width = Math.max(width, normalFontMetrics.stringWidth(exampleString));
+                height += normalFontMetrics.getHeight();
+            }
+
+            var borderRectangle = getTooltipRectangleWithBorder(canvasRectangle, width, height);
+            var rectangle = getTooltipRectangle(canvasRectangle, width, height);
+
+            g2d.setColor(Dendrogram.TOOLTIP_BACKGROUND_COLOR.darker());
+            g2d.fill(borderRectangle);
+
+            g2d.setColor(Dendrogram.TOOLTIP_BACKGROUND_COLOR);
+            g2d.fill(rectangle);
+
+            var x = rectangle.x + Dendrogram.TOOLTIP_PADDING;
+            var y = rectangle.y + boldFontMetrics.getHeight();
+
+            g2d.setColor(Color.BLACK);
+            g2d.setFont(boldFont);
+            g2d.drawString(title, x, y);
+            g2d.setFont(normalFont);
+            for (int i = 0; i < this.selectedClusterExamples.size(); ++i) {
+                y += normalFontMetrics.getHeight();
+                var exampleString = String.format("%d: %s", this.selectedClusterExampleIndices.get(i), this.selectedClusterExamples.get(i));
+                g2d.drawString(exampleString, x, y);
+            }
+        }
+
         g2d.setClip(oldClip);
+    }
+
+    private void fillCenteredCircle(Graphics2D g2d, int x, int y, int radius) {
+        g2d.fillArc(x - radius, y - radius, radius * 2, radius * 2, 0, 360);
+    }
+
+    private Rectangle getTooltipRectangleWithBorder(Rectangle canvasRectangle, int width, int height) {
+        var widthWithBorderAndPadding = width + (Dendrogram.TOOLTIP_PADDING + Dendrogram.TOOLTIP_BORDER_SIZE) * 2;
+        var heightWithBorderAndPadding = height + (Dendrogram.TOOLTIP_PADDING + Dendrogram.TOOLTIP_BORDER_SIZE) * 2;
+
+        return new Rectangle(
+            canvasRectangle.x + canvasRectangle.width - widthWithBorderAndPadding,
+            canvasRectangle.y + canvasRectangle.height - heightWithBorderAndPadding,
+            widthWithBorderAndPadding,
+            heightWithBorderAndPadding
+        );
+    }
+
+    private Rectangle getTooltipRectangle(Rectangle canvasRectangle, int width, int height) {
+        var widthWithPadding = width + Dendrogram.TOOLTIP_PADDING * 2;
+        var heightWithPadding = height + Dendrogram.TOOLTIP_PADDING * 2;
+
+        return new Rectangle(
+            canvasRectangle.x + canvasRectangle.width - widthWithPadding - Dendrogram.TOOLTIP_BORDER_SIZE,
+            canvasRectangle.y + canvasRectangle.height - heightWithPadding - Dendrogram.TOOLTIP_BORDER_SIZE,
+            widthWithPadding,
+            heightWithPadding
+        );
     }
 
     @Override
@@ -249,6 +370,17 @@ public class DendrogramViewerWidget extends JPanel implements MouseListener, Mou
                 }
 
                 this.selectedClusterIndex = i;
+                var exampleIndices = this.dendrogram.getExamplesInCluster(this.selectedClusterIndex);
+                try {
+                    this.selectedClusterExampleIndices = exampleIndices;
+                    this.selectedClusterExamples = ServerConnection.the().getExamples(this.selectedClusterExampleIndices);
+                    this.clusterTooltipError = null;
+                } catch (IOException exception) {
+                    this.selectedClusterExampleIndices = null;
+                    this.selectedClusterExamples = null;
+                    this.clusterTooltipError = String.format("Errore durante il caricamento degli esempi: %s!", exception.getMessage());
+                }
+
                 this.repaint();
                 return;
             }
