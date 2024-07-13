@@ -1,7 +1,6 @@
 package com.davidecarella.hclus.server;
 
 import com.davidecarella.hclus.common.Clustering;
-import com.davidecarella.hclus.common.ClusteringStep;
 import com.davidecarella.hclus.common.exceptions.ExampleSizeMismatchException;
 import com.davidecarella.hclus.server.clustering.Dataset;
 import com.davidecarella.hclus.server.clustering.HierarchicalClustering;
@@ -67,7 +66,7 @@ public class ClientHandler extends Thread {
                 try {
                     var requestType = dataDeserializer.deserializeInt();
                     switch (requestType) {
-                        case 0 -> loadDataRequest(dataDeserializer, dataSerializer);
+                        case 0 -> loadDatasetRequest(dataDeserializer, dataSerializer);
                         case 1 -> newClusteringRequest(dataDeserializer, dataSerializer);
                         case 2 -> loadClusteringRequest(dataDeserializer, dataSerializer);
                         case 3 -> getExamplesRequest(dataDeserializer, dataSerializer);
@@ -96,12 +95,13 @@ public class ClientHandler extends Thread {
      * @param dataDeserializer il <i>deserializzatore</i> dei dati inviati dal client
      * @param dataSerializer il <i>serializzatore</i> dei dati inviati dal server
      */
-    private void loadDataRequest(DataDeserializer dataDeserializer, DataSerializer dataSerializer) throws IOException {
+    private void loadDatasetRequest(DataDeserializer dataDeserializer, DataSerializer dataSerializer) throws IOException {
         String tableName = dataDeserializer.deserializeString();
 
         try {
             this.dataset = new Dataset(tableName);
             dataSerializer.serializeInt(SUCCESS);
+            dataSerializer.serializeInt(this.dataset.getExampleCount());
         } catch (NoDataException exception) {
             dataSerializer.serializeInt(ERROR);
             dataSerializer.serializeString(walkThrowable(exception));

@@ -74,15 +74,16 @@ public class ServerConnection {
      * Invia la richiesta di caricamento dati dalla tabella con nome {@code tableName} specificato come parametro.
      *
      * @param tableName il nome della tabella da cui caricare i dati
+     * @return il numero di esempi contenuti nel dataset caricato
      * @throws IOException in caso di errori di durante la comunicazione
      */
-    public void loadData(String tableName) throws IOException {
+    public int loadDataset(String tableName) throws IOException {
         this.dataSerializer.serializeInt(0);
         this.dataSerializer.serializeString(tableName);
 
         var responseType = this.dataDeserializer.deserializeInt();
         if (responseType == 0) {
-            return;
+            return this.dataDeserializer.deserializeInt();
         }
 
         if (responseType == 1) {

@@ -10,7 +10,6 @@ import java.io.IOException;
 import java.util.Objects;
 
 /**
- * TODO: Make the load data request return the number of examples in the loaded dataset
  * TODO: Avoid saving using actual path (maybe use the actual database or store using a generated file name in a
  *       specific folder and maybe new request to list saved dendrograms)
  * TODO: New distances (add a method to get the possible distances)
@@ -301,8 +300,8 @@ public class MainWindow extends JFrame {
                 }
 
                 try {
-                    // FIXME: Set the maximum value in the depth model to the number of examples of the loaded dataset
-                    ServerConnection.the().loadData(this.txt_tableName.getText());
+                    var exampleCount = ServerConnection.the().loadDataset(this.txt_tableName.getText());
+                    this.depthModel.setMaximum(exampleCount);
                     this.tbp_controls.setEnabledAt(2, true);
                     JOptionPane.showMessageDialog(this, "Dataset caricato con successo!", this.getTitle(), JOptionPane.INFORMATION_MESSAGE);
                     this.dendrogramViewerWidget.setClustering(null);
