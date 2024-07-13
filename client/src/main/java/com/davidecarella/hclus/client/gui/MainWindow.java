@@ -290,6 +290,7 @@ public class MainWindow extends JFrame {
         this.btn_loadDataset.addActionListener(event -> {
             this.lbl_tableName.setEnabled(false);
             this.txt_tableName.setEnabled(false);
+            this.btn_loadDataset.setEnabled(false);
 
             try {
                 if (ServerConnection.the() == null) {
@@ -309,6 +310,7 @@ public class MainWindow extends JFrame {
             } finally {
                 this.lbl_tableName.setEnabled(true);
                 this.txt_tableName.setEnabled(true);
+                this.btn_loadDataset.setEnabled(true);
             }
         });
 
