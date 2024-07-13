@@ -9,7 +9,6 @@ import java.awt.event.WindowEvent;
 import java.io.IOException;
 
 /**
- * TODO: Do the actual drawing
  * TODO: Load from file
  * TODO: Avoid saving using actual path (maybe use the actual database or store using a generated file name in a
  *       specific folder and maybe new request to list saved dendrograms)

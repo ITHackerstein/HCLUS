@@ -6,12 +6,13 @@ import com.davidecarella.hclus.common.Example;
 
 import javax.swing.*;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.NoninvertibleTransformException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Stack;
 
 class Dendrogram {
@@ -37,33 +38,13 @@ class Dendrogram {
     }
 
     private void initializeArrays() {
-        var stack = new Stack<Integer>();
-        stack.push(this.clusterPositions.length - 1);
-
-        int offset = 0;
-        int edgeIndex = 0;
-        while (!stack.empty()) {
-            var clusterIndex = stack.pop();
-            if (clusterIndex < this.clustering.exampleCount()) {
-                this.clusterPositions[clusterIndex] = new Point((CLUSTER_SPACING + CLUSTER_SIZE * 2) * (offset - this.clustering.exampleCount() / 2), 0);
-                ++offset;
-                continue;
-            }
-
-            var createStep = this.clustering.steps()[clusterIndex - this.clustering.exampleCount()];
-
-            stack.push(createStep.firstClusterIndex());
-            stack.push(createStep.secondClusterIndex());
-
-            this.edges[edgeIndex][0] = clusterIndex;
-            this.edges[edgeIndex][1] = createStep.firstClusterIndex();
-            ++edgeIndex;
-
-            this.edges[edgeIndex][0] = clusterIndex;
-            this.edges[edgeIndex][1] = createStep.secondClusterIndex();
-            ++edgeIndex;
+        for (int clusterIndex = 0; clusterIndex < this.clustering.exampleCount(); ++clusterIndex) {
+            this.clusterPositions[clusterIndex] = new Point((CLUSTER_SPACING + CLUSTER_SIZE * 2) * (clusterIndex - this.clustering.exampleCount() / 2), 0);
         }
 
+        this.reorderLeafs();
+
+        int edgeIndex = 0;
         for (int i = 0; i < this.clustering.steps().length; ++i) {
             var step = this.clustering.steps()[i];
             var firstClusterPosition = this.clusterPositions[step.firstClusterIndex()];
@@ -72,7 +53,114 @@ class Dendrogram {
                 (int) ((firstClusterPosition.getX() + secondClusterPosition.getX()) / 2),
                 (int) (Math.min(firstClusterPosition.getY(), secondClusterPosition.getY()) - CLUSTER_SPACING - CLUSTER_SIZE * 2)
             );
+
+            this.edges[edgeIndex][0] = step.firstClusterIndex();
+            this.edges[edgeIndex][1] = this.clustering.exampleCount() + i;
+            ++edgeIndex;
+            this.edges[edgeIndex][0] = step.secondClusterIndex();
+            this.edges[edgeIndex][1] = this.clustering.exampleCount() + i;
+            ++edgeIndex;
         }
+    }
+
+    private void reorderLeafs() {
+        int[] order;
+        if (this.clustering.exampleCount() == this.clustering.steps().length + 1) {
+            order = findLeafOrderForCompleteDendrogram();
+        } else {
+            order = findLeafOrderForPartialDendrogram();
+        }
+
+        var oldClusterPositions = Arrays.copyOf(this.clusterPositions, this.clusterPositions.length);
+        for (int i = 0; i < this.clusterPositions.length; ++i) {
+            if (i < order.length && order[i] != -1) {
+                this.clusterPositions[order[i]] = oldClusterPositions[i];
+            } else {
+                this.clusterPositions[i] = oldClusterPositions[i];
+            }
+        }
+    }
+
+    private int[] findLeafOrderForCompleteDendrogram() {
+        var stack = new Stack<Integer>();
+        stack.push(this.clusterPositions.length - 1);
+
+        var order = new int[this.clustering.exampleCount()];
+        int orderIndex = 0;
+
+        while (!stack.empty()) {
+            int clusterIndex = stack.pop();
+            if (clusterIndex < this.clustering.exampleCount()) {
+                order[orderIndex++] = clusterIndex;
+                continue;
+            }
+
+            pushClusterChildrenInOrder(stack, clusterIndex);
+        }
+
+        return order;
+    }
+
+    private int[] findLeafOrderForPartialDendrogram() {
+        var stack = new Stack<Integer>();
+        for (int i = 0; i < this.clustering.steps().length; ++i) {
+            stack.push(this.clustering.exampleCount() + i);
+        }
+
+        stack.sort((a, b) -> {
+            var aSize = this.clustering.steps()[a - this.clustering.exampleCount()].newClusterSize();
+            var bSize = this.clustering.steps()[b - this.clustering.exampleCount()].newClusterSize();
+            return aSize - bSize;
+        });
+
+        var visitedLeafs = new boolean[this.clustering.exampleCount()];
+        var order = new int[this.clustering.exampleCount()];
+        var orderIndex = 0;
+
+        while (!stack.empty()) {
+            int clusterIndex = stack.pop();
+            if (clusterIndex < this.clustering.exampleCount()) {
+                if (!visitedLeafs[clusterIndex]) {
+                    order[orderIndex++] = clusterIndex;
+                    visitedLeafs[clusterIndex] = true;
+                }
+
+                continue;
+            }
+
+            pushClusterChildrenInOrder(stack, clusterIndex);
+        }
+
+        for (int i = 0; i < this.clustering.exampleCount(); ++i) {
+            if (!visitedLeafs[i]) {
+                order[orderIndex++] = i;
+            }
+        }
+
+        return order;
+    }
+
+    private void pushClusterChildrenInOrder(Stack<Integer> stack, int clusterIndex) {
+        var createStep = this.clustering.steps()[clusterIndex - this.clustering.exampleCount()];
+
+        int firstClusterSize = getClusterSize(createStep.firstClusterIndex());
+        int secondClusterSize = getClusterSize(createStep.secondClusterIndex());
+
+        if (firstClusterSize < secondClusterSize) {
+            stack.push(createStep.firstClusterIndex());
+            stack.push(createStep.secondClusterIndex());
+        } else {
+            stack.push(createStep.secondClusterIndex());
+            stack.push(createStep.firstClusterIndex());
+        }
+    }
+
+    private int getClusterSize(int clusterIndex) {
+        if (clusterIndex < this.clustering.exampleCount()) {
+            return 1;
+        }
+
+        return this.clustering.steps()[clusterIndex - this.clustering.exampleCount()].newClusterSize();
     }
 
     int getClusterCount() {
@@ -114,7 +202,7 @@ class Dendrogram {
     }
 }
 
-public class DendrogramViewerWidget extends JPanel implements MouseListener, MouseMotionListener, MouseWheelListener {
+public class DendrogramViewerWidget extends JPanel implements MouseListener, MouseMotionListener, MouseWheelListener, ComponentListener {
     private Dendrogram dendrogram = null;
     private int selectedClusterIndex = -1;
     private int hoveredClusterIndex = -1;
@@ -132,16 +220,16 @@ public class DendrogramViewerWidget extends JPanel implements MouseListener, Mou
         this.addMouseListener(this);
         this.addMouseMotionListener(this);
         this.addMouseWheelListener(this);
-        this.addComponentListener(new ComponentAdapter() {
-            @Override
-            public void componentResized(ComponentEvent e) {
-                repaint();
-            }
-        });
+        this.addComponentListener(this);
     }
 
     public void setClustering(Clustering clustering) {
         this.dendrogram = new Dendrogram(clustering);
+        this.selectedClusterIndex = -1;
+        this.hoveredClusterIndex = -1;
+        this.selectedClusterExampleIndices = null;
+        this.selectedClusterExamples = null;
+        this.clusterTooltipError = null;
         this.repaint();
     }
 
@@ -432,6 +520,26 @@ public class DendrogramViewerWidget extends JPanel implements MouseListener, Mou
         newTransform.concatenate(this.transform);
         this.transform = newTransform;
 
+        this.repaint();
+    }
+
+    @Override
+    public void componentResized(ComponentEvent event) {
+        this.repaint();
+    }
+
+    @Override
+    public void componentMoved(ComponentEvent event) {
+        this.repaint();
+    }
+
+    @Override
+    public void componentShown(ComponentEvent event) {
+        this.repaint();
+    }
+
+    @Override
+    public void componentHidden(ComponentEvent event) {
         this.repaint();
     }
 }
