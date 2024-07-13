@@ -210,7 +210,7 @@ public class ClientHandler extends Thread {
         var indexCount = dataDeserializer.deserializeInt();
         while (indexCount-- > 0) {
             var index = dataDeserializer.deserializeInt();
-            if (index < 0 || index >= dataset.getNumberOfExamples()) {
+            if (index < 0 || index >= dataset.getExampleCount()) {
                 dataSerializer.serializeInt(ERROR);
                 dataSerializer.serializeString("Uno o più indici non validi!");
                 return;

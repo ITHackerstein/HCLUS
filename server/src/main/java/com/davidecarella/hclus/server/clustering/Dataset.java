@@ -38,7 +38,7 @@ public class Dataset {
      *
      * @return il numero di esempi contenuti
      */
-    public int getNumberOfExamples() {
+    public int getExampleCount() {
         return this.data.size();
     }
 

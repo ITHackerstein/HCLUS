@@ -35,7 +35,7 @@ public class HierarchicalClustering {
      * @throws ExampleSizeMismatchException quando ci sono due esempi con lunghezze diverse
      */
     public static Clustering mine(Dataset dataset, ClusterDistance distanceCalculator, int depth) throws InvalidDepthException, ExampleSizeMismatchException {
-        final int n = dataset.getNumberOfExamples();
+        final int n = dataset.getExampleCount();
 
         if (depth <= 0 || depth > n) {
             throw new InvalidDepthException("La profondità del dendrogramma deve essere al massimo pari al numero di esempi nel dataset");
@@ -43,7 +43,7 @@ public class HierarchicalClustering {
 
         var distancesBetweenClusters = dataset.computeDistanceMatrix();
         var steps = new ClusteringStep[depth - 1];
-        var indexMap = new int[dataset.getNumberOfExamples()];
+        var indexMap = new int[dataset.getExampleCount()];
         for (int i = 0; i < n; i++) {
             indexMap[i] = i;
         }
@@ -67,8 +67,8 @@ public class HierarchicalClustering {
                 }
             }
 
-            var firstClusterSize = indexMap[firstCluster] < dataset.getNumberOfExamples() ? 1 : steps[indexMap[firstCluster] - n].newClusterSize();
-            var secondClusterSize = indexMap[secondCluster] < dataset.getNumberOfExamples() ? 1 : steps[indexMap[secondCluster] - n].newClusterSize();
+            var firstClusterSize = indexMap[firstCluster] < dataset.getExampleCount() ? 1 : steps[indexMap[firstCluster] - n].newClusterSize();
+            var secondClusterSize = indexMap[secondCluster] < dataset.getExampleCount() ? 1 : steps[indexMap[secondCluster] - n].newClusterSize();
 
             steps[k] = new ClusteringStep(
                 Math.min(indexMap[firstCluster], indexMap[secondCluster]),
@@ -100,7 +100,7 @@ public class HierarchicalClustering {
             }
         }
 
-        return new Clustering(dataset.getNumberOfExamples(), steps);
+        return new Clustering(dataset.getExampleCount(), steps);
     }
 
     /**
@@ -118,7 +118,7 @@ public class HierarchicalClustering {
              var dataDeserializer = new DataDeserializer(fileInputStream))
         {
             var depth = dataDeserializer.deserializeInt();
-            if (depth <= 0 || depth > dataset.getNumberOfExamples()) {
+            if (depth <= 0 || depth > dataset.getExampleCount()) {
                 throw new InvalidDepthException("Profondità non valida!");
             }
 
@@ -126,15 +126,15 @@ public class HierarchicalClustering {
             for (int i = 0; i < depth - 1; ++i) {
                 var step = dataDeserializer.deserializeClusteringStep();
                 // NOTE: Two cluster cannot be joined if they haven't been generated yet.
-                if (step.firstClusterIndex() < 0 || step.firstClusterIndex() > i + dataset.getNumberOfExamples() - 1 ||
-                    step.secondClusterIndex() < 0 || step.secondClusterIndex() > i + dataset.getNumberOfExamples() - 1)
+                if (step.firstClusterIndex() < 0 || step.firstClusterIndex() > i + dataset.getExampleCount() - 1 ||
+                    step.secondClusterIndex() < 0 || step.secondClusterIndex() > i + dataset.getExampleCount() - 1)
                 {
                     throw new InvalidClusterIndexException("Indice del cluster non valido!");
                 }
                 steps[i] = step;
             }
 
-            return new Clustering(dataset.getNumberOfExamples(), steps);
+            return new Clustering(dataset.getExampleCount(), steps);
         }
     }
 
