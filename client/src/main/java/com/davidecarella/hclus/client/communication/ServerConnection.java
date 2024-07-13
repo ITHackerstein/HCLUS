@@ -129,7 +129,7 @@ public class ServerConnection {
      * @return il dendrogramma caricato dal file
      * @throws IOException in caso di errori durante la comunicazione
      */
-    public Clustering loadDendrogram(String fileName) throws IOException {
+    public Clustering loadClustering(String fileName) throws IOException {
         this.dataSerializer.serializeInt(2);
         this.dataSerializer.serializeString(fileName);
 

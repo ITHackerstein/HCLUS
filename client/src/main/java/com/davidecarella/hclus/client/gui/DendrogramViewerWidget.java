@@ -224,7 +224,7 @@ public class DendrogramViewerWidget extends JPanel implements MouseListener, Mou
     }
 
     public void setClustering(Clustering clustering) {
-        this.dendrogram = new Dendrogram(clustering);
+        this.dendrogram = clustering == null ? null : new Dendrogram(clustering);
         this.selectedClusterIndex = -1;
         this.hoveredClusterIndex = -1;
         this.selectedClusterExampleIndices = null;

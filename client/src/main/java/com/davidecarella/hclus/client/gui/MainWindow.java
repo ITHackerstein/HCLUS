@@ -1,391 +1,361 @@
 package com.davidecarella.hclus.client.gui;
 
 import com.davidecarella.hclus.client.communication.ServerConnection;
+import com.davidecarella.hclus.common.ClusterDistance;
+import com.davidecarella.hclus.common.Clustering;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
 import java.io.IOException;
+import java.util.Objects;
 
 /**
- * TODO: Load from file
+ * TODO: Make the load data request return the number of examples in the loaded dataset
  * TODO: Avoid saving using actual path (maybe use the actual database or store using a generated file name in a
  *       specific folder and maybe new request to list saved dendrograms)
  * TODO: New distances (add a method to get the possible distances)
  * TODO: Fix comments all around the code
- *
- * <p>La finestra principale del client.
- *
- * <p>È divisa in 4 sezioni:
- * <ul>
- *     <li>la sezione di connessione: consente all'utente di inserire i dati necessari per connettersi al server;</li>
- *     <li>
- *         la sezione dei dati: consente all'utente, connesso al server, di inserire il nome della tabella del server da
- *                              cui caricare i dati;
- *     </li>
- *     <li>
- *         la sezione delle impostazioni: consente all'utente, connesso al server, di inserire le impostazioni per poter
- *                                        creare un nuovo dendrogramma;
- *     </li>
- *     <li>
- *         la sezione di visualizzazione: in cui viene visualizzato il dendrogramma.
- *     </li>
- * </ul>
  */
 public class MainWindow extends JFrame {
-    /**
-     * Il campo di testo per l'inserimento dell'indirizzo del server.
-     */
+    private JTabbedPane tbp_controls;
+    private JPanel pnl_connection;
+    private JLabel lbl_address;
     private JTextField txt_address;
-
-    /**
-     * Il campo di testo per l'inserimento della porta del server.
-     */
+    private JLabel lbl_port;
     private JTextField txt_port;
-
-    /**
-     * Il widget dello stato di connessione al server.
-     */
     private ConnectionStatusWidget connectionStatusWidget;
-
-    /**
-     * Il pulsante per connettersi al server.
-     */
     private JButton btn_connect;
-
-    /**
-     * Il campo di testo per l'inserimento del nome della tabella da cui caricare i dati.
-     */
+    private JPanel pnl_dataset;
+    private JLabel lbl_tableName;
     private JTextField txt_tableName;
-
-    /**
-     * Il pulsante per caricare i dati dal server.
-     */
-    private JButton btn_loadData;
-
-    /**
-     * L'opzione per il selezionamento della distanza single-link.
-     */
-    private JRadioButton rdb_singleLinkDistance;
-
-    /**
-     * L'opzione per il selezionamento della distanza average-link.
-     */
-    private JRadioButton rdb_averageLinkDistance;
-
-    /**
-     * Il modello dati di {@link MainWindow#spn_depth}.
-     */
-    private SpinnerNumberModel depthModel;
-
-    /**
-     * Il campo numerico per l'inserimento della profondità.
-     */
-    private JSpinner spn_depth;
-
-    /**
-     * Il campo di testo per l'inserimento del nome del file.
-     */
+    private JButton btn_loadDataset;
+    private JPanel pnl_clustering;
+    private JLabel lbl_newClustering;
+    private JCheckBox chk_newClustering;
+    private JLabel lbl_fileName;
     private JTextField txt_fileName;
-
-    /**
-     * IL pulsante per creare un nuovo dendrogramma.
-     */
+    private JLabel lbl_distance;
+    private DefaultComboBoxModel<ClusterDistance> distanceModel;
+    private JComboBox<ClusterDistance> cmb_distance;
+    private JLabel lbl_depth;
+    private SpinnerNumberModel depthModel;
+    private JSpinner spn_depth;
     private JButton btn_mine;
-
-    /**
-     * IL widget per la visualizzazione del dendrogramma.
-     */
     private DendrogramViewerWidget dendrogramViewerWidget;
 
-    /**
-     * <p>Costruttore della finestra.
-     *
-     * <p>Crea la finestra impostandone il suo layout e la visualizza.
-     */
     public MainWindow() {
         super("HCLUS - Client");
         this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
-        this.initializeComponents();
-        this.initializeListeners();
+        this.createConnectionTab();
+        this.createDatasetTab();
+        this.createClusteringTab();
+        this.dendrogramViewerWidget = new DendrogramViewerWidget();
 
-        var pnl_main = new JPanel();
-        pnl_main.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
-        pnl_main.setLayout(new BoxLayout(pnl_main, BoxLayout.PAGE_AXIS));
+        this.tbp_controls = new JTabbedPane();
+        this.tbp_controls.addTab("Connessione", this.pnl_connection);
+        this.tbp_controls.addTab("Dataset", this.pnl_dataset);
+        this.tbp_controls.addTab("Clustering", this.pnl_clustering);
+        this.tbp_controls.setEnabledAt(1, false);
+        this.tbp_controls.setEnabledAt(2, false);
 
-        pnl_main.add(createConnectionPanel());
-        pnl_main.add(createDataSourcePanel());
-        pnl_main.add(createMineSettingsPanel());
-        pnl_main.add(this.dendrogramViewerWidget);
+        this.getContentPane().setLayout(new BoxLayout(this.getContentPane(), BoxLayout.PAGE_AXIS));
+        this.getContentPane().add(this.tbp_controls);
+        this.getContentPane().add(this.dendrogramViewerWidget);
 
-        this.add(pnl_main);
+        this.createEventListeners();
+
+        this.setMinimumSize(new Dimension(400, 600));
         this.pack();
-
-        this.setMinimumSize(this.getPreferredSize());
-        this.setResizable(true);
         this.setLocationRelativeTo(null);
         this.setVisible(true);
     }
 
-    /**
-     * Metodo utilizzato per inizializzare ogni componente della finestra.
-     */
-    private void initializeComponents() {
+    private void createConnectionTab() {
+        this.lbl_address = new JLabel("Indirizzo");
         this.txt_address = new JTextField();
+        this.lbl_port = new JLabel("Porta");
         this.txt_port = new JTextField();
-        this.connectionStatusWidget = new ConnectionStatusWidget();
         this.btn_connect = new JButton("Connetti");
+        this.connectionStatusWidget = new ConnectionStatusWidget();
 
-        this.txt_tableName = new JTextField();
-        this.txt_tableName.setEnabled(false);
-        this.btn_loadData = new JButton("Carica");
-        this.btn_loadData.setEnabled(false);
+        this.pnl_connection = new JPanel();
+        this.pnl_connection.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+        var layout = new GridBagLayout();
+        layout.columnWidths = new int[]{0, 0, 0};
+        layout.rowHeights = new int[]{0, 0, 0, 0};
+        layout.columnWeights = new double[]{0.0, 1.0, 1e-4};
+        layout.rowWeights = new double[]{0.0, 0.0, 0.0, 1e-4};
+        this.pnl_connection.setLayout(layout);
 
-        this.rdb_singleLinkDistance = new JRadioButton("Single-Link");
-        this.rdb_singleLinkDistance.setEnabled(false);
-        this.rdb_averageLinkDistance = new JRadioButton("Average-Link");
-        this.rdb_averageLinkDistance.setEnabled(false);
-        var buttonGroup = new ButtonGroup();
-        buttonGroup.add(this.rdb_singleLinkDistance);
-        buttonGroup.add(this.rdb_averageLinkDistance);
+        this.pnl_connection.add(this.lbl_address, new GridBagConstraints(
+            0, 0, 1, 1, 0.0, 0.0,
+            GridBagConstraints.EAST, GridBagConstraints.VERTICAL,
+            new Insets(0, 0, 5, 5),
+            0, 0
+        ));
 
-        this.depthModel = new SpinnerNumberModel(1, 1, Integer.MAX_VALUE, 1);
-        this.spn_depth = new JSpinner(this.depthModel);
-        this.spn_depth.setEnabled(false);
-        this.txt_fileName = new JTextField();
-        this.txt_fileName.setEnabled(false);
-        this.btn_mine = new JButton("Estrai");
-        this.btn_mine.setEnabled(false);
+        this.pnl_connection.add(this.txt_address, new GridBagConstraints(
+            1, 0, 1, 1, 0.0, 0.0,
+            GridBagConstraints.CENTER, GridBagConstraints.BOTH,
+            new Insets(0, 0, 5, 0),
+            0, 0
+        ));
 
-        this.dendrogramViewerWidget = new DendrogramViewerWidget();
+        this.pnl_connection.add(this.lbl_port, new GridBagConstraints(
+            0, 1, 1, 1, 0.0, 0.0,
+            GridBagConstraints.EAST, GridBagConstraints.VERTICAL,
+            new Insets(0, 0, 5, 5),
+            0, 0
+        ));
+
+        this.pnl_connection.add(this.txt_port, new GridBagConstraints(
+            1, 1, 1, 1, 0.0, 0.0,
+            GridBagConstraints.CENTER, GridBagConstraints.BOTH,
+            new Insets(0, 0, 5, 0),
+            0, 0
+        ));
+
+        this.pnl_connection.add(this.connectionStatusWidget, new GridBagConstraints(
+            0, 2, 1, 1, 0.0, 0.0,
+            GridBagConstraints.EAST, GridBagConstraints.CENTER,
+            new Insets(0, 0, 0, 5), 0, 0
+        ));
+
+        this.pnl_connection.add(this.btn_connect, new GridBagConstraints(
+            1, 2, 1, 1, 0.0, 0.0,
+            GridBagConstraints.CENTER, GridBagConstraints.BOTH,
+            new Insets(0, 0, 0, 0), 0, 0
+        ));
     }
 
-    /**
-     * Metodo utilizzato per inizializzare gli ascoltatori degli eventi per ogni elemento.
-     */
-    private void initializeListeners() {
+    private void createDatasetTab() {
+        this.lbl_tableName = new JLabel("Tabella");
+        this.txt_tableName = new JTextField();
+        this.btn_loadDataset = new JButton("Carica");
+
+        this.pnl_dataset = new JPanel();
+        this.pnl_dataset.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+        var layout = new GridBagLayout();
+        layout.columnWidths = new int[]{0, 0, 0};
+        layout.rowHeights = new int[]{0, 0, 0};
+        layout.columnWeights = new double[]{0.0, 1.0, 1e-4};
+        layout.rowWeights = new double[]{0.0, 0.0, 1e-4};
+        this.pnl_dataset.setLayout(layout);
+
+        this.pnl_dataset.add(this.lbl_tableName, new GridBagConstraints(
+            0, 0, 1, 1, 0.0, 0.0,
+            GridBagConstraints.EAST, GridBagConstraints.VERTICAL,
+            new Insets(0, 0, 5, 5), 0, 0
+        ));
+
+        this.pnl_dataset.add(this.txt_tableName, new GridBagConstraints(
+            1, 0, 1, 1, 0.0, 0.0,
+            GridBagConstraints.CENTER, GridBagConstraints.BOTH,
+            new Insets(0, 0, 5, 0), 0, 0
+        ));
+
+        this.pnl_dataset.add(this.btn_loadDataset, new GridBagConstraints(
+            1, 1, 1, 1, 0.0, 0.0,
+            GridBagConstraints.CENTER, GridBagConstraints.BOTH,
+            new Insets(0, 0, 0, 0), 0, 0
+        ));
+    }
+
+    private void createClusteringTab() {
+        this.lbl_newClustering = new JLabel("Nuovo clustering");
+        this.chk_newClustering = new JCheckBox();
+        this.chk_newClustering.setSelected(true);
+        this.lbl_fileName = new JLabel("File");
+        this.txt_fileName = new JTextField();
+        this.lbl_distance = new JLabel("Distanza");
+        // FIXME: This data should come directly from the server
+        this.distanceModel = new DefaultComboBoxModel<>(new ClusterDistance[]{
+            new ClusterDistance(0, "Single-Link"),
+            new ClusterDistance(1, "Average-Link")
+        });
+        this.cmb_distance = new JComboBox<>(this.distanceModel);
+        this.lbl_depth = new JLabel("Profondità");
+        this.depthModel = new SpinnerNumberModel(1, 1, Integer.MAX_VALUE, 1);
+        this.spn_depth = new JSpinner(depthModel);
+        this.btn_mine = new JButton("Estrai");
+
+        this.pnl_clustering = new JPanel();
+        this.pnl_clustering.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+        var layout = new GridBagLayout();
+        layout.columnWidths = new int[]{0, 0, 0};
+        layout.rowHeights = new int[]{0, 0, 0, 0, 0, 0};
+        layout.columnWeights = new double[]{0.0, 1.0, 1e-4};
+        layout.rowWeights = new double[]{0.0, 0.0, 0.0, 0.0, 0.0, 1e-4};
+        this.pnl_clustering.setLayout(layout);
+
+        this.pnl_clustering.add(this.lbl_newClustering, new GridBagConstraints(
+            0, 0, 1, 1, 0.0, 0.0,
+            GridBagConstraints.EAST, GridBagConstraints.VERTICAL,
+            new Insets(0, 0, 5, 5), 0, 0
+        ));
+
+        this.pnl_clustering.add(this.chk_newClustering, new GridBagConstraints(
+            1, 0, 1, 1, 0.0, 0.0,
+            GridBagConstraints.CENTER, GridBagConstraints.BOTH,
+            new Insets(0, 0, 5, 5), 0, 0
+        ));
+
+        this.pnl_clustering.add(this.lbl_fileName, new GridBagConstraints(
+            0, 1, 1, 1, 0.0, 0.0,
+            GridBagConstraints.EAST, GridBagConstraints.VERTICAL,
+            new Insets(0, 0, 5, 5), 0, 0
+        ));
+
+        this.pnl_clustering.add(this.txt_fileName, new GridBagConstraints(
+            1, 1, 1, 1, 0.0, 0.0,
+            GridBagConstraints.CENTER, GridBagConstraints.BOTH,
+            new Insets(0, 0, 5, 0), 0, 0
+        ));
+
+        this.pnl_clustering.add(this.lbl_distance, new GridBagConstraints(
+            0, 2, 1, 1, 0.0, 0.0,
+            GridBagConstraints.EAST, GridBagConstraints.VERTICAL,
+            new Insets(0, 0, 5, 5), 0, 0
+        ));
+
+        this.pnl_clustering.add(this.cmb_distance, new GridBagConstraints(
+            1, 2, 1, 1, 0.0, 0.0,
+            GridBagConstraints.CENTER, GridBagConstraints.BOTH,
+            new Insets(0, 0, 5, 0), 0, 0
+        ));
+
+        this.pnl_clustering.add(this.lbl_depth, new GridBagConstraints(
+            0, 3, 1, 1, 0.0, 0.0,
+            GridBagConstraints.EAST, GridBagConstraints.VERTICAL,
+            new Insets(0, 0, 5, 5), 0, 0
+        ));
+
+        this.pnl_clustering.add(this.spn_depth, new GridBagConstraints(
+            1, 3, 1, 1, 0.0, 0.0,
+            GridBagConstraints.CENTER, GridBagConstraints.BOTH,
+            new Insets(0, 0, 5, 0), 0, 0
+        ));
+
+        this.pnl_clustering.add(this.btn_mine, new GridBagConstraints(
+            1, 4, 1, 1, 0.0, 0.0,
+            GridBagConstraints.CENTER, GridBagConstraints.BOTH,
+            new Insets(0, 0, 0, 0), 0, 0
+        ));
+    }
+
+    private void createEventListeners() {
         this.btn_connect.addActionListener(event -> {
-            this.btn_connect.setEnabled(false);
-            this.connectionStatusWidget.setStatus(ConnectionStatusWidget.Status.CONNECTING);
-
-            var address = this.txt_address.getText();
-            var portString = this.txt_port.getText();
-            int port;
             try {
-                port = Integer.parseInt(portString);
+                this.lbl_address.setEnabled(false);
+                this.txt_address.setEnabled(false);
+                this.lbl_port.setEnabled(false);
+                this.txt_port.setEnabled(false);
+                this.btn_connect.setEnabled(false);
+                this.connectionStatusWidget.setStatus(ConnectionStatusWidget.Status.CONNECTING);
 
-                if (port < 1 || port > 65535) {
+                var address = this.txt_address.getText();
+                var portString = this.txt_port.getText();
+
+                int port;
+                try {
+                    port = Integer.parseInt(portString);
+                } catch (NumberFormatException exception) {
                     this.connectionStatusWidget.setStatus(ConnectionStatusWidget.Status.NOT_CONNECTED);
-                    this.btn_connect.setEnabled(true);
                     JOptionPane.showMessageDialog(this, "Porta non valida!", this.getTitle(), JOptionPane.ERROR_MESSAGE);
                     return;
                 }
-            } catch (NumberFormatException exception) {
-                this.connectionStatusWidget.setStatus(ConnectionStatusWidget.Status.NOT_CONNECTED);
-                this.btn_connect.setEnabled(true);
-                JOptionPane.showMessageDialog(this, "Porta non valida!", this.getTitle(), JOptionPane.ERROR_MESSAGE);
-                return;
-            }
 
-            try {
-                ServerConnection.open(address, port);
-                this.connectionStatusWidget.setStatus(ConnectionStatusWidget.Status.CONNECTED);
-                this.btn_connect.setEnabled(false);
-                this.txt_tableName.setEnabled(true);
-                this.btn_loadData.setEnabled(true);
-            } catch (IOException exception) {
-                this.connectionStatusWidget.setStatus(ConnectionStatusWidget.Status.NOT_CONNECTED);
-                this.btn_connect.setEnabled(true);
-                JOptionPane.showMessageDialog(this, "Errore durante la connessione: " + exception.getMessage(), this.getTitle(), JOptionPane.ERROR_MESSAGE);
-            }
-        });
-
-        this.btn_loadData.addActionListener(event -> {
-            this.btn_loadData.setEnabled(false);
-
-            try {
-                ServerConnection.the().loadData(this.txt_tableName.getText());
-                JOptionPane.showMessageDialog(this, "Dati caricati con successo!", this.getTitle(), JOptionPane.INFORMATION_MESSAGE);
-
-                this.rdb_singleLinkDistance.setEnabled(true);
-                this.rdb_averageLinkDistance.setEnabled(true);
-                this.spn_depth.setEnabled(true);
-                this.txt_fileName.setEnabled(true);
-                this.btn_mine.setEnabled(true);
-            } catch (IOException exception) {
-                JOptionPane.showMessageDialog(this, "Errore durante il caricamento dei dati: " + exception.getMessage(), this.getTitle(), JOptionPane.ERROR_MESSAGE);
-            }
-
-            this.btn_loadData.setEnabled(true);
-        });
-
-        this.btn_mine.addActionListener(event -> {
-            this.btn_mine.setEnabled(false);
-
-            try {
-                if (!this.rdb_singleLinkDistance.isSelected() && !this.rdb_averageLinkDistance.isSelected()) {
-                    JOptionPane.showMessageDialog(this, "Bisogna selezionare un tipo di distanza!", this.getTitle(), JOptionPane.ERROR_MESSAGE);
+                if (port <= 0 || port > 65535) {
+                    this.connectionStatusWidget.setStatus(ConnectionStatusWidget.Status.NOT_CONNECTED);
+                    JOptionPane.showMessageDialog(this, "Porta non valida!", this.getTitle(), JOptionPane.ERROR_MESSAGE);
                     return;
                 }
 
-                int depth = (int) this.depthModel.getValue();
-                int distanceType = this.rdb_singleLinkDistance.isSelected() ? 0 : 1;
-                var clustering = ServerConnection.the().newClustering(depth, distanceType, this.txt_fileName.getText());
-                this.dendrogramViewerWidget.setClustering(clustering);
-                JOptionPane.showMessageDialog(this, "Dendrogramma creato con successo!", this.getTitle(), JOptionPane.INFORMATION_MESSAGE);
-            } catch (IOException exception) {
-                JOptionPane.showMessageDialog(this, "Errore durante la creazione del dendrogramma: " + exception.getMessage(), this.getTitle(), JOptionPane.ERROR_MESSAGE);
-            }
-
-            this.btn_mine.setEnabled(true);
-        });
-
-        this.addWindowListener(new WindowAdapter() {
-            @Override
-            public void windowClosed(WindowEvent event) {
                 try {
-                    ServerConnection.the().closeConnection();
-                } catch (IOException ignored) {
-                    // NOTE: At this point there's not much we can do
+                    ServerConnection.open(address, port);
+                    this.connectionStatusWidget.setStatus(ConnectionStatusWidget.Status.CONNECTED);
+                    this.tbp_controls.setEnabledAt(1, true);
+                    // FIXME: Send list distance methods request
+                } catch (IOException exception) {
+                    this.connectionStatusWidget.setStatus(ConnectionStatusWidget.Status.NOT_CONNECTED);
+                    JOptionPane.showMessageDialog(this, String.format("Errore durante la connessione: %s!", exception.getMessage()), this.getTitle(), JOptionPane.ERROR_MESSAGE);
                 }
+            } finally {
+                this.lbl_address.setEnabled(true);
+                this.txt_address.setEnabled(true);
+                this.lbl_port.setEnabled(true);
+                this.txt_port.setEnabled(true);
+                this.btn_connect.setEnabled(true);
+            }
+        });
+
+        this.btn_loadDataset.addActionListener(event -> {
+            this.lbl_tableName.setEnabled(false);
+            this.txt_tableName.setEnabled(false);
+
+            try {
+                if (ServerConnection.the() == null) {
+                    JOptionPane.showMessageDialog(this, "Nessuna connessione al server!", this.getTitle(), JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+
+                try {
+                    // FIXME: Set the maximum value in the depth model to the number of examples of the loaded dataset
+                    ServerConnection.the().loadData(this.txt_tableName.getText());
+                    this.tbp_controls.setEnabledAt(2, true);
+                    JOptionPane.showMessageDialog(this, "Dataset caricato con successo!", this.getTitle(), JOptionPane.INFORMATION_MESSAGE);
+                    this.dendrogramViewerWidget.setClustering(null);
+                } catch (IOException exception) {
+                    JOptionPane.showMessageDialog(this, String.format("Errore durante il caricamento del dataset: %s!", exception.getMessage()), this.getTitle(), JOptionPane.INFORMATION_MESSAGE);
+                }
+            } finally {
+                this.lbl_tableName.setEnabled(true);
+                this.txt_tableName.setEnabled(true);
+            }
+        });
+
+        this.chk_newClustering.addItemListener(event -> {
+            if (this.chk_newClustering.isSelected()) {
+                this.lbl_distance.setEnabled(true);
+                this.cmb_distance.setEnabled(true);
+                this.lbl_depth.setEnabled(true);
+                this.spn_depth.setEnabled(true);
+            } else {
+                this.lbl_distance.setEnabled(false);
+                this.cmb_distance.setEnabled(false);
+                this.lbl_depth.setEnabled(false);
+                this.spn_depth.setEnabled(false);
+            }
+        });
+
+        this.btn_mine.addActionListener(event -> {
+            var depth = (int) this.depthModel.getValue();
+            var distanceId = ((ClusterDistance) Objects.requireNonNull(this.cmb_distance.getSelectedItem())).id();
+            var fileName = this.txt_fileName.getText();
+
+            try {
+                Clustering clustering;
+                if (this.chk_newClustering.isSelected()) {
+                    clustering = ServerConnection.the().newClustering(depth, distanceId, fileName);
+                } else {
+                    clustering = ServerConnection.the().loadClustering(fileName);
+                }
+
+                this.dendrogramViewerWidget.setClustering(clustering);
+            } catch (IOException exception) {
+                String message;
+                if (this.chk_newClustering.isSelected()) {
+                    message = String.format("Errore durante la creazione del nuovo clustering: %s", exception.getMessage());
+                } else {
+                    message = String.format("Errore durante il caricamento del clustering: %s", exception.getMessage());
+                }
+
+                JOptionPane.showMessageDialog(this, message, this.getTitle(), JOptionPane.ERROR_MESSAGE);
             }
         });
     }
 
-    /**
-     * Metodo per la creazione della sezione di connessione.
-     *
-     * @return la sezione di connessione
-     */
-    private JPanel createConnectionPanel() {
-        this.txt_address.setMaximumSize(new Dimension(Integer.MAX_VALUE, this.txt_address.getPreferredSize().height));
-        this.txt_port.setMaximumSize(new Dimension(Integer.MAX_VALUE, this.txt_port.getPreferredSize().height));
-
-        var pnl_address = new JPanel();
-        pnl_address.setLayout(new BoxLayout(pnl_address, BoxLayout.LINE_AXIS));
-
-        pnl_address.add(new JLabel("Indirizzo"));
-        pnl_address.add(Box.createRigidArea(new Dimension(5, 0)));
-        pnl_address.add(this.txt_address);
-
-        var pnl_port = new JPanel();
-        pnl_port.setLayout(new BoxLayout(pnl_port, BoxLayout.LINE_AXIS));
-
-        pnl_port.add(new JLabel("Porta"));
-        pnl_port.add(Box.createRigidArea(new Dimension(5, 0)));
-        pnl_port.add(this.txt_port);
-
-        var pnl_connectionSettings = new JPanel();
-        pnl_connectionSettings.setLayout(new BoxLayout(pnl_connectionSettings, BoxLayout.PAGE_AXIS));
-
-        pnl_connectionSettings.add(pnl_address);
-        pnl_connectionSettings.add(pnl_port);
-
-        var pnl_connect = new JPanel();
-        pnl_connect.setLayout(new BoxLayout(pnl_connect, BoxLayout.LINE_AXIS));
-
-        pnl_connect.add(this.btn_connect);
-        pnl_connect.add(Box.createRigidArea(new Dimension(5, 0)));
-        pnl_connect.add(this.connectionStatusWidget);
-
-        var pnl_connection = new JPanel();
-        pnl_connection.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(), "Connessione"));
-        pnl_connection.setLayout(new BoxLayout(pnl_connection, BoxLayout.LINE_AXIS));
-
-        pnl_connectionSettings.setAlignmentY(Component.BOTTOM_ALIGNMENT);
-        pnl_connect.setAlignmentY(Component.BOTTOM_ALIGNMENT);
-
-        pnl_connection.add(pnl_connectionSettings);
-        pnl_connection.add(Box.createRigidArea(new Dimension(5, 0)));
-        pnl_connection.add(pnl_connect);
-
-        return pnl_connection;
-    }
-
-    /**
-     * Metodo per la creazione della sezione dei dati.
-     *
-     * @return la sezione dei dati
-     */
-    private JPanel createDataSourcePanel() {
-        this.txt_tableName.setMaximumSize(new Dimension(Integer.MAX_VALUE, this.txt_tableName.getPreferredSize().height));
-
-        var pnl_dataSource = new JPanel();
-        pnl_dataSource.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(), "Dati"));
-        pnl_dataSource.setLayout(new BoxLayout(pnl_dataSource, BoxLayout.LINE_AXIS));
-
-        pnl_dataSource.add(new JLabel("Tabella"));
-        pnl_dataSource.add(Box.createRigidArea(new Dimension(5, 0)));
-        pnl_dataSource.add(this.txt_tableName);
-        pnl_dataSource.add(Box.createRigidArea(new Dimension(5, 0)));
-        pnl_dataSource.add(this.btn_loadData);
-
-        return pnl_dataSource;
-    }
-
-    /**
-     * Metodo per la creazione della sezione delle impostazioni.
-     *
-     * @return la sezione delle impostazioni
-     */
-    private JPanel createMineSettingsPanel() {
-        this.spn_depth.setMaximumSize(new Dimension(Integer.MAX_VALUE, this.spn_depth.getPreferredSize().height));
-        this.txt_fileName.setMaximumSize(new Dimension(Integer.MAX_VALUE, this.txt_address.getPreferredSize().height));
-
-        var pnl_distance = new JPanel();
-        pnl_distance.setLayout(new BoxLayout(pnl_distance, BoxLayout.LINE_AXIS));
-
-        pnl_distance.add(new JLabel("Distanza"));
-        pnl_distance.add(Box.createRigidArea(new Dimension(5, 0)));
-        pnl_distance.add(this.rdb_singleLinkDistance);
-        pnl_distance.add(this.rdb_averageLinkDistance);
-
-        var pnl_depth = new JPanel();
-        pnl_depth.setLayout(new BoxLayout(pnl_depth, BoxLayout.LINE_AXIS));
-
-        pnl_depth.add(new JLabel("Profondità"));
-        pnl_depth.add(Box.createRigidArea(new Dimension(5, 0)));
-        pnl_depth.add(this.spn_depth);
-
-        var pnl_fileName = new JPanel();
-        pnl_fileName.setLayout(new BoxLayout(pnl_fileName, BoxLayout.LINE_AXIS));
-
-        pnl_fileName.add(new JLabel("File"));
-        pnl_fileName.add(Box.createRigidArea(new Dimension(5, 0)));
-        pnl_fileName.add(this.txt_fileName);
-
-        var pnl_settings = new JPanel();
-        pnl_settings.setLayout(new BoxLayout(pnl_settings, BoxLayout.PAGE_AXIS));
-
-        pnl_distance.setAlignmentX(Component.LEFT_ALIGNMENT);
-        pnl_depth.setAlignmentX(Component.LEFT_ALIGNMENT);
-        pnl_fileName.setAlignmentX(Component.LEFT_ALIGNMENT);
-
-        pnl_settings.add(pnl_distance);
-        pnl_settings.add(pnl_depth);
-        pnl_settings.add(pnl_fileName);
-
-        var pnl_mineSettings = new JPanel();
-        pnl_mineSettings.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(), "Impostazioni"));
-        pnl_mineSettings.setLayout(new BoxLayout(pnl_mineSettings, BoxLayout.LINE_AXIS));
-
-        pnl_settings.setAlignmentY(Component.BOTTOM_ALIGNMENT);
-        this.btn_mine.setAlignmentY(Component.BOTTOM_ALIGNMENT);
-
-        pnl_mineSettings.add(pnl_settings);
-        pnl_mineSettings.add(Box.createRigidArea(new Dimension(5, 0)));
-        pnl_mineSettings.add(this.btn_mine);
-
-        return pnl_mineSettings;
-    }
-
-    /**
-     * Metodo principale dell'applicazione che crea un'istanza della finestra.
-     *
-     * @param args argomenti da linea di comando
-     */
     public static void main(String[] args) {
         SwingUtilities.invokeLater(MainWindow::new);
     }
