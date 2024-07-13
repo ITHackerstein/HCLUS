@@ -1,5 +1,6 @@
 package com.davidecarella.hclus.server;
 
+import com.davidecarella.hclus.common.ClusterDistanceMethod;
 import com.davidecarella.hclus.common.Clustering;
 import com.davidecarella.hclus.common.exceptions.ExampleSizeMismatchException;
 import com.davidecarella.hclus.server.clustering.Dataset;
@@ -70,7 +71,8 @@ public class ClientHandler extends Thread {
                         case 1 -> newClusteringRequest(dataDeserializer, dataSerializer);
                         case 2 -> loadClusteringRequest(dataDeserializer, dataSerializer);
                         case 3 -> getExamplesRequest(dataDeserializer, dataSerializer);
-                        case 4 -> closeConnectionRequest(dataDeserializer, dataSerializer);
+                        case 4 -> getClusterDistanceMethodsRequest(dataDeserializer, dataSerializer);
+                        case 5 -> closeConnectionRequest(dataDeserializer, dataSerializer);
                         default -> {
                             dataSerializer.serializeInt(ERROR);
                             dataSerializer.serializeString("Richiesta non valida!");
@@ -223,6 +225,20 @@ public class ClientHandler extends Thread {
         for (var example : examples) {
             dataSerializer.serializeExample(example);
         }
+    }
+
+    /**
+     * Gestisce la richiesta di recupero dei metodi di distanze fra cluster.
+     *
+     * @param dataDeserializer il <i>deserializzatore</i> dei dati inviati dal client
+     * @param dataSerializer il <i>serializzatore</i> dei dati inviati dal server
+     * @throws IOException in caso di errori di I/O
+     */
+    private void getClusterDistanceMethodsRequest(DataDeserializer dataDeserializer, DataSerializer dataSerializer) throws IOException {
+        dataSerializer.serializeInt(SUCCESS);
+        dataSerializer.serializeInt(2);
+        dataSerializer.serializeClusterDistance(new ClusterDistanceMethod(0, "Single-Link"));
+        dataSerializer.serializeClusterDistance(new ClusterDistanceMethod(1, "Average-Link"));
     }
 
     /**

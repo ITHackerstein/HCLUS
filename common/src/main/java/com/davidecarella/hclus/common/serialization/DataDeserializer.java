@@ -1,5 +1,6 @@
 package com.davidecarella.hclus.common.serialization;
 
+import com.davidecarella.hclus.common.ClusterDistanceMethod;
 import com.davidecarella.hclus.common.Clustering;
 import com.davidecarella.hclus.common.ClusteringStep;
 import com.davidecarella.hclus.common.Example;
@@ -43,6 +44,13 @@ public class DataDeserializer implements AutoCloseable {
             example.add(this.dataInputStream.readDouble());
         }
         return example;
+    }
+
+    public ClusterDistanceMethod deserializeClusterDistanceMethod() throws IOException {
+        return new ClusterDistanceMethod(
+            this.dataInputStream.readInt(),
+            this.deserializeString()
+        );
     }
 
     public ClusteringStep deserializeClusteringStep() throws IOException {

@@ -1,7 +1,7 @@
 package com.davidecarella.hclus.client.gui;
 
 import com.davidecarella.hclus.client.communication.ServerConnection;
-import com.davidecarella.hclus.common.ClusterDistance;
+import com.davidecarella.hclus.common.ClusterDistanceMethod;
 import com.davidecarella.hclus.common.Clustering;
 
 import javax.swing.*;
@@ -34,8 +34,8 @@ public class MainWindow extends JFrame {
     private JLabel lbl_fileName;
     private JTextField txt_fileName;
     private JLabel lbl_distance;
-    private DefaultComboBoxModel<ClusterDistance> distanceModel;
-    private JComboBox<ClusterDistance> cmb_distance;
+    private DefaultComboBoxModel<ClusterDistanceMethod> distanceModel;
+    private JComboBox<ClusterDistanceMethod> cmb_distance;
     private JLabel lbl_depth;
     private SpinnerNumberModel depthModel;
     private JSpinner spn_depth;
@@ -168,11 +168,7 @@ public class MainWindow extends JFrame {
         this.lbl_fileName = new JLabel("File");
         this.txt_fileName = new JTextField();
         this.lbl_distance = new JLabel("Distanza");
-        // FIXME: This data should come directly from the server
-        this.distanceModel = new DefaultComboBoxModel<>(new ClusterDistance[]{
-            new ClusterDistance(0, "Single-Link"),
-            new ClusterDistance(1, "Average-Link")
-        });
+        this.distanceModel = new DefaultComboBoxModel<>();
         this.cmb_distance = new JComboBox<>(this.distanceModel);
         this.lbl_depth = new JLabel("Profondità");
         this.depthModel = new SpinnerNumberModel(1, 1, Integer.MAX_VALUE, 1);
@@ -273,9 +269,11 @@ public class MainWindow extends JFrame {
 
                 try {
                     ServerConnection.open(address, port);
+                    this.distanceModel.removeAllElements();
+                    this.distanceModel.addAll(ServerConnection.the().getClusterDistanceMethods());
+                    this.cmb_distance.setSelectedIndex(0);
                     this.connectionStatusWidget.setStatus(ConnectionStatusWidget.Status.CONNECTED);
                     this.tbp_controls.setEnabledAt(1, true);
-                    // FIXME: Send list distance methods request
                 } catch (IOException exception) {
                     this.connectionStatusWidget.setStatus(ConnectionStatusWidget.Status.NOT_CONNECTED);
                     JOptionPane.showMessageDialog(this, String.format("Errore durante la connessione: %s!", exception.getMessage()), this.getTitle(), JOptionPane.ERROR_MESSAGE);
@@ -330,7 +328,7 @@ public class MainWindow extends JFrame {
 
         this.btn_mine.addActionListener(event -> {
             var depth = (int) this.depthModel.getValue();
-            var distanceId = ((ClusterDistance) Objects.requireNonNull(this.cmb_distance.getSelectedItem())).id();
+            var distanceId = ((ClusterDistanceMethod) Objects.requireNonNull(this.cmb_distance.getSelectedItem())).id();
             var fileName = this.txt_fileName.getText();
 
             try {

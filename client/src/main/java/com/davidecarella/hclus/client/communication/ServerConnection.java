@@ -1,5 +1,6 @@
 package com.davidecarella.hclus.client.communication;
 
+import com.davidecarella.hclus.common.ClusterDistanceMethod;
 import com.davidecarella.hclus.common.Clustering;
 import com.davidecarella.hclus.common.Example;
 import com.davidecarella.hclus.common.serialization.DataDeserializer;
@@ -176,13 +177,33 @@ public class ServerConnection {
         }
     }
 
+    public List<ClusterDistanceMethod> getClusterDistanceMethods() throws IOException {
+        this.dataSerializer.serializeInt(4);
+
+        var responseType = this.dataDeserializer.deserializeInt();
+        if (responseType == 0) {
+            var count = this.dataDeserializer.deserializeInt();
+            var clusterDistanceMethods = new ArrayList<ClusterDistanceMethod>();
+            while (count-- > 0) {
+                clusterDistanceMethods.add(this.dataDeserializer.deserializeClusterDistanceMethod());
+            }
+            return clusterDistanceMethods;
+        }
+
+        if (responseType == 1) {
+            throw new IOException(this.dataDeserializer.deserializeString());
+        } else {
+            throw new IOException("Risposta non valida!");
+        }
+    }
+
     /**
      * Invia la richiesta di chiusura della connessione al server.
      *
      * @throws IOException in caso di errori durante la comunicazione
      */
     public void closeConnection() throws IOException {
-        this.dataSerializer.serializeInt(4);
+        this.dataSerializer.serializeInt(5);
 
         var responseType = this.dataDeserializer.deserializeInt();
         if (responseType == 0) {
