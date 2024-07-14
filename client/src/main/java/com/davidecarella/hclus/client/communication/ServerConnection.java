@@ -96,19 +96,19 @@ public class ServerConnection {
 
     /**
      * Invia la richiesta di creazione di un clustering dati come parametro: profondità del dendrogramma
-     * ({@code depth}), tipo di distanza da utilizzare ({@code distanceType}) e nome del file dove salvare il
+     * ({@code depth}), tipo di distanza da utilizzare ({@code distanceId}) e nome del file dove salvare il
      * dendrogramma ({@code fileName}).
      *
      * @param depth la profondità del dendrogramma
-     * @param distanceType il tipo di distanza (0 per single-link, 1 per average-link)
+     * @param distanceId il tipo di distanza (0 per single-link, 1 per average-link)
      * @param fileName il nome del file dove salvare il dendrogramma
      * @return il dendrogramma creato dal server
      * @throws IOException in caso di errori di durante la comunicazione
      */
-    public Clustering newClustering(int depth, int distanceType, String fileName) throws IOException {
+    public Clustering newClustering(int depth, int distanceId, String fileName) throws IOException {
         this.dataSerializer.serializeInt(1);
         this.dataSerializer.serializeInt(depth);
-        this.dataSerializer.serializeInt(distanceType);
+        this.dataSerializer.serializeInt(distanceId);
         this.dataSerializer.serializeString(fileName);
 
         var responseType = this.dataDeserializer.deserializeInt();
