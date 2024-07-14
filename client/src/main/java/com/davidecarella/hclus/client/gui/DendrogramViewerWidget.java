@@ -16,9 +16,9 @@ import java.util.List;
 import java.util.Stack;
 
 class Dendrogram {
-    static final int CLUSTER_SIZE = 32;
-    static final int CLUSTER_SPACING = 16;
-    static final int CLUSTER_BORDER_SIZE = 6;
+    static final int CLUSTER_SIZE = 16;
+    static final int CLUSTER_SPACING = 8;
+    static final int CLUSTER_BORDER_SIZE = 2;
     static final int EDGE_LINE_WIDTH = 1;
     static final Color CLUSTER_COLOR = new Color(138, 43, 216);
     static final Color EDGE_COLOR = Color.black;
@@ -54,11 +54,11 @@ class Dendrogram {
                 (int) (Math.min(firstClusterPosition.getY(), secondClusterPosition.getY()) - CLUSTER_SPACING - CLUSTER_SIZE * 2)
             );
 
-            this.edges[edgeIndex][0] = step.firstClusterIndex();
-            this.edges[edgeIndex][1] = this.clustering.exampleCount() + i;
+            this.edges[edgeIndex][0] = this.clustering.exampleCount() + i;
+            this.edges[edgeIndex][1] = step.firstClusterIndex();
             ++edgeIndex;
-            this.edges[edgeIndex][0] = step.secondClusterIndex();
-            this.edges[edgeIndex][1] = this.clustering.exampleCount() + i;
+            this.edges[edgeIndex][0] = this.clustering.exampleCount() + i;
+            this.edges[edgeIndex][1] = step.secondClusterIndex();
             ++edgeIndex;
         }
     }
@@ -292,7 +292,8 @@ public class DendrogramViewerWidget extends JPanel implements MouseListener, Mou
 
             g2d.setColor(Dendrogram.EDGE_COLOR);
             g2d.setStroke(new BasicStroke(Dendrogram.EDGE_LINE_WIDTH));
-            g2d.drawLine(firstPosition.x, firstPosition.y, secondPosition.x, secondPosition.y);
+            g2d.drawLine(firstPosition.x, firstPosition.y, secondPosition.x, firstPosition.y);
+            g2d.drawLine(secondPosition.x, firstPosition.y, secondPosition.x, secondPosition.y);
         }
 
         for (int i = 0; i < this.dendrogram.getClusterCount(); ++i) {
@@ -410,7 +411,9 @@ public class DendrogramViewerWidget extends JPanel implements MouseListener, Mou
         }
 
         if (this.lastMousePosition != null) {
-            this.transform.translate(event.getX() - this.lastMousePosition.getX(), event.getY() - this.lastMousePosition.getY());
+            var mousePosition = this.inverseTransformPoint(event.getPoint());
+            var lastMousePosition = this.inverseTransformPoint(this.lastMousePosition);
+            this.transform.translate(mousePosition.getX() - lastMousePosition.getX(), mousePosition.getY() - lastMousePosition.getY());
         }
 
         this.lastMousePosition = event.getPoint();
@@ -454,6 +457,10 @@ public class DendrogramViewerWidget extends JPanel implements MouseListener, Mou
             var clusterPosition = this.dendrogram.getClusterPosition(i);
             if (mousePosition.distance(clusterPosition) <= Dendrogram.CLUSTER_SIZE) {
                 if (i == this.selectedClusterIndex) {
+                    this.selectedClusterIndex = -1;
+                    this.selectedClusterExampleIndices = null;
+                    this.selectedClusterExamples = null;
+                    this.clusterTooltipError = null;
                     return;
                 }
 
@@ -475,6 +482,9 @@ public class DendrogramViewerWidget extends JPanel implements MouseListener, Mou
         }
 
         this.selectedClusterIndex = -1;
+        this.selectedClusterExampleIndices = null;
+        this.selectedClusterExamples = null;
+        this.clusterTooltipError = null;
         this.repaint();
     }
 
