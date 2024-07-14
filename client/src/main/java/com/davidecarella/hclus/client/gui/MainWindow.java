@@ -10,8 +10,8 @@ import java.io.IOException;
 import java.util.Objects;
 
 /**
- * TODO: Avoid saving using actual path (maybe use the actual database or store using a generated file name in a
- *       specific folder and maybe new request to list saved dendrograms)
+ * TODO: Make cluster tooltip scrollable
+ * TODO: Make a method to list available saved clusterings
  * TODO: Fix comments all around the code
  */
 public class MainWindow extends JFrame {
@@ -30,8 +30,8 @@ public class MainWindow extends JFrame {
     private JPanel pnl_clustering;
     private JLabel lbl_newClustering;
     private JCheckBox chk_newClustering;
-    private JLabel lbl_fileName;
-    private JTextField txt_fileName;
+    private JLabel lbl_clusteringName;
+    private JTextField txt_clusteringName;
     private JLabel lbl_distance;
     private DefaultComboBoxModel<ClusterDistanceMethod> distanceModel;
     private JComboBox<ClusterDistanceMethod> cmb_distance;
@@ -164,8 +164,8 @@ public class MainWindow extends JFrame {
         this.lbl_newClustering = new JLabel("Nuovo clustering");
         this.chk_newClustering = new JCheckBox();
         this.chk_newClustering.setSelected(true);
-        this.lbl_fileName = new JLabel("File");
-        this.txt_fileName = new JTextField();
+        this.lbl_clusteringName = new JLabel("Nome");
+        this.txt_clusteringName = new JTextField();
         this.lbl_distance = new JLabel("Distanza");
         this.distanceModel = new DefaultComboBoxModel<>();
         this.cmb_distance = new JComboBox<>(this.distanceModel);
@@ -195,13 +195,13 @@ public class MainWindow extends JFrame {
             new Insets(0, 0, 5, 5), 0, 0
         ));
 
-        this.pnl_clustering.add(this.lbl_fileName, new GridBagConstraints(
+        this.pnl_clustering.add(this.lbl_clusteringName, new GridBagConstraints(
             0, 1, 1, 1, 0.0, 0.0,
             GridBagConstraints.EAST, GridBagConstraints.VERTICAL,
             new Insets(0, 0, 5, 5), 0, 0
         ));
 
-        this.pnl_clustering.add(this.txt_fileName, new GridBagConstraints(
+        this.pnl_clustering.add(this.txt_clusteringName, new GridBagConstraints(
             1, 1, 1, 1, 0.0, 0.0,
             GridBagConstraints.CENTER, GridBagConstraints.BOTH,
             new Insets(0, 0, 5, 0), 0, 0
@@ -330,7 +330,7 @@ public class MainWindow extends JFrame {
         this.btn_mine.addActionListener(event -> {
             var depth = (int) this.depthModel.getValue();
             var distanceId = ((ClusterDistanceMethod) Objects.requireNonNull(this.cmb_distance.getSelectedItem())).id();
-            var fileName = this.txt_fileName.getText();
+            var fileName = this.txt_clusteringName.getText();
 
             try {
                 Clustering clustering;

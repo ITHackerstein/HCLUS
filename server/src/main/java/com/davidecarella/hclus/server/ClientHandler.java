@@ -35,6 +35,9 @@ public class ClientHandler extends Thread {
         new WeightedAverageLinkDistance()
     };
 
+    private static final String CLUSTERINGS_DIRECTORY = "clusterings";
+    private static final String CLUSTERING_NAME_REGEX = "^[a-zA-Z0-9_]+$";
+
     /**
      * Il socket per la connessione con il client.
      */
@@ -138,12 +141,17 @@ public class ClientHandler extends Thread {
             dataSerializer.serializeString("Tipo di distanza non valida!");
             return;
         }
-        var distance = AVAILABLE_DISTANCE_METHODS[distanceId];
-        var fileName = dataDeserializer.deserializeString();
+        var name = dataDeserializer.deserializeString();
+
+        if (!name.matches(CLUSTERING_NAME_REGEX)) {
+            dataSerializer.serializeInt(ERROR);
+            dataSerializer.serializeString("Nome non valido!");
+            return;
+        }
 
         Clustering clustering;
         try {
-            clustering = HierarchicalClustering.mine(this.dataset, distance, depth);
+            clustering = HierarchicalClustering.mine(this.dataset, AVAILABLE_DISTANCE_METHODS[distanceId], depth);
         } catch (InvalidDepthException | ExampleSizeMismatchException exception) {
             dataSerializer.serializeInt(ERROR);
             dataSerializer.serializeString(walkThrowable(exception));
@@ -151,7 +159,17 @@ public class ClientHandler extends Thread {
         }
 
         try {
-            HierarchicalClustering.save(clustering, fileName);
+            var clusteringsDir = new File(CLUSTERINGS_DIRECTORY);
+            if (!clusteringsDir.exists()) {
+                if (!clusteringsDir.mkdirs()) {
+                    throw new IOException("Non è stato possibile creare la directory per i clustering");
+                }
+            } else if (!clusteringsDir.isDirectory()) {
+                throw new IOException(String.format("Esiste già un file con nome '%s'", CLUSTERINGS_DIRECTORY));
+            }
+
+            var path = clusteringsDir.toPath().resolve(String.format("%s.hclus", name));
+            HierarchicalClustering.save(clustering, path.toString());
         } catch (IOException exception) {
             dataSerializer.serializeInt(ERROR);
             dataSerializer.serializeString(String.format("Errore durante il salvataggio del dendrogramma: %s!", exception.getMessage()));
@@ -175,11 +193,16 @@ public class ClientHandler extends Thread {
             return;
         }
 
-        String fileName = dataDeserializer.deserializeString();
+        var name = dataDeserializer.deserializeString();
+        if (!name.matches(CLUSTERING_NAME_REGEX)) {
+            dataSerializer.serializeInt(ERROR);
+            dataSerializer.serializeString("Nome non valido!");
+            return;
+        }
 
         Clustering clustering;
         try {
-            clustering = HierarchicalClustering.load(fileName, this.dataset);
+            clustering = HierarchicalClustering.load(String.format("%s/%s.hclus", CLUSTERINGS_DIRECTORY, name), this.dataset);
         } catch (FileNotFoundException exception) {
             dataSerializer.serializeInt(ERROR);
             dataSerializer.serializeString("Il file inserito non esiste!");
