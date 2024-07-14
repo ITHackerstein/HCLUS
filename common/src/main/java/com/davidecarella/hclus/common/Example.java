@@ -58,7 +58,7 @@ public class Example implements Iterable<Double> {
             dist += delta * delta;
         }
 
-        return dist;
+        return Math.sqrt(dist);
     }
 
     /**

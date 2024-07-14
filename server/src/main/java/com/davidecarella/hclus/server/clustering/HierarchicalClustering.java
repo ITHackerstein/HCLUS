@@ -49,7 +49,7 @@ public class HierarchicalClustering {
         }
 
         for (int k = 0; k < depth - 1; ++k) {
-            var minDistance = Double.MAX_VALUE;
+            var minDistance = Double.POSITIVE_INFINITY;
             int firstCluster = 0;
             int secondCluster = 0;
 
@@ -85,17 +85,19 @@ public class HierarchicalClustering {
                 }
 
                 var iSize = indexMap[i] < n ? 1 : steps[indexMap[i] - n].newClusterSize();
-                distancesBetweenClusters[i][secondCluster] = distanceCalculator.distance(
-                    distancesBetweenClusters[i][firstCluster],
-                    distancesBetweenClusters[i][secondCluster],
-                    minDistance,
-                    firstClusterSize,
-                    secondClusterSize,
-                    iSize
-                );
+                distancesBetweenClusters[i][secondCluster] = distancesBetweenClusters[secondCluster][i] =
+                    distanceCalculator.distance(
+                        distancesBetweenClusters[i][firstCluster],
+                        distancesBetweenClusters[i][secondCluster],
+                        minDistance,
+                        firstClusterSize,
+                        secondClusterSize,
+                        iSize
+                    );
 
                 if (i < firstCluster) {
-                    distancesBetweenClusters[i][firstCluster] = Double.MAX_VALUE;
+                    distancesBetweenClusters[i][firstCluster] = distancesBetweenClusters[firstCluster][i] =
+                        Double.POSITIVE_INFINITY;
                 }
             }
         }

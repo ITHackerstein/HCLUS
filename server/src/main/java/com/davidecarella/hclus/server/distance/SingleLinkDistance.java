@@ -17,4 +17,9 @@ public class SingleLinkDistance implements ClusterDistance {
     public double distance(double dxi, double dyi, double dxy, int xSize, int ySize, int iSize) {
         return Math.min(dxi, dyi);
     }
+
+    @Override
+    public String getName() {
+        return "Single-Link";
+    }
 }

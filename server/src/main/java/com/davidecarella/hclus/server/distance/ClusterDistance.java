@@ -21,4 +21,13 @@ public interface ClusterDistance {
      * @param iSize la dimensione del cluster \(i\)
      */
     double distance(double dxi, double dyi, double dxy, int xSize, int ySize, int iSize);
+
+    /**
+     * Restituisce il nome del metodo di distanza fra cluster.
+     *
+     * @return il nome del metodo
+     */
+    default String getName() {
+        return this.getClass().getSimpleName();
+    }
 }

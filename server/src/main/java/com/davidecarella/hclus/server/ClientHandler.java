@@ -6,9 +6,7 @@ import com.davidecarella.hclus.common.exceptions.ExampleSizeMismatchException;
 import com.davidecarella.hclus.server.clustering.Dataset;
 import com.davidecarella.hclus.server.clustering.HierarchicalClustering;
 import com.davidecarella.hclus.common.Example;
-import com.davidecarella.hclus.server.distance.AverageLinkDistance;
-import com.davidecarella.hclus.server.distance.ClusterDistance;
-import com.davidecarella.hclus.server.distance.SingleLinkDistance;
+import com.davidecarella.hclus.server.distance.*;
 import com.davidecarella.hclus.server.exceptions.InvalidClusterIndexException;
 import com.davidecarella.hclus.server.exceptions.InvalidDepthException;
 import com.davidecarella.hclus.server.exceptions.NoDataException;
@@ -24,8 +22,18 @@ import java.util.ArrayList;
  * Classe che gestisce la connessione con un client.
  */
 public class ClientHandler extends Thread {
-    private final int SUCCESS = 0;
-    private final int ERROR = 1;
+    private static final int SUCCESS = 0;
+    private static final int ERROR = 1;
+
+    private static final ClusterDistance[] AVAILABLE_DISTANCE_METHODS = new ClusterDistance[] {
+        new AverageLinkDistance(),
+        new CentroidLinkDistance(),
+        new CompleteLinkDistance(),
+        new MedianLinkDistance(),
+        new SingleLinkDistance(),
+        new WardLinkDistance(),
+        new WeightedAverageLinkDistance()
+    };
 
     /**
      * Il socket per la connessione con il client.
@@ -124,19 +132,14 @@ public class ClientHandler extends Thread {
         }
 
         var depth = dataDeserializer.deserializeInt();
-        ClusterDistance distance = switch (dataDeserializer.deserializeInt()) {
-            case 0 -> new SingleLinkDistance();
-            case 1 -> new AverageLinkDistance();
-            default -> null;
-        };
-
-        if (distance == null) {
+        var distanceId = dataDeserializer.deserializeInt();
+        if (distanceId < 0 || distanceId >= AVAILABLE_DISTANCE_METHODS.length) {
             dataSerializer.serializeInt(ERROR);
             dataSerializer.serializeString("Tipo di distanza non valida!");
             return;
         }
-
-        String fileName = dataDeserializer.deserializeString();
+        var distance = AVAILABLE_DISTANCE_METHODS[distanceId];
+        var fileName = dataDeserializer.deserializeString();
 
         Clustering clustering;
         try {
@@ -236,9 +239,10 @@ public class ClientHandler extends Thread {
      */
     private void getClusterDistanceMethodsRequest(DataDeserializer dataDeserializer, DataSerializer dataSerializer) throws IOException {
         dataSerializer.serializeInt(SUCCESS);
-        dataSerializer.serializeInt(2);
-        dataSerializer.serializeClusterDistance(new ClusterDistanceMethod(0, "Single-Link"));
-        dataSerializer.serializeClusterDistance(new ClusterDistanceMethod(1, "Average-Link"));
+        dataSerializer.serializeInt(AVAILABLE_DISTANCE_METHODS.length);
+        for (int i = 0; i < AVAILABLE_DISTANCE_METHODS.length; ++i) {
+            dataSerializer.serializeClusterDistance(new ClusterDistanceMethod(i, AVAILABLE_DISTANCE_METHODS[i].getName()));
+        }
     }
 
     /**

@@ -17,4 +17,9 @@ public class AverageLinkDistance implements ClusterDistance {
     public double distance(double dxi, double dyi, double dxy, int xSize, int ySize, int iSize) {
         return (dxi * xSize + dyi * ySize) / (xSize + ySize);
     }
+
+    @Override
+    public String getName() {
+        return "Average-Link";
+    }
 }
