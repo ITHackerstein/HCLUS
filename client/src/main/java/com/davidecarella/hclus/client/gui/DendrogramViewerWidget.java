@@ -23,8 +23,11 @@ class Dendrogram {
     static final Color CLUSTER_COLOR = new Color(138, 43, 216);
     static final Color EDGE_COLOR = Color.black;
     static final Color TOOLTIP_BACKGROUND_COLOR = new Color(200, 200, 200);
-    static final int TOOLTIP_PADDING = 8;
+    static final int TOOLTIP_PADDING = 5;
     static final int TOOLTIP_BORDER_SIZE = 2;
+    static final double TOOLTIP_HEIGHT_PERCENTAGE = 0.2;
+    static final int TOOLTIP_SCROLLBAR_HEIGHT = 12;
+    static final int TOOLTIP_SCROLLBAR_WIDTH = 2;
 
     private final Clustering clustering;
     private final Point[] clusterPositions;
@@ -208,6 +211,7 @@ public class DendrogramViewerWidget extends JPanel implements MouseListener, Mou
     private int hoveredClusterIndex = -1;
     private List<Integer> selectedClusterExampleIndices = null;
     private List<Example> selectedClusterExamples = null;
+    private int selectedClusterFirstExampleIndex = -1;
     private String clusterTooltipError = null;
 
     private AffineTransform transform = null;
@@ -229,6 +233,7 @@ public class DendrogramViewerWidget extends JPanel implements MouseListener, Mou
         this.hoveredClusterIndex = -1;
         this.selectedClusterExampleIndices = null;
         this.selectedClusterExamples = null;
+        this.selectedClusterFirstExampleIndex = -1;
         this.clusterTooltipError = null;
         this.repaint();
     }
@@ -342,13 +347,13 @@ public class DendrogramViewerWidget extends JPanel implements MouseListener, Mou
             var title = "Esempi nel cluster selezionato";
 
             var width = boldFontMetrics.stringWidth(title);
-            var height = boldFontMetrics.getHeight();
-
             for (int i = 0; i < this.selectedClusterExampleIndices.size(); ++i) {
                 var exampleString = String.format("%d: %s", this.selectedClusterExampleIndices.get(i), this.selectedClusterExamples.get(i));
                 width = Math.max(width, normalFontMetrics.stringWidth(exampleString));
-                height += normalFontMetrics.getHeight();
             }
+
+            var height = boldFontMetrics.getHeight() + normalFontMetrics.getHeight() * this.selectedClusterExampleIndices.size();
+            height = (int) Math.min(height, canvasRectangle.height * Dendrogram.TOOLTIP_HEIGHT_PERCENTAGE);
 
             var borderRectangle = getTooltipRectangleWithBorder(canvasRectangle, width, height);
             var rectangle = getTooltipRectangle(canvasRectangle, width, height);
@@ -359,6 +364,22 @@ public class DendrogramViewerWidget extends JPanel implements MouseListener, Mou
             g2d.setColor(Dendrogram.TOOLTIP_BACKGROUND_COLOR);
             g2d.fill(rectangle);
 
+            var exampleCount = (height - boldFontMetrics.getHeight()) / normalFontMetrics.getHeight();
+            if (exampleCount == this.selectedClusterExamples.size()) {
+                this.selectedClusterFirstExampleIndex = 0;
+            } else {
+                this.selectedClusterFirstExampleIndex = Math.clamp(this.selectedClusterFirstExampleIndex, 0, this.selectedClusterExamples.size() - exampleCount);
+
+                var scrollPercentage = ((double) this.selectedClusterFirstExampleIndex) / (this.selectedClusterExamples.size() - exampleCount);
+                var scrollbarY = rectangle.y + boldFontMetrics.getHeight() + scrollPercentage * (rectangle.height - boldFontMetrics.getHeight() - Dendrogram.TOOLTIP_SCROLLBAR_HEIGHT);
+
+                g2d.setColor(Color.GRAY);
+                g2d.fillRect(
+                    rectangle.x + rectangle.width - Dendrogram.TOOLTIP_SCROLLBAR_WIDTH, (int) scrollbarY,
+                    Dendrogram.TOOLTIP_SCROLLBAR_WIDTH, Dendrogram.TOOLTIP_SCROLLBAR_HEIGHT
+                );
+            }
+
             var x = rectangle.x + Dendrogram.TOOLTIP_PADDING;
             var y = rectangle.y + boldFontMetrics.getHeight();
 
@@ -366,7 +387,7 @@ public class DendrogramViewerWidget extends JPanel implements MouseListener, Mou
             g2d.setFont(boldFont);
             g2d.drawString(title, x, y);
             g2d.setFont(normalFont);
-            for (int i = 0; i < this.selectedClusterExamples.size(); ++i) {
+            for (int i = this.selectedClusterFirstExampleIndex; i < this.selectedClusterFirstExampleIndex + exampleCount; ++i) {
                 y += normalFontMetrics.getHeight();
                 var exampleString = String.format("%d: %s", this.selectedClusterExampleIndices.get(i), this.selectedClusterExamples.get(i));
                 g2d.drawString(exampleString, x, y);
@@ -460,6 +481,7 @@ public class DendrogramViewerWidget extends JPanel implements MouseListener, Mou
                     this.selectedClusterIndex = -1;
                     this.selectedClusterExampleIndices = null;
                     this.selectedClusterExamples = null;
+                    this.selectedClusterFirstExampleIndex = -1;
                     this.clusterTooltipError = null;
                     return;
                 }
@@ -469,6 +491,7 @@ public class DendrogramViewerWidget extends JPanel implements MouseListener, Mou
                 try {
                     this.selectedClusterExampleIndices = exampleIndices;
                     this.selectedClusterExamples = ServerConnection.the().getExamples(this.selectedClusterExampleIndices);
+                    this.selectedClusterFirstExampleIndex = 0;
                     this.clusterTooltipError = null;
                 } catch (IOException exception) {
                     this.selectedClusterExampleIndices = null;
@@ -484,6 +507,7 @@ public class DendrogramViewerWidget extends JPanel implements MouseListener, Mou
         this.selectedClusterIndex = -1;
         this.selectedClusterExampleIndices = null;
         this.selectedClusterExamples = null;
+        this.selectedClusterFirstExampleIndex = -1;
         this.clusterTooltipError = null;
         this.repaint();
     }
@@ -520,15 +544,20 @@ public class DendrogramViewerWidget extends JPanel implements MouseListener, Mou
             return;
         }
 
-        int notches = event.getWheelRotation();
-        var zoom = Math.exp(-Math.signum(notches) * 0.02);
+        if ((event.getModifiersEx() & InputEvent.CTRL_DOWN_MASK) != 0) {
+            int notches = event.getWheelRotation();
+            var zoom = Math.exp(-Math.signum(notches) * 0.02);
 
-        var newTransform = new AffineTransform();
-        newTransform.translate(event.getX(), event.getY());
-        newTransform.scale(zoom, zoom);
-        newTransform.translate(-event.getX(), -event.getY());
-        newTransform.concatenate(this.transform);
-        this.transform = newTransform;
+            var newTransform = new AffineTransform();
+            newTransform.translate(event.getX(), event.getY());
+            newTransform.scale(zoom, zoom);
+            newTransform.translate(-event.getX(), -event.getY());
+            newTransform.concatenate(this.transform);
+            this.transform = newTransform;
+        } else {
+            this.selectedClusterFirstExampleIndex += (int) Math.signum(event.getWheelRotation());
+        }
+
 
         this.repaint();
     }

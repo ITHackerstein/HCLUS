@@ -10,7 +10,6 @@ import java.io.IOException;
 import java.util.Objects;
 
 /**
- * TODO: Make cluster tooltip scrollable
  * TODO: Make a method to list available saved clusterings
  * TODO: Fix comments all around the code
  */
