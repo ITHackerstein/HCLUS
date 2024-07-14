@@ -12,7 +12,6 @@ import java.util.Objects;
 /**
  * TODO: Avoid saving using actual path (maybe use the actual database or store using a generated file name in a
  *       specific folder and maybe new request to list saved dendrograms)
- * TODO: New distances (add a method to get the possible distances)
  * TODO: Fix comments all around the code
  */
 public class MainWindow extends JFrame {
