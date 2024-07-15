@@ -11,7 +11,6 @@ import java.util.List;
 import java.util.Objects;
 
 /**
- * TODO: Show number of examples in dataset
  * TODO: Fix comments all around the code
  */
 public class MainWindow extends JFrame {
@@ -27,6 +26,8 @@ public class MainWindow extends JFrame {
     private JLabel lbl_tableName;
     private JTextField txt_tableName;
     private JButton btn_loadDataset;
+    private JLabel lbl_loaddedDataset;
+    private JLabel lbl_loadedDatasetInfo;
     private JPanel pnl_clustering;
     private JLabel lbl_newClustering;
     private JCheckBox chk_newClustering;
@@ -133,14 +134,19 @@ public class MainWindow extends JFrame {
         this.lbl_tableName = new JLabel("Tabella");
         this.txt_tableName = new JTextField();
         this.btn_loadDataset = new JButton("Carica");
+        this.lbl_loaddedDataset = new JLabel("Attuale");
+        this.lbl_loaddedDataset.setVisible(false);
+        this.lbl_loadedDatasetInfo = new JLabel();
+        this.lbl_loadedDatasetInfo.setVisible(false);
+        this.lbl_loadedDatasetInfo.setFont(new Font(Font.MONOSPACED, Font.PLAIN, this.lbl_loadedDatasetInfo.getFont().getSize()));
 
         this.pnl_dataset = new JPanel();
         this.pnl_dataset.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
         var layout = new GridBagLayout();
         layout.columnWidths = new int[]{0, 0, 0};
-        layout.rowHeights = new int[]{0, 0, 0};
+        layout.rowHeights = new int[]{0, 0, 0, 0};
         layout.columnWeights = new double[]{0.0, 1.0, 1e-4};
-        layout.rowWeights = new double[]{0.0, 0.0, 1e-4};
+        layout.rowWeights = new double[]{0.0, 0.0, 0.0, 1e-4};
         this.pnl_dataset.setLayout(layout);
 
         this.pnl_dataset.add(this.lbl_tableName, new GridBagConstraints(
@@ -158,6 +164,18 @@ public class MainWindow extends JFrame {
         this.pnl_dataset.add(this.btn_loadDataset, new GridBagConstraints(
             1, 1, 1, 1, 0.0, 0.0,
             GridBagConstraints.CENTER, GridBagConstraints.BOTH,
+            new Insets(0, 0, 5, 0), 0, 0
+        ));
+
+        this.pnl_dataset.add(this.lbl_loaddedDataset, new GridBagConstraints(
+            0, 2, 1, 1, 0.0, 0.0,
+            GridBagConstraints.EAST, GridBagConstraints.VERTICAL,
+            new Insets(0, 0, 0, 5), 0, 0
+        ));
+
+        this.pnl_dataset.add(this.lbl_loadedDatasetInfo, new GridBagConstraints(
+            1, 2, 1, 1, 0.0, 0.0,
+            GridBagConstraints.WEST, GridBagConstraints.VERTICAL,
             new Insets(0, 0, 0, 0), 0, 0
         ));
     }
@@ -329,6 +347,9 @@ public class MainWindow extends JFrame {
                 try {
                     var exampleCount = ServerConnection.the().loadDataset(this.txt_tableName.getText());
                     this.depthModel.setMaximum(exampleCount);
+                    this.lbl_loaddedDataset.setVisible(true);
+                    this.lbl_loadedDatasetInfo.setText(String.format("%s - %d esempi", this.txt_tableName.getText(), exampleCount));
+                    this.lbl_loadedDatasetInfo.setVisible(true);
                     this.tbp_controls.setEnabledAt(2, true);
                     JOptionPane.showMessageDialog(this, "Dataset caricato con successo!", this.getTitle(), JOptionPane.INFORMATION_MESSAGE);
                     this.dendrogramViewerWidget.setClustering(null);
