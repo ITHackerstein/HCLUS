@@ -29,7 +29,7 @@ class Dendrogram {
     Dendrogram(Clustering clustering) {
         this.clustering = clustering;
         this.clusterPositions = new Point[this.clustering.exampleCount() + this.clustering.steps().length];
-        this.edges = new int[this.clusterPositions.length * 2][2];
+        this.edges = new int[this.clustering.steps().length * 2][2];
         this.initializeArrays();
     }
 
