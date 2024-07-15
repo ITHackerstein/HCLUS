@@ -7,10 +7,11 @@ import com.davidecarella.hclus.common.Clustering;
 import javax.swing.*;
 import java.awt.*;
 import java.io.IOException;
+import java.util.List;
 import java.util.Objects;
 
 /**
- * TODO: Make a method to list available saved clusterings
+ * TODO: Show number of examples in dataset
  * TODO: Fix comments all around the code
  */
 public class MainWindow extends JFrame {
@@ -30,7 +31,9 @@ public class MainWindow extends JFrame {
     private JLabel lbl_newClustering;
     private JCheckBox chk_newClustering;
     private JLabel lbl_clusteringName;
+    private JPanel pnl_clusteringName;
     private JTextField txt_clusteringName;
+    private JButton btn_showSavedClusterings;
     private JLabel lbl_distance;
     private DefaultComboBoxModel<ClusterDistanceMethod> distanceModel;
     private JComboBox<ClusterDistanceMethod> cmb_distance;
@@ -165,6 +168,7 @@ public class MainWindow extends JFrame {
         this.chk_newClustering.setSelected(true);
         this.lbl_clusteringName = new JLabel("Nome");
         this.txt_clusteringName = new JTextField();
+        this.btn_showSavedClusterings = new JButton("...");
         this.lbl_distance = new JLabel("Distanza");
         this.distanceModel = new DefaultComboBoxModel<>();
         this.cmb_distance = new JComboBox<>(this.distanceModel);
@@ -172,6 +176,32 @@ public class MainWindow extends JFrame {
         this.depthModel = new SpinnerNumberModel(1, 1, Integer.MAX_VALUE, 1);
         this.spn_depth = new JSpinner(depthModel);
         this.btn_mine = new JButton("Estrai");
+
+        this.pnl_clusteringName = new JPanel();
+        {
+            var layout = new GridBagLayout();
+            layout.columnWidths = new int[]{0, 0, 0};
+            layout.rowHeights = new int[]{0, 0};
+            layout.columnWeights = new double[]{1.0, 0.0, 1e-4};
+            layout.rowWeights = new double[]{0.0, 1e-4};
+            this.pnl_clusteringName.setLayout(layout);
+        }
+
+        this.pnl_clusteringName.add(this.txt_clusteringName, new GridBagConstraints(
+            0, 0, 1, 1, 0.0, 0.0,
+            GridBagConstraints.CENTER, GridBagConstraints.BOTH,
+            new Insets(0, 0, 0, 5), 0, 0
+        ));
+
+        this.pnl_clusteringName.add(this.btn_showSavedClusterings, new GridBagConstraints(
+            1, 0, 1, 1, 0.0, 0.0,
+            GridBagConstraints.EAST, GridBagConstraints.VERTICAL,
+            new Insets(0, 0, 0, 0), 0, 0
+        ));
+
+        this.btn_showSavedClusterings.setPreferredSize(new Dimension(
+            this.btn_showSavedClusterings.getPreferredSize().width, this.txt_clusteringName.getPreferredSize().height
+        ));
 
         this.pnl_clustering = new JPanel();
         this.pnl_clustering.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
@@ -200,7 +230,7 @@ public class MainWindow extends JFrame {
             new Insets(0, 0, 5, 5), 0, 0
         ));
 
-        this.pnl_clustering.add(this.txt_clusteringName, new GridBagConstraints(
+        this.pnl_clustering.add(this.pnl_clusteringName, new GridBagConstraints(
             1, 1, 1, 1, 0.0, 0.0,
             GridBagConstraints.CENTER, GridBagConstraints.BOTH,
             new Insets(0, 0, 5, 0), 0, 0
@@ -326,31 +356,126 @@ public class MainWindow extends JFrame {
             }
         });
 
-        this.btn_mine.addActionListener(event -> {
-            var depth = (int) this.depthModel.getValue();
-            var distanceId = ((ClusterDistanceMethod) Objects.requireNonNull(this.cmb_distance.getSelectedItem())).id();
-            var fileName = this.txt_clusteringName.getText();
+        this.btn_showSavedClusterings.addActionListener(event -> {
+            this.btn_showSavedClusterings.setEnabled(false);
 
             try {
-                Clustering clustering;
-                if (this.chk_newClustering.isSelected()) {
-                    clustering = ServerConnection.the().newClustering(depth, distanceId, fileName);
-                } else {
-                    clustering = ServerConnection.the().loadClustering(fileName);
+                if (ServerConnection.the() == null) {
+                    JOptionPane.showMessageDialog(this, "Nessuna connessione al server!", this.getTitle(), JOptionPane.ERROR_MESSAGE);
+                    return;
                 }
 
-                this.dendrogramViewerWidget.setClustering(clustering);
-            } catch (IOException exception) {
-                String message;
-                if (this.chk_newClustering.isSelected()) {
-                    message = String.format("Errore durante la creazione del nuovo clustering: %s", exception.getMessage());
-                } else {
-                    message = String.format("Errore durante il caricamento del clustering: %s", exception.getMessage());
+                try {
+                    showSavedClusteringsDialog(ServerConnection.the().getSavedClusterings());
+                } catch (IOException exception) {
+                    JOptionPane.showMessageDialog(this, String.format("Errore durante la lettura dei clustering salvati: %s!", exception.getMessage()), this.getTitle(), JOptionPane.ERROR_MESSAGE);
                 }
-
-                JOptionPane.showMessageDialog(this, message, this.getTitle(), JOptionPane.ERROR_MESSAGE);
+            } finally {
+                this.btn_showSavedClusterings.setEnabled(true);
             }
         });
+
+        this.btn_mine.addActionListener(event -> {
+            this.lbl_newClustering.setEnabled(false);
+            this.chk_newClustering.setEnabled(false);
+            this.lbl_clusteringName.setEnabled(false);
+            this.txt_clusteringName.setEnabled(false);
+            this.lbl_distance.setEnabled(false);
+            this.cmb_distance.setEnabled(false);
+            this.lbl_depth.setEnabled(false);
+            this.spn_depth.setEnabled(false);
+            this.btn_mine.setEnabled(false);
+
+            try {
+                if (ServerConnection.the() == null) {
+                    JOptionPane.showMessageDialog(this, "Nessuna connessione al server!", this.getTitle(), JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+
+                var depth = (int) this.depthModel.getValue();
+                var distanceId = ((ClusterDistanceMethod) Objects.requireNonNull(this.cmb_distance.getSelectedItem())).id();
+                var fileName = this.txt_clusteringName.getText();
+
+                try {
+                    Clustering clustering;
+                    if (this.chk_newClustering.isSelected()) {
+                        clustering = ServerConnection.the().newClustering(depth, distanceId, fileName);
+                    } else {
+                        clustering = ServerConnection.the().loadClustering(fileName);
+                    }
+
+                    this.dendrogramViewerWidget.setClustering(clustering);
+                } catch (IOException exception) {
+                    String message;
+                    if (this.chk_newClustering.isSelected()) {
+                        message = String.format("Errore durante la creazione del nuovo clustering: %s", exception.getMessage());
+                    } else {
+                        message = String.format("Errore durante il caricamento del clustering: %s", exception.getMessage());
+                    }
+
+                    JOptionPane.showMessageDialog(this, message, this.getTitle(), JOptionPane.ERROR_MESSAGE);
+                }
+            } finally {
+                this.lbl_newClustering.setEnabled(true);
+                this.chk_newClustering.setEnabled(true);
+                this.lbl_clusteringName.setEnabled(true);
+                this.txt_clusteringName.setEnabled(true);
+                this.lbl_distance.setEnabled(true);
+                this.cmb_distance.setEnabled(true);
+                this.lbl_depth.setEnabled(true);
+                this.spn_depth.setEnabled(true);
+                this.btn_mine.setEnabled(true);
+            }
+        });
+    }
+
+    private void showSavedClusteringsDialog(List<String> savedClusterings) {
+        var model = new DefaultListModel<String>();
+        model.addAll(savedClusterings);
+
+        if (model.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Nessun clustering salvato sul server", this.getTitle(), JOptionPane.INFORMATION_MESSAGE);
+            return;
+        }
+
+        var list = new JList<>(model);
+        list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        list.setLayoutOrientation(JList.VERTICAL);
+        var scrollPane = new JScrollPane(list);
+
+        var confirmButton = new JButton("Ok");
+        var cancelButton = new JButton("Annulla");
+        var buttons = new JPanel();
+        buttons.setLayout(new BoxLayout(buttons, BoxLayout.LINE_AXIS));
+        buttons.add(confirmButton);
+        buttons.add(Box.createRigidArea(new Dimension(5, 0)));
+        buttons.add(cancelButton);
+
+        var mainPanel = new JPanel();
+        mainPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.PAGE_AXIS));
+        mainPanel.add(scrollPane);
+        mainPanel.add(Box.createRigidArea(new Dimension(0, 5)));
+        mainPanel.add(buttons);
+
+        var dialog = new JDialog(this, this.getTitle(), true);
+        dialog.getContentPane().add(mainPanel);
+
+        confirmButton.addActionListener(dialogEvent -> {
+            var selection = list.getSelectedValue();
+            if (selection != null) {
+                this.txt_clusteringName.setText(selection);
+            }
+
+            dialog.setVisible(false);
+        });
+
+        cancelButton.addActionListener(dialogEvent -> dialog.setVisible(false));
+
+        dialog.setPreferredSize(new Dimension(250, 200));
+        dialog.setLocationRelativeTo(null);
+        dialog.pack();
+        dialog.setVisible(true);
     }
 
     public static void main(String[] args) {

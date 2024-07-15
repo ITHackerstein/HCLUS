@@ -197,13 +197,33 @@ public class ServerConnection {
         }
     }
 
+    public List<String> getSavedClusterings() throws IOException {
+        this.dataSerializer.serializeInt(5);
+
+        var responseType = this.dataDeserializer.deserializeInt();
+        if (responseType == 0) {
+            var count = this.dataDeserializer.deserializeInt();
+            var clusterings = new ArrayList<String>();
+            while (count-- > 0) {
+                clusterings.add(this.dataDeserializer.deserializeString());
+            }
+            return clusterings;
+        }
+
+        if (responseType == 1) {
+            throw new IOException(this.dataDeserializer.deserializeString());
+        } else {
+            throw new IOException("Risposta non valida!");
+        }
+    }
+
     /**
      * Invia la richiesta di chiusura della connessione al server.
      *
      * @throws IOException in caso di errori durante la comunicazione
      */
     public void closeConnection() throws IOException {
-        this.dataSerializer.serializeInt(5);
+        this.dataSerializer.serializeInt(6);
 
         var responseType = this.dataDeserializer.deserializeInt();
         if (responseType == 0) {
