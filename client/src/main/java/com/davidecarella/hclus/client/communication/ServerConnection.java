@@ -32,8 +32,12 @@ public class ServerConnection {
      * @throws IOException in caso di errori di I/O durante la connessione
      */
     public static void open(String address, int port) throws IOException {
-        if (instance != null) {
-            instance.closeConnection();
+        try {
+            if (instance != null) {
+                instance.closeConnection();
+            }
+        } finally {
+            instance = null;
         }
 
         instance = new ServerConnection(address, port);
