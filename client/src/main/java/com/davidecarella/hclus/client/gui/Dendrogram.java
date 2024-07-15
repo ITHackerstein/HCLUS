@@ -69,7 +69,7 @@ class Dendrogram {
 
         var oldClusterPositions = Arrays.copyOf(this.clusterPositions, this.clusterPositions.length);
         for (int i = 0; i < this.clusterPositions.length; ++i) {
-            if (i < order.length && order[i] != -1) {
+            if (i < order.length) {
                 this.clusterPositions[order[i]] = oldClusterPositions[i];
             } else {
                 this.clusterPositions[i] = oldClusterPositions[i];
