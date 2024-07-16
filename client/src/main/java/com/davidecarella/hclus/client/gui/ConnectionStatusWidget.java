@@ -17,7 +17,7 @@ class ConnectionStatusWidget extends JPanel {
     /**
      * I possibili stati della connessione.
      */
-    public enum Status {
+    enum Status {
         /**
          * Non connesso.
          */

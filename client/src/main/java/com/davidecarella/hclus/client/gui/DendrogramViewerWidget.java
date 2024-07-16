@@ -24,7 +24,7 @@ import java.util.List;
  *
  * @see Dendrogram
  */
-public class DendrogramViewerWidget extends JPanel implements MouseListener, MouseMotionListener, MouseWheelListener, ComponentListener {
+class DendrogramViewerWidget extends JPanel implements MouseListener, MouseMotionListener, MouseWheelListener, ComponentListener {
     /**
      * Il dendrogramma che si sta visualizzando.
      */
@@ -78,7 +78,7 @@ public class DendrogramViewerWidget extends JPanel implements MouseListener, Mou
     /**
      * Costruisce il widget per la visualizzazione del dendrogramma.
      */
-    public DendrogramViewerWidget() {
+    DendrogramViewerWidget() {
         this.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(), "Dendrogramma"));
         this.addMouseListener(this);
         this.addMouseMotionListener(this);
@@ -91,7 +91,7 @@ public class DendrogramViewerWidget extends JPanel implements MouseListener, Mou
      *
      * @param clustering il clustering di cui si vuole visualizzare il dendrogramma
      */
-    public void setClustering(Clustering clustering) {
+    void setClustering(Clustering clustering) {
         this.dendrogram = clustering == null ? null : new Dendrogram(clustering);
         this.selectedClusterIndex = -1;
         this.hoveredClusterIndex = -1;
