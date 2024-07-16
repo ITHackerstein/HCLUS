@@ -626,8 +626,6 @@ public class MainWindow extends JFrame {
                     this.spn_depth.setEnabled(true);
                     this.depthModel.setMaximum(exampleCount);
                     this.btn_mine.setEnabled(true);
-
-                    JOptionPane.showMessageDialog(this, "Dataset caricato con successo!", this.getTitle(), JOptionPane.INFORMATION_MESSAGE);
                 } catch (IOException exception) {
                     JOptionPane.showMessageDialog(this, String.format("Errore durante il caricamento del dataset: %s!", exception.getMessage()), this.getTitle(), JOptionPane.INFORMATION_MESSAGE);
                 }
@@ -714,6 +712,7 @@ public class MainWindow extends JFrame {
                     }
 
                     this.dendrogramViewerWidget.setClustering(clustering);
+                    this.dendrogramViewerWidget.requestFocus();
                 } catch (IOException exception) {
                     String message;
                     if (this.chk_newClustering.isSelected()) {
@@ -817,9 +816,9 @@ public class MainWindow extends JFrame {
         cancelButton.addActionListener(dialogEvent -> dialog.setVisible(false));
 
         dialog.setResizable(false);
-        dialog.setPreferredSize(new Dimension(250, 200));
-        dialog.setLocationRelativeTo(null);
+        dialog.setPreferredSize(new Dimension(350, 200));
         dialog.pack();
+        dialog.setLocationRelativeTo(this);
         dialog.setVisible(true);
     }
 

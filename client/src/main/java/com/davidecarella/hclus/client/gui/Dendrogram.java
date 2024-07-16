@@ -3,6 +3,7 @@ package com.davidecarella.hclus.client.gui;
 import com.davidecarella.hclus.common.Clustering;
 
 import java.awt.*;
+import java.awt.geom.AffineTransform;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -27,6 +28,20 @@ import java.util.Stack;
  * @see DendrogramViewerWidget
  */
 class Dendrogram {
+    /**
+     * L'orientazione del dendrogramma.
+     */
+    enum Orientation {
+        /**
+         * Orientazione verticale.
+         */
+        VERTICAL,
+        /**
+         * Orientazione orizzontale.
+         */
+        HORIZONTAL
+    }
+
     /**
      * La dimensione (in pixel) di un cluster.
      */
@@ -91,6 +106,11 @@ class Dendrogram {
      * Il clustering a cui fa riferimento il dendrogramma.
      */
     private final Clustering clustering;
+
+    /**
+     * L'orientazione del dendrogramma.
+     */
+    private Orientation orientation = Orientation.VERTICAL;
 
     /**
      * Le posizioni dei cluster del dendrogramma.
@@ -276,6 +296,28 @@ class Dendrogram {
         }
 
         return this.clustering.steps()[clusterIndex - this.clustering.exampleCount()].newClusterSize();
+    }
+
+    /**
+     * Restituisce l'orientazione del dendrogramma.
+     *
+     * @return l'orientazione del dendrogramma
+     */
+    Orientation getOrientation() {
+        return this.orientation;
+    }
+
+    /**
+     * Scambia l'orientazione del dendrogramma.
+     */
+    void swapOrientation() {
+        this.orientation = switch (orientation) {
+            case HORIZONTAL -> Orientation.VERTICAL;
+            case VERTICAL -> Orientation.HORIZONTAL;
+        };
+
+        var transform = AffineTransform.getRotateInstance(this.orientation == Orientation.VERTICAL ? Math.PI / 2 : -Math.PI / 2);
+        transform.transform(this.clusterPositions, 0, this.clusterPositions, 0, this.clusterPositions.length);
     }
 
     /**

@@ -24,7 +24,7 @@ import java.util.List;
  *
  * @see Dendrogram
  */
-class DendrogramViewerWidget extends JPanel implements MouseListener, MouseMotionListener, MouseWheelListener, ComponentListener {
+class DendrogramViewerWidget extends JPanel implements KeyListener, MouseListener, MouseMotionListener, MouseWheelListener, ComponentListener {
     /**
      * Il dendrogramma che si sta visualizzando.
      */
@@ -80,6 +80,8 @@ class DendrogramViewerWidget extends JPanel implements MouseListener, MouseMotio
      */
     DendrogramViewerWidget() {
         this.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(), "Dendrogramma"));
+        this.setFocusable(true);
+        this.addKeyListener(this);
         this.addMouseListener(this);
         this.addMouseMotionListener(this);
         this.addMouseWheelListener(this);
@@ -167,8 +169,13 @@ class DendrogramViewerWidget extends JPanel implements MouseListener, MouseMotio
 
             g2d.setColor(Dendrogram.EDGE_COLOR);
             g2d.setStroke(new BasicStroke(Dendrogram.EDGE_LINE_WIDTH));
-            g2d.drawLine(firstPosition.x, firstPosition.y, secondPosition.x, firstPosition.y);
-            g2d.drawLine(secondPosition.x, firstPosition.y, secondPosition.x, secondPosition.y);
+            if (dendrogram.getOrientation() == Dendrogram.Orientation.HORIZONTAL) {
+                g2d.drawLine(firstPosition.x, firstPosition.y, firstPosition.x, secondPosition.y);
+                g2d.drawLine(firstPosition.x, secondPosition.y, secondPosition.x, secondPosition.y);
+            } else {
+                g2d.drawLine(firstPosition.x, firstPosition.y, secondPosition.x, firstPosition.y);
+                g2d.drawLine(secondPosition.x, firstPosition.y, secondPosition.x, secondPosition.y);
+            }
         }
 
         for (int i = 0; i < this.dendrogram.getClusterCount(); ++i) {
@@ -320,6 +327,31 @@ class DendrogramViewerWidget extends JPanel implements MouseListener, MouseMotio
         );
     }
 
+    @Override
+    public void keyTyped(KeyEvent event) {
+    }
+
+    @Override
+    public void keyPressed(KeyEvent event) {
+    }
+
+    /**
+     * <p>Gestisce l'evento del rilascio di un tasto della tastiera.
+     *
+     * <p>Controlla se viene rilasciata la {@code R} sulla tastiera e in tal caso ruota il dendrogramma.
+     *
+     * @param event l'evento da processare
+     */
+    @Override
+    public void keyReleased(KeyEvent event) {
+        if (event.getKeyChar() != 'R' && event.getKeyChar() != 'r') {
+            return;
+        }
+
+        this.dendrogram.swapOrientation();
+        repaint();
+    }
+
     /**
      * <p>Gestisce l'evento di <i>dragging</i> del mouse mentre si sta tenendo premuta la rotellina del mouse.
      *
@@ -387,7 +419,13 @@ class DendrogramViewerWidget extends JPanel implements MouseListener, MouseMotio
      */
     @Override
     public void mouseClicked(MouseEvent event) {
-        if (this.dendrogram == null || !this.isEnabled() || event.getButton() != MouseEvent.BUTTON1) {
+        if (this.dendrogram == null || !this.isEnabled()) {
+            return;
+        }
+
+        this.requestFocus();
+
+        if (event.getButton() != MouseEvent.BUTTON1) {
             return;
         }
 
