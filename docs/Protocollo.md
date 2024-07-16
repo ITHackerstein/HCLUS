@@ -112,6 +112,7 @@ Se il tutto avviene con successo il server risponde con la seguente risposta:
 altrimenti risponde con:
 * `responseType = 1`
 * `errorMessage`: `String`
+* `details`: `String`
 
 ### 2.2. `GetDatasets`
 
@@ -130,6 +131,7 @@ Se il tutto avviene con successo il server risponde con la seguente risposta:
 altrimenti risponde con:
 * `responseType = 1`
 * `errorMessage`: `String`
+* `details`: `String`
 
 ### 2.3. `NewClustering`
 
@@ -155,6 +157,7 @@ Se il tutto avviene con successo il server risponde con la seguente risposta:
 altrimenti risponde con:
 * `responseType = 1`
 * `errorMessage`: `String`
+* `details`: `String`
 
 ### 2.4. `LoadClustering`
 
@@ -173,6 +176,7 @@ Se il tutto avviene con successo il server risponde con la seguente risposta:
 altrimenti risponde con:
 * `responseType = 1`
 * `errorMessage`: `String`
+* `details`: `String`
 
 ### 2.5. `GetExamples`
 
@@ -193,6 +197,7 @@ Se il tutto avviene con successo il server risponde con la seguente risposta:
 altrimenti risponde con:
 * `repsonseType = 1`
 * `errorMessage`: `String`
+* `details`: `String`
 
 ### 2.6. `GetClusterDistanceMethods`
 
@@ -224,6 +229,7 @@ Il server proverà a elencare i nomi dei clustering salvati e, se non si dovesse
 altrimenti risponde con:
 * `responseType = 1`
 * `errorMessage`: `String`
+* `details`: `String`
 
 ### 2.8. `CloseConnection`
 

@@ -1,6 +1,7 @@
 package com.davidecarella.hclus.client.gui;
 
 import com.davidecarella.hclus.client.communication.ServerConnection;
+import com.davidecarella.hclus.client.exceptions.ServerException;
 import com.davidecarella.hclus.common.Clustering;
 import com.davidecarella.hclus.common.Example;
 
@@ -453,6 +454,10 @@ class DendrogramViewerWidget extends JPanel implements KeyListener, MouseListene
                     this.selectedClusterExampleIndices = null;
                     this.selectedClusterExamples = null;
                     this.clusterTooltipError = String.format("Errore durante il caricamento degli esempi: %s!", exception.getMessage());
+                } catch (ServerException exception) {
+                    this.selectedClusterExampleIndices = null;
+                    this.selectedClusterExamples = null;
+                    this.clusterTooltipError = String.format("%s: %s!", exception.getMessage(), exception.getDetails());
                 }
 
                 this.repaint();

@@ -39,7 +39,7 @@ public class HierarchicalClustering {
         final int n = dataset.getExampleCount();
 
         if (depth <= 0 || depth > n) {
-            throw new InvalidDepthException("La profondità del dendrogramma deve essere al massimo pari al numero di esempi nel dataset");
+            throw new InvalidDepthException("La profondità del dendrogramma deve essere al massimo pari al numero di esempi nel dataset!");
         }
 
         // The cluster distance matrix delle distanze fra cluster (initially it contains example distances).
@@ -134,7 +134,7 @@ public class HierarchicalClustering {
         {
             var depth = dataDeserializer.deserializeInt();
             if (depth <= 0 || depth > dataset.getExampleCount()) {
-                throw new InvalidDepthException("La profondità del dendrogramma deve essere al massimo pari al numero di esempi nel dataset");
+                throw new InvalidDepthException("La profondità del dendrogramma deve essere al massimo pari al numero di esempi nel dataset!");
             }
 
             var steps = new ClusteringStep[depth - 1];
@@ -144,7 +144,7 @@ public class HierarchicalClustering {
                 if (step.firstClusterIndex() < 0 || step.firstClusterIndex() > i + dataset.getExampleCount() - 1 ||
                     step.secondClusterIndex() < 0 || step.secondClusterIndex() > i + dataset.getExampleCount() - 1)
                 {
-                    throw new InvalidClusterIndexException("Indice del cluster non valido");
+                    throw new InvalidClusterIndexException("Indice del cluster non valido!");
                 }
                 steps[i] = step;
             }

@@ -1,10 +1,12 @@
 package com.davidecarella.hclus.client.gui;
 
 import com.davidecarella.hclus.client.communication.ServerConnection;
+import com.davidecarella.hclus.client.exceptions.ServerException;
 import com.davidecarella.hclus.common.ClusterDistanceMethod;
 import com.davidecarella.hclus.common.Clustering;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -519,7 +521,7 @@ public class MainWindow extends JFrame {
                         this.connectionStatusWidget.setStatus(ConnectionStatusWidget.Status.NOT_CONNECTED);
                     }
                 } catch (IOException exception) {
-                    JOptionPane.showMessageDialog(this, exception.getMessage(), this.getTitle(), JOptionPane.ERROR_MESSAGE);
+                    this.showErrorDialog("Errore durante la chiusura della connessione!", exception.getMessage());
                     this.connectionStatusWidget.setStatus(ConnectionStatusWidget.Status.NOT_CONNECTED);
                     return;
                 }
@@ -532,13 +534,13 @@ public class MainWindow extends JFrame {
                     port = Integer.parseInt(portString);
                 } catch (NumberFormatException exception) {
                     this.connectionStatusWidget.setStatus(ConnectionStatusWidget.Status.NOT_CONNECTED);
-                    JOptionPane.showMessageDialog(this, "Porta non valida!", this.getTitle(), JOptionPane.ERROR_MESSAGE);
+                    this.showErrorDialog("Porta non valida!", "");
                     return;
                 }
 
                 if (port <= 0 || port > 65535) {
                     this.connectionStatusWidget.setStatus(ConnectionStatusWidget.Status.NOT_CONNECTED);
-                    JOptionPane.showMessageDialog(this, "Porta non valida!", this.getTitle(), JOptionPane.ERROR_MESSAGE);
+                    this.showErrorDialog("Porta non valida!", "");
                     return;
                 }
 
@@ -553,9 +555,12 @@ public class MainWindow extends JFrame {
                     this.distanceModel.addAll(ServerConnection.the().getClusterDistanceMethods());
 
                     this.connectionStatusWidget.setStatus(ConnectionStatusWidget.Status.CONNECTED);
+                } catch (ServerException exception) {
+                    this.connectionStatusWidget.setStatus(ConnectionStatusWidget.Status.NOT_CONNECTED);
+                    this.showErrorDialog(exception.getMessage(), exception.getDetails());
                 } catch (IOException exception) {
                     this.connectionStatusWidget.setStatus(ConnectionStatusWidget.Status.NOT_CONNECTED);
-                    JOptionPane.showMessageDialog(this, String.format("Errore durante la connessione: %s!", exception.getMessage()), this.getTitle(), JOptionPane.ERROR_MESSAGE);
+                    this.showErrorDialog("Errore di I/O durante la comunicazione!", exception.getMessage());
                 }
             } finally {
                 this.lbl_address.setEnabled(true);
@@ -571,7 +576,7 @@ public class MainWindow extends JFrame {
 
             try {
                 if (ServerConnection.the() == null) {
-                    JOptionPane.showMessageDialog(this, "Nessuna connessione al server!", this.getTitle(), JOptionPane.ERROR_MESSAGE);
+                    this.showErrorDialog("Nessuna connessione al server!", "");
                     return;
                 }
 
@@ -583,8 +588,10 @@ public class MainWindow extends JFrame {
                     }
 
                     this.showSuggestionDialog(availableDatasets, this.txt_tableName::setText);
+                } catch (ServerException exception) {
+                    this.showErrorDialog(exception.getMessage(), exception.getDetails());
                 } catch (IOException exception) {
-                    JOptionPane.showMessageDialog(this, String.format("Errore durante la lettura dei dataset disponibili: %s!", exception.getMessage()), this.getTitle(), JOptionPane.ERROR_MESSAGE);
+                    this.showErrorDialog("Errore di I/O durante la comunicazione!", exception.getMessage());
                 }
             } finally {
                 this.btn_showAvailableDatasets.setEnabled(true);
@@ -598,7 +605,7 @@ public class MainWindow extends JFrame {
 
             try {
                 if (ServerConnection.the() == null) {
-                    JOptionPane.showMessageDialog(this, "Nessuna connessione al server!", this.getTitle(), JOptionPane.ERROR_MESSAGE);
+                    this.showErrorDialog("Nessuna connessione al server!", "");
                     return;
                 }
 
@@ -626,8 +633,10 @@ public class MainWindow extends JFrame {
                     this.spn_depth.setEnabled(true);
                     this.depthModel.setMaximum(exampleCount);
                     this.btn_mine.setEnabled(true);
+                } catch (ServerException exception) {
+                    this.showErrorDialog(exception.getMessage(), exception.getDetails());
                 } catch (IOException exception) {
-                    JOptionPane.showMessageDialog(this, String.format("Errore durante il caricamento del dataset: %s!", exception.getMessage()), this.getTitle(), JOptionPane.INFORMATION_MESSAGE);
+                    this.showErrorDialog("Errore di I/O durante la comunicazione!", exception.getMessage());
                 }
             } finally {
                 this.lbl_tableName.setEnabled(true);
@@ -655,7 +664,7 @@ public class MainWindow extends JFrame {
 
             try {
                 if (ServerConnection.the() == null) {
-                    JOptionPane.showMessageDialog(this, "Nessuna connessione al server!", this.getTitle(), JOptionPane.ERROR_MESSAGE);
+                    this.showErrorDialog("Nessuna connessione al server!", "");
                     return;
                 }
 
@@ -667,8 +676,10 @@ public class MainWindow extends JFrame {
                     }
 
                     this.showSuggestionDialog(savedClusterings, this.txt_clusteringName::setText);
+                } catch (ServerException exception) {
+                    this.showErrorDialog(exception.getMessage(), exception.getDetails());
                 } catch (IOException exception) {
-                    JOptionPane.showMessageDialog(this, String.format("Errore durante la lettura dei clustering salvati: %s!", exception.getMessage()), this.getTitle(), JOptionPane.ERROR_MESSAGE);
+                    this.showErrorDialog("Errore di I/O durante la comunicazione!", exception.getMessage());
                 }
             } finally {
                 this.btn_showSavedClusterings.setEnabled(true);
@@ -689,7 +700,7 @@ public class MainWindow extends JFrame {
 
             try {
                 if (ServerConnection.the() == null) {
-                    JOptionPane.showMessageDialog(this, "Nessuna connessione al server!", this.getTitle(), JOptionPane.ERROR_MESSAGE);
+                    this.showErrorDialog("Nessuna connessione al server!", "");
                     return;
                 }
 
@@ -701,7 +712,7 @@ public class MainWindow extends JFrame {
                         var depth = (int) this.depthModel.getValue();
                         var selectedDistance = this.cmb_distance.getSelectedItem();
                         if (selectedDistance == null) {
-                            JOptionPane.showMessageDialog(this, "Bisogna selezionare un metodo per il calcolo della distanza!", this.getTitle(), JOptionPane.ERROR_MESSAGE);
+                            this.showErrorDialog("Bisogna selezionare un metodo per il calcolo della distanza!", "");
                             return;
                         }
                         var distanceId = ((ClusterDistanceMethod) selectedDistance).id();
@@ -713,15 +724,10 @@ public class MainWindow extends JFrame {
 
                     this.dendrogramViewerWidget.setClustering(clustering);
                     this.dendrogramViewerWidget.requestFocus();
+                } catch (ServerException exception) {
+                    this.showErrorDialog(exception.getMessage(), exception.getDetails());
                 } catch (IOException exception) {
-                    String message;
-                    if (this.chk_newClustering.isSelected()) {
-                        message = String.format("Errore durante la creazione del nuovo clustering: %s", exception.getMessage());
-                    } else {
-                        message = String.format("Errore durante il caricamento del clustering: %s", exception.getMessage());
-                    }
-
-                    JOptionPane.showMessageDialog(this, message, this.getTitle(), JOptionPane.ERROR_MESSAGE);
+                    this.showErrorDialog("Errore di I/O durante la comunicazione!", exception.getMessage());
                 }
             } finally {
                 this.lbl_newClustering.setEnabled(true);
@@ -743,6 +749,62 @@ public class MainWindow extends JFrame {
     }
 
     /**
+     * Mostra una finestra di dialogo che contiene un messaggio d'errore, {@code error}, specificato come parametro e
+     * degli eventuali dettagli che lo specificano, {@code details}, specificati come parametro.
+     *
+     * @param message il messaggio d'errore da visualizzare
+     * @param details i dettagli del messaggio d'errore
+     */
+    private void showErrorDialog(String message, String details) {
+        if (details == null || details.isBlank()) {
+            JOptionPane.showMessageDialog(this, message, this.getTitle(), JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        var icn_error = new JLabel(UIManager.getIcon("OptionPane.errorIcon"));
+        var lbl_message = new JLabel(message);
+        var txt_details = new JTextArea(10, 40);
+        var scr_details = new JScrollPane(txt_details);
+        txt_details.setText(details);
+        txt_details.setFont(new Font(Font.MONOSPACED, Font.PLAIN, txt_details.getFont().getSize()));
+        txt_details.setEditable(false);
+        var pnl_message = new JPanel();
+        pnl_message.setLayout(new BoxLayout(pnl_message, BoxLayout.LINE_AXIS));
+        pnl_message.add(icn_error);
+        pnl_message.add(Box.createRigidArea(new Dimension(10, 0)));
+        pnl_message.add(lbl_message);
+
+        var btn_ok = new JButton("Ok");
+        var pnl_buttons = new JPanel();
+        pnl_buttons.setLayout(new BoxLayout(pnl_buttons, BoxLayout.LINE_AXIS));
+        pnl_buttons.add(btn_ok);
+
+        var pnl_main = new JPanel();
+        pnl_main.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        pnl_main.setLayout(new BoxLayout(pnl_main, BoxLayout.PAGE_AXIS));
+
+        pnl_message.setAlignmentX(Component.RIGHT_ALIGNMENT);
+        scr_details.setAlignmentX(Component.RIGHT_ALIGNMENT);
+        pnl_buttons.setAlignmentX(Component.RIGHT_ALIGNMENT);
+
+        pnl_main.add(pnl_message);
+        pnl_main.add(Box.createRigidArea(new Dimension(0, 5)));
+        pnl_main.add(scr_details);
+        pnl_main.add(Box.createRigidArea(new Dimension(0, 5)));
+        pnl_main.add(pnl_buttons);
+
+        var dialog = new JDialog(this, this.getTitle(), true);
+        dialog.getContentPane().add(pnl_main);
+
+        btn_ok.addActionListener(event -> dialog.setVisible(false));
+
+        dialog.setResizable(false);
+        dialog.pack();
+        dialog.setLocationRelativeTo(this);
+        dialog.setVisible(true);
+    }
+
+    /**
      * Mostra una finestra di dialogo che contiene i suggerimenti per l'utente {@code suggestions}, specificati come
      * parametro. Se viene selezionato uno dei suggerimenti allora viene richiamata la funzione {@code useSuggestion},
      * specificata come parametro, con il suggerimento selezionato come argomento.
@@ -756,56 +818,56 @@ public class MainWindow extends JFrame {
             return;
         }
 
-        var model = new DefaultListModel<String>();
-        model.addAll(suggestions);
+        var suggestionsModel = new DefaultListModel<String>();
+        suggestionsModel.addAll(suggestions);
 
-        var list = new JList<>(model);
-        list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        list.setLayoutOrientation(JList.VERTICAL);
-        var scrollPane = new JScrollPane(list);
+        var lst_suggestions = new JList<>(suggestionsModel);
+        lst_suggestions.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        lst_suggestions.setLayoutOrientation(JList.VERTICAL);
+        var scr_suggestions = new JScrollPane(lst_suggestions);
 
-        var confirmButton = new JButton("Ok");
-        var cancelButton = new JButton("Annulla");
-        var buttons = new JPanel();
-        buttons.setLayout(new BoxLayout(buttons, BoxLayout.LINE_AXIS));
-        buttons.add(confirmButton);
-        buttons.add(Box.createRigidArea(new Dimension(5, 0)));
-        buttons.add(cancelButton);
+        var btn_ok = new JButton("Ok");
+        var btn_cancel = new JButton("Annulla");
+        var pnl_buttons = new JPanel();
+        pnl_buttons.setLayout(new BoxLayout(pnl_buttons, BoxLayout.LINE_AXIS));
+        pnl_buttons.add(btn_ok);
+        pnl_buttons.add(Box.createRigidArea(new Dimension(5, 0)));
+        pnl_buttons.add(btn_cancel);
 
-        var mainPanel = new JPanel();
-        mainPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-        mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.PAGE_AXIS));
-        mainPanel.add(scrollPane);
-        mainPanel.add(Box.createRigidArea(new Dimension(0, 5)));
-        mainPanel.add(buttons);
+        var pnl_main = new JPanel();
+        pnl_main.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        pnl_main.setLayout(new BoxLayout(pnl_main, BoxLayout.PAGE_AXIS));
+        pnl_main.add(scr_suggestions);
+        pnl_main.add(Box.createRigidArea(new Dimension(0, 5)));
+        pnl_main.add(pnl_buttons);
 
         var dialog = new JDialog(this, this.getTitle(), true);
-        dialog.getContentPane().add(mainPanel);
+        dialog.getContentPane().add(pnl_main);
 
-        list.addMouseListener(new MouseAdapter() {
+        lst_suggestions.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent mouseEvent) {
                 if (mouseEvent.getButton() != MouseEvent.BUTTON1 || mouseEvent.getClickCount() != 2) {
                     return;
                 }
 
-                Rectangle listBounds = list.getCellBounds(list.getFirstVisibleIndex(), list.getLastVisibleIndex());
+                Rectangle listBounds = lst_suggestions.getCellBounds(lst_suggestions.getFirstVisibleIndex(), lst_suggestions.getLastVisibleIndex());
                 if (listBounds == null || !listBounds.contains(mouseEvent.getPoint())) {
                     return;
                 }
 
-                var index = list.locationToIndex(mouseEvent.getPoint());
+                var index = lst_suggestions.locationToIndex(mouseEvent.getPoint());
                 if (index == -1) {
                     return;
                 }
 
-                useSuggestion.accept(model.get(index));
+                useSuggestion.accept(suggestionsModel.get(index));
                 dialog.setVisible(false);
             }
         });
 
-        confirmButton.addActionListener(dialogEvent -> {
-            var selection = list.getSelectedValue();
+        btn_ok.addActionListener(dialogEvent -> {
+            var selection = lst_suggestions.getSelectedValue();
             if (selection != null) {
                 useSuggestion.accept(selection);
             }
@@ -813,7 +875,7 @@ public class MainWindow extends JFrame {
             dialog.setVisible(false);
         });
 
-        cancelButton.addActionListener(dialogEvent -> dialog.setVisible(false));
+        btn_cancel.addActionListener(dialogEvent -> dialog.setVisible(false));
 
         dialog.setResizable(false);
         dialog.setPreferredSize(new Dimension(350, 200));

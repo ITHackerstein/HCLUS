@@ -8,10 +8,7 @@ import com.davidecarella.hclus.server.clustering.HierarchicalClustering;
 import com.davidecarella.hclus.common.Example;
 import com.davidecarella.hclus.server.database.DatabaseService;
 import com.davidecarella.hclus.server.distance.*;
-import com.davidecarella.hclus.server.exceptions.DatabaseConnectionException;
-import com.davidecarella.hclus.server.exceptions.InvalidClusterIndexException;
-import com.davidecarella.hclus.server.exceptions.InvalidDepthException;
-import com.davidecarella.hclus.server.exceptions.NoDataException;
+import com.davidecarella.hclus.server.exceptions.*;
 import com.davidecarella.hclus.common.serialization.DataDeserializer;
 import com.davidecarella.hclus.common.serialization.DataSerializer;
 
@@ -112,9 +109,10 @@ public class ClientHandler extends Thread {
                         case 6 -> getSavedClusterings(dataDeserializer, dataSerializer);
                         case 7 -> closeConnectionRequest(dataDeserializer, dataSerializer);
                         default -> {
-                            log(String.format("Richiesta non valida (%d)", requestType));
+                            log(String.format("Richiesta non valida (%d)!", requestType));
                             dataSerializer.serializeInt(ERROR);
-                            dataSerializer.serializeString("Richiesta non valida");
+                            dataSerializer.serializeString("Richiesta non valida!");
+                            dataSerializer.serializeString(String.format("%d non è un tipo valido di richiesta", requestType));
                         }
                     }
                 } catch (SocketException | EOFException ignored) {
@@ -148,10 +146,16 @@ public class ClientHandler extends Thread {
             log(String.format("Richiesta `LoadDataset(tableName=%s)` eseguita con successo", tableName));
             dataSerializer.serializeInt(SUCCESS);
             dataSerializer.serializeInt(this.dataset.getExampleCount());
-        } catch (NoDataException exception) {
+        } catch (DatabaseConnectionException | SQLException exception) {
             log(String.format("Errore durante l'esecuzione della richiesta `LoadDataset(tableName=%s)`!", tableName));
             dataSerializer.serializeInt(ERROR);
-            dataSerializer.serializeString(walkThrowable(exception));
+            dataSerializer.serializeString("Errore durante il caricamento del dataset!");
+            dataSerializer.serializeString(throwableStackTraceToString(exception));
+        } catch (EmptySetException | MissingNumberException exception) {
+            log(String.format("Errore durante l'esecuzione della richiesta `LoadDataset(tableName=%s)`!", tableName));
+            dataSerializer.serializeInt(ERROR);
+            dataSerializer.serializeString(exception.getMessage());
+            dataSerializer.serializeString("");
         }
     }
 
@@ -176,7 +180,8 @@ public class ClientHandler extends Thread {
         } catch (DatabaseConnectionException | SQLException exception) {
             log("Errore durante l'esecuzione della richiesta `GetDatasets`!");
             dataSerializer.serializeInt(ERROR);
-            dataSerializer.serializeString(walkThrowable(exception));
+            dataSerializer.serializeString("Errore durante la lettura dei dataset disponibili!");
+            dataSerializer.serializeString(throwableStackTraceToString(exception));
         }
     }
 
@@ -197,21 +202,21 @@ public class ClientHandler extends Thread {
         if (this.dataset == null) {
             log(String.format("Errore durante l'esecuzione della richiesta `NewClustering(depth=%d, distanceId=%d, name=%s)`!", depth, distanceId, name));
             dataSerializer.serializeInt(ERROR);
-            dataSerializer.serializeString("I dati non sono stati ancora caricati");
+            dataSerializer.serializeString("Nessun dataset caricato!");
             return;
         }
 
         if (distanceId < 0 || distanceId >= AVAILABLE_DISTANCE_METHODS.length) {
             log(String.format("Errore durante l'esecuzione della richiesta `NewClustering(depth=%d, distanceId=%d, name=%s)`!", depth, distanceId, name));
             dataSerializer.serializeInt(ERROR);
-            dataSerializer.serializeString("Tipo di distanza non valida");
+            dataSerializer.serializeString("Tipo di distanza non valida!");
             return;
         }
 
         if (!name.matches(CLUSTERING_NAME_REGEX)) {
             log(String.format("Errore durante l'esecuzione della richiesta `NewClustering(depth=%d, distanceId=%d, name=%s)`!", depth, distanceId, name));
             dataSerializer.serializeInt(ERROR);
-            dataSerializer.serializeString("Nome non valido");
+            dataSerializer.serializeString("Nome non valido!");
             return;
         }
 
@@ -221,7 +226,8 @@ public class ClientHandler extends Thread {
         } catch (InvalidDepthException | ExampleSizeMismatchException exception) {
             log(String.format("Errore durante l'esecuzione della richiesta `NewClustering(depth=%d, distanceId=%d, name=%s)`!", depth, distanceId, name));
             dataSerializer.serializeInt(ERROR);
-            dataSerializer.serializeString(walkThrowable(exception));
+            dataSerializer.serializeString(exception.getMessage());
+            dataSerializer.serializeString("");
             return;
         }
 
@@ -229,10 +235,16 @@ public class ClientHandler extends Thread {
             var clusteringsDir = new File(CLUSTERINGS_DIRECTORY);
             if (!clusteringsDir.exists()) {
                 if (!clusteringsDir.mkdirs()) {
-                    throw new IOException("Non è stato possibile creare la directory per i clustering");
+                    dataSerializer.serializeInt(ERROR);
+                    dataSerializer.serializeString("Non è stato possibile creare la directory per i clustering!");
+                    dataSerializer.serializeString("");
+                    return;
                 }
             } else if (!clusteringsDir.isDirectory()) {
-                throw new IOException(String.format("Esiste già un file con nome '%s'", CLUSTERINGS_DIRECTORY));
+                dataSerializer.serializeInt(ERROR);
+                dataSerializer.serializeString(String.format("Esiste già un file con nome '%s'!", CLUSTERINGS_DIRECTORY));
+                dataSerializer.serializeString("");
+                return;
             }
 
             var path = clusteringsDir.toPath().resolve(String.format("%s.hclus", name));
@@ -240,7 +252,8 @@ public class ClientHandler extends Thread {
         } catch (IOException exception) {
             log(String.format("Errore durante l'esecuzione della richiesta `NewClustering(depth=%d, distanceId=%d, name=%s)`!", depth, distanceId, name));
             dataSerializer.serializeInt(ERROR);
-            dataSerializer.serializeString(String.format("Errore durante il salvataggio del dendrogramma: %s", exception.getMessage()));
+            dataSerializer.serializeString("Errore durante il salvataggio del dendrogramma!");
+            dataSerializer.serializeString(throwableStackTraceToString(exception));
             return;
         }
 
@@ -264,7 +277,8 @@ public class ClientHandler extends Thread {
         if (this.dataset == null) {
             log(String.format("Errore durante l'esecuzione della richiesta `LoadClustering(name=%s)`!", name));
             dataSerializer.serializeInt(ERROR);
-            dataSerializer.serializeString("I dati non sono stati ancora caricati!");
+            dataSerializer.serializeString("Nessun dataset caricato!");
+            dataSerializer.serializeString("");
             return;
         }
 
@@ -272,6 +286,7 @@ public class ClientHandler extends Thread {
             log(String.format("Errore durante l'esecuzione della richiesta `LoadClustering(name=%s)`!", name));
             dataSerializer.serializeInt(ERROR);
             dataSerializer.serializeString("Nome non valido!");
+            dataSerializer.serializeString("");
             return;
         }
 
@@ -281,17 +296,20 @@ public class ClientHandler extends Thread {
         } catch (FileNotFoundException exception) {
             log(String.format("Errore durante l'esecuzione della richiesta `LoadClustering(name=%s)`!", name));
             dataSerializer.serializeInt(ERROR);
-            dataSerializer.serializeString("Il file inserito non esiste");
+            dataSerializer.serializeString("Il file inserito non esiste!");
+            dataSerializer.serializeString("");
             return;
         } catch (IOException exception) {
             log(String.format("Errore durante l'esecuzione della richiesta `LoadClustering(name=%s)`!", name));
             dataSerializer.serializeInt(ERROR);
-            dataSerializer.serializeString(String.format("Errore durante il caricamento del dendrogramma: %s", exception.getMessage()));
+            dataSerializer.serializeString("Errore durante il caricamento del dendrogramma!");
+            dataSerializer.serializeString(throwableStackTraceToString(exception));
             return;
         } catch (InvalidDepthException | InvalidClusterIndexException exception) {
             log(String.format("Errore durante l'esecuzione della richiesta `LoadClustering(name=%s)`!", name));
             dataSerializer.serializeInt(ERROR);
             dataSerializer.serializeString(exception.getMessage());
+            dataSerializer.serializeString("");
             return;
         }
 
@@ -320,16 +338,17 @@ public class ClientHandler extends Thread {
             log(String.format("Errore durante l'esecuzione della richiesta `GetExamples(indexCount=%d)`!", indices.size()));
             dataSerializer.serializeInt(ERROR);
             dataSerializer.serializeString("Uno o più indici non validi!");
+            dataSerializer.serializeString("");
             return;
         }
 
         if (this.dataset == null) {
             log(String.format("Errore durante l'esecuzione della richiesta `GetExamples(indexCount=%d)`!", indices.size()));
             dataSerializer.serializeInt(ERROR);
-            dataSerializer.serializeString("I dati non sono stati ancora caricati!");
+            dataSerializer.serializeString("Nessun dataset caricato!");
+            dataSerializer.serializeString("");
             return;
         }
-
 
         dataSerializer.serializeInt(SUCCESS);
         for (var index : indices) {
@@ -373,13 +392,15 @@ public class ClientHandler extends Thread {
             if (!clusteringsDir.mkdirs()) {
                 log("Errore durante l'esecuzione della richiesta `GetClusterDistanceMethods`!");
                 dataSerializer.serializeInt(ERROR);
-                dataSerializer.serializeString("Non è stato possibile creare la directory per i clustering");
+                dataSerializer.serializeString("Non è stato possibile creare la directory per i clustering!");
+                dataSerializer.serializeString("");
                 return;
             }
         } else if (!clusteringsDir.isDirectory()) {
             log("Errore durante l'esecuzione della richiesta `GetClusterDistanceMethods`!");
             dataSerializer.serializeInt(ERROR);
-            dataSerializer.serializeString(String.format("Esiste già un file con nome '%s'", CLUSTERINGS_DIRECTORY));
+            dataSerializer.serializeString(String.format("Esiste già un file con nome '%s'!", CLUSTERINGS_DIRECTORY));
+            dataSerializer.serializeString("");
             return;
         }
 
@@ -387,7 +408,8 @@ public class ClientHandler extends Thread {
         if (clusteringNames == null) {
             log("Errore durante l'esecuzione della richiesta `GetClusterDistanceMethods`!");
             dataSerializer.serializeInt(ERROR);
-            dataSerializer.serializeString("Errore durante la lettura dei clustering salvati");
+            dataSerializer.serializeString("Errore durante la lettura dei clustering salvati!");
+            dataSerializer.serializeString("");
             return;
         }
 
@@ -437,34 +459,16 @@ public class ClientHandler extends Thread {
     }
 
     /**
-     * Dato un errore/eccezione, {@code throwable}, specificato come parametro stampa il suo messaggio e se contiene
-     * degli altri errori/eccezioni che lo causano allora provvede a stampare anche loro.
+     * Restituisce lo stack trace in forma testuale di un eccezione/errore {@code throwable}, specificato come
+     * parametro.
      *
-     * @param throwable l'errore/eccezione che si vuole stampare
-     * @return il messaggio dell'eccezione e gli eventuali messaggi delle eccezioni che contiene.
+     * @param throwable l'eccezione/errore di cui si vuole ottenere la rappresentazione testuale del proprio stack trace
+     * @return la rappresentazione testaule delllo stack trace dell'eccezione/errore
      */
-    private static String walkThrowable(Throwable throwable) {
-        if (throwable.getCause() == null) {
-            return String.format("%s%n", throwable.getMessage());
-        }
-
-        var stringBuilder = new StringBuilder();
-
-        var current = throwable;
-        int level = 0;
-
-        while (current != null) {
-            int spaceCount = Math.max(level - 1, 0);
-            stringBuilder.append(" ".repeat(spaceCount));
-            if (level != 0) {
-                stringBuilder.append('\\');
-            }
-            stringBuilder.append("- ").append(current.getMessage()).append(System.lineSeparator());
-
-            current = current.getCause();
-            ++level;
-        }
-
-        return stringBuilder.toString();
+    private static String throwableStackTraceToString(Throwable throwable) {
+        var stringWriter = new StringWriter();
+        var printWriter = new PrintWriter(stringWriter);
+        throwable.printStackTrace(printWriter);
+        return stringWriter.toString();
     }
 }

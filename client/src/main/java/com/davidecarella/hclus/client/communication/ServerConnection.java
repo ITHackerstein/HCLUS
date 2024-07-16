@@ -1,5 +1,6 @@
 package com.davidecarella.hclus.client.communication;
 
+import com.davidecarella.hclus.client.exceptions.ServerException;
 import com.davidecarella.hclus.common.ClusterDistanceMethod;
 import com.davidecarella.hclus.common.Clustering;
 import com.davidecarella.hclus.common.Example;
@@ -22,6 +23,7 @@ import java.util.List;
  * <p>Attraverso di essa è possibile inviare le richieste previste dal protocollo:
  * <ul>
  *     <li>{@code LoadDataset}, realizzata dal metodo {@link ServerConnection#loadDataset(String)};</li>
+ *     <li>{@code GetDatasets}, realizzata dal metodo {@link ServerConnection#getDatasets()}</li>
  *     <li>{@code NewClustering}, realizzata dal metodo {@link ServerConnection#newClustering(int, int, String)};</li>
  *     <li>{@code LoadClustering}, realizzata dal metodo {@link ServerConnection#loadClustering(String)};</li>
  *     <li>{@code GetExamples}, realizzata dal metodo {@link ServerConnection#getExamples(List)};</li>
@@ -94,9 +96,10 @@ public class ServerConnection {
      *
      * @param tableName il nome della tabella da cui caricare il dataset
      * @return il numero di esempi contenuti nel dataset caricato
-     * @throws IOException in caso di errori di durante l'esecuzione della richiesta
+     * @throws IOException in caso di errori di I/O durante la comunicazione
+     * @throws ServerException in caso di un errore durante l'esecuzione della richiesta
      */
-    public int loadDataset(String tableName) throws IOException {
+    public int loadDataset(String tableName) throws IOException, ServerException {
         this.dataSerializer.serializeInt(0);
         this.dataSerializer.serializeString(tableName);
 
@@ -106,19 +109,20 @@ public class ServerConnection {
         }
 
         if (responseType == 1) {
-            throw new IOException(this.dataDeserializer.deserializeString());
-        } else {
-            throw new IOException("Risposta non valida!");
+            throw new ServerException(this.dataDeserializer.deserializeString(), this.dataDeserializer.deserializeString());
         }
+
+        throw new ServerException("Risposta non valida!", String.format("%d non è un tipo di risposta valido", responseType));
     }
 
     /**
      * Invia la richiesta {@code GetDatasets} al server.
      *
      * @return la lista dei dataset disponibili sul server
-     * @throws IOException in caso di errori durante l'esecuzione della richiesta
+     * @throws IOException in caso di errori di I/O durante la comunicazione
+     * @throws ServerException in caso di un errore durante l'esecuzione della richiesta
      */
-    public List<String> getDatasets() throws IOException {
+    public List<String> getDatasets() throws IOException, ServerException {
         this.dataSerializer.serializeInt(1);
 
         var responseType = this.dataDeserializer.deserializeInt();
@@ -132,10 +136,10 @@ public class ServerConnection {
         }
 
         if (responseType == 1) {
-            throw new IOException(this.dataDeserializer.deserializeString());
-        } else {
-            throw new IOException("Risposta non valida!");
+            throw new ServerException(this.dataDeserializer.deserializeString(), this.dataDeserializer.deserializeString());
         }
+
+        throw new ServerException("Risposta non valida!", String.format("%d non è un tipo di risposta valido", responseType));
     }
 
     /**
@@ -146,12 +150,13 @@ public class ServerConnection {
      * @param distanceId l'identificatore del metodo per il calcolo della distanza fra cluster
      * @param name il nome del clustering
      * @return il clustering creato dal server
-     * @throws IOException in caso di errori di durante l'esecuzione della richiesta
+     * @throws IOException in caso di errori di I/O durante la comunicazione
+     * @throws ServerException in caso di un errore durante l'esecuzione della richiesta
      *
      * @see ServerConnection#getClusterDistanceMethods() il metodo per recuperare i metodi per il calolo della distanza
      *                                                   fra cluster disponibili sul server
      */
-    public Clustering newClustering(int depth, int distanceId, String name) throws IOException {
+    public Clustering newClustering(int depth, int distanceId, String name) throws IOException, ServerException {
         this.dataSerializer.serializeInt(2);
         this.dataSerializer.serializeInt(depth);
         this.dataSerializer.serializeInt(distanceId);
@@ -163,10 +168,10 @@ public class ServerConnection {
         }
 
         if (responseType == 1) {
-            throw new IOException(this.dataDeserializer.deserializeString());
-        } else {
-            throw new IOException("Risposta non valida!");
+            throw new ServerException(this.dataDeserializer.deserializeString(), this.dataDeserializer.deserializeString());
         }
+
+        throw new ServerException("Risposta non valida!", String.format("%d non è un tipo di risposta valido", responseType));
     }
 
     /**
@@ -174,9 +179,10 @@ public class ServerConnection {
      *
      * @param name il nome del clustering che si vuole caricare
      * @return il clustering caricato dal server
-     * @throws IOException in caso di errori durante l'esecuzione della richiesta
+     * @throws IOException in caso di errori di I/O durante la comunicazione
+     * @throws ServerException in caso di un errore durante l'esecuzione della richiesta
      */
-    public Clustering loadClustering(String name) throws IOException {
+    public Clustering loadClustering(String name) throws IOException, ServerException {
         this.dataSerializer.serializeInt(3);
         this.dataSerializer.serializeString(name);
 
@@ -186,10 +192,10 @@ public class ServerConnection {
         }
 
         if (responseType == 1) {
-            throw new IOException(this.dataDeserializer.deserializeString());
-        } else {
-            throw new IOException("Risposta non valida!");
+            throw new ServerException(this.dataDeserializer.deserializeString(), this.dataDeserializer.deserializeString());
         }
+
+        throw new ServerException("Risposta non valida!", String.format("%d non è un tipo di risposta valido", responseType));
     }
 
     /**
@@ -197,9 +203,10 @@ public class ServerConnection {
      *
      * @param indices la lista degli indici degli esempi che si vuole recuperare
      * @return la lista degli esempi corrispondenti agl indici richiesti
-     * @throws IOException in caso di errori durante l'esecuzione della richiesta
+     * @throws IOException in caso di errori di I/O durante la comunicazione
+     * @throws ServerException in caso di un errore durante l'esecuzione della richiesta
      */
-    public List<Example> getExamples(List<Integer> indices) throws IOException {
+    public List<Example> getExamples(List<Integer> indices) throws IOException, ServerException {
         this.dataSerializer.serializeInt(4);
         this.dataSerializer.serializeInt(indices.size());
         for (var index : indices) {
@@ -216,19 +223,20 @@ public class ServerConnection {
         }
 
         if (responseType == 1) {
-            throw new IOException(this.dataDeserializer.deserializeString());
-        } else {
-            throw new IOException("Risposta non valida!");
+            throw new ServerException(this.dataDeserializer.deserializeString(), this.dataDeserializer.deserializeString());
         }
+
+        throw new ServerException("Risposta non valida!", String.format("%d non è un tipo di risposta valido", responseType));
     }
 
     /**
      * Invia la richiesta {@code GetClusterDistanceMethods} al server.
      *
      * @return la lista dei metodi per il calcolo della distanza fra cluster
-     * @throws IOException in caso di errori durante l'esecuzione della richiesta
+     * @throws IOException in caso di errori di I/O durante la comunicazione
+     * @throws ServerException in caso di un errore durante l'esecuzione della richiesta
      */
-    public List<ClusterDistanceMethod> getClusterDistanceMethods() throws IOException {
+    public List<ClusterDistanceMethod> getClusterDistanceMethods() throws IOException, ServerException {
         this.dataSerializer.serializeInt(5);
 
         var responseType = this.dataDeserializer.deserializeInt();
@@ -242,19 +250,20 @@ public class ServerConnection {
         }
 
         if (responseType == 1) {
-            throw new IOException(this.dataDeserializer.deserializeString());
-        } else {
-            throw new IOException("Risposta non valida!");
+            throw new ServerException(this.dataDeserializer.deserializeString(), this.dataDeserializer.deserializeString());
         }
+
+        throw new ServerException("Risposta non valida!", String.format("%d non è un tipo di risposta valido", responseType));
     }
 
     /**
      * Invia la richiesta {@code GetSavedClusterings} al server.
      *
      * @return la lista dei clustering salvati sul server
-     * @throws IOException in caso di errori durante l'esecuzione della richiesta
+     * @throws IOException in caso di errori di I/O durante la comunicazione
+     * @throws ServerException in caso di un errore durante l'esecuzione della richiesta
      */
-    public List<String> getSavedClusterings() throws IOException {
+    public List<String> getSavedClusterings() throws IOException, ServerException {
         this.dataSerializer.serializeInt(6);
 
         var responseType = this.dataDeserializer.deserializeInt();
@@ -268,10 +277,10 @@ public class ServerConnection {
         }
 
         if (responseType == 1) {
-            throw new IOException(this.dataDeserializer.deserializeString());
-        } else {
-            throw new IOException("Risposta non valida!");
+            throw new ServerException(this.dataDeserializer.deserializeString(), this.dataDeserializer.deserializeString());
         }
+
+        throw new ServerException("Risposta non valida!", String.format("%d non è un tipo di risposta valido", responseType));
     }
 
     /**

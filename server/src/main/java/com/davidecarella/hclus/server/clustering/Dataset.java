@@ -23,14 +23,13 @@ public class Dataset {
      * database.
      *
      * @param tableName la tabella le cui righe si vogliono usare come esempi
-     * @throws NoDataException se ci dovesse essere un error durante il caricamento della tabella
+     * @throws DatabaseConnectionException in caso di errori durante la connessione al database
+     * @throws SQLException in caso di errori durante l'esecuzione delle query sul database
+     * @throws EmptySetException in caso la tabella sia vuota
+     * @throws MissingNumberException in caso la tabella contenga attributi non numerici
      */
-    public Dataset(String tableName) throws NoDataException {
-        try {
-            this.data.addAll(DatabaseService.getExamples(tableName));
-        } catch (DatabaseConnectionException | SQLException | EmptySetException | MissingNumberException exception) {
-            throw new NoDataException("Errore durante il caricamento degli esempi!", exception);
-        }
+    public Dataset(String tableName) throws DatabaseConnectionException, SQLException, EmptySetException, MissingNumberException {
+        this.data.addAll(DatabaseService.getExamples(tableName));
     }
 
     /**
