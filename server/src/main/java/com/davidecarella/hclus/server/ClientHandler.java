@@ -17,6 +17,7 @@ import java.io.*;
 import java.net.Socket;
 import java.net.SocketException;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 /**
  * Classe che gestisce la connessione con un client.
@@ -318,10 +319,11 @@ public class ClientHandler extends Thread {
             return;
         }
 
+        Arrays.sort(clusteringNames, String::compareToIgnoreCase);
         dataSerializer.serializeInt(SUCCESS);
         dataSerializer.serializeInt(clusteringNames.length);
-        for (var clusteringName : clusteringNames) {
-            dataSerializer.serializeString(clusteringName.substring(0, clusteringName.indexOf(".hclus")));
+        for (var name : clusteringNames) {
+            dataSerializer.serializeString(name.substring(0, name.indexOf(".hclus")));
         }
     }
 

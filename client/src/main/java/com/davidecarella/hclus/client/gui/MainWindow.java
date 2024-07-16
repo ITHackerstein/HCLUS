@@ -6,6 +6,8 @@ import com.davidecarella.hclus.common.Clustering;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.io.IOException;
 import java.util.List;
 import java.util.Objects;
@@ -629,6 +631,28 @@ public class MainWindow extends JFrame {
         var dialog = new JDialog(this, this.getTitle(), true);
         dialog.getContentPane().add(mainPanel);
 
+        list.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent mouseEvent) {
+                if (mouseEvent.getButton() != MouseEvent.BUTTON1 || mouseEvent.getClickCount() != 2) {
+                    return;
+                }
+
+                Rectangle listBounds = list.getCellBounds(list.getFirstVisibleIndex(), list.getLastVisibleIndex());
+                if (listBounds == null || !listBounds.contains(mouseEvent.getPoint())) {
+                    return;
+                }
+
+                var index = list.locationToIndex(mouseEvent.getPoint());
+                if (index == -1) {
+                    return;
+                }
+
+                txt_clusteringName.setText(model.get(index));
+                dialog.setVisible(false);
+            }
+        });
+
         confirmButton.addActionListener(dialogEvent -> {
             var selection = list.getSelectedValue();
             if (selection != null) {
@@ -640,6 +664,7 @@ public class MainWindow extends JFrame {
 
         cancelButton.addActionListener(dialogEvent -> dialog.setVisible(false));
 
+        dialog.setResizable(false);
         dialog.setPreferredSize(new Dimension(250, 200));
         dialog.setLocationRelativeTo(null);
         dialog.pack();
