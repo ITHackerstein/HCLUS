@@ -42,14 +42,20 @@ public class HierarchicalClustering {
             throw new InvalidDepthException("La profondità del dendrogramma deve essere al massimo pari al numero di esempi nel dataset");
         }
 
+        // The cluster distance matrix delle distanze fra cluster (initially it contains example distances).
         var distancesBetweenClusters = dataset.computeDistanceMatrix();
+
+        // The array of clustering steps
         var steps = new ClusteringStep[depth - 1];
+
+        // An array which maps an index to its corresponding cluster index.
         var indexMap = new int[dataset.getExampleCount()];
         for (int i = 0; i < n; i++) {
             indexMap[i] = i;
         }
 
         for (int k = 0; k < depth - 1; ++k) {
+            // Find the two clusters with minimum distance.
             var minDistance = Double.POSITIVE_INFINITY;
             int firstCluster = 0;
             int secondCluster = 0;
@@ -77,10 +83,13 @@ public class HierarchicalClustering {
                 firstClusterSize + secondClusterSize
             );
 
+            // Removes the first cluster from the map and replaces the second cluster with the new one.
             indexMap[firstCluster] = -1;
             indexMap[secondCluster] = n + k;
 
             for (int i = 0; i < n; ++i) {
+                // Update the distances from the new cluster to every other cluster (except the ones we removed).
+
                 if (indexMap[i] == -1 || indexMap[i] == n + k) {
                     continue;
                 }
@@ -96,6 +105,8 @@ public class HierarchicalClustering {
                         iSize
                     );
 
+                // Sets the distances to the first cluster to +inf so that they are not considered when finding
+                // the two clusters with minimum distance in the next step.
                 if (i < firstCluster) {
                     distancesBetweenClusters[i][firstCluster] = distancesBetweenClusters[firstCluster][i] =
                         Double.POSITIVE_INFINITY;
