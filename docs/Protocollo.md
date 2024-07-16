@@ -14,12 +14,13 @@
   * [1.9. `Clustering`](#19-clustering)
 * [2. Richieste e risposte](#2-richieste-e-risposte)
   * [2.1. `LoadDataset`](#21-loaddataset)
-  * [2.2. `NewClustering`](#22-newclustering)
-  * [2.3. `LoadClustering`](#23-loadclustering)
-  * [2.4. `GetExamples`](#24-getexamples)
-  * [2.5. `GetClusterDistanceMethods`](#25-getclusterdistancemethods)
-  * [2.6. `GetSavedClusterings`](#26-getsavedclusterings)
-  * [2.7. `CloseConnection`](#27-closeconnection)
+  * [2.2. `GetDatasets`](#22-getdatasets)
+  * [2.3. `NewClustering`](#23-newclustering)
+  * [2.4. `LoadClustering`](#24-loadclustering)
+  * [2.5. `GetExamples`](#25-getexamples)
+  * [2.6. `GetClusterDistanceMethods`](#26-getclusterdistancemethods)
+  * [2.7. `GetSavedClusterings`](#27-getsavedclusterings)
+  * [2.8. `CloseConnection`](#28-closeconnection)
 
 Il seguente documento specifica il protocollo HCLUS utilizzato dal server e il client per comunicare fra loro.
 
@@ -96,7 +97,7 @@ Vediamole ora nello specifico.
 
 ### 2.1. `LoadDataset`
 
-La seguente richiesta viene inviata dal client quando desidera caricare sul server un dataset.
+Viene inviata dal client quando desidera caricare sul server un dataset.
 
 Il formato è il seguente:
 * `requestType = 0`
@@ -112,7 +113,25 @@ altrimenti risponde con:
 * `responseType = 1`
 * `errorMessage`: `String`
 
-### 2.2. `NewClustering`
+### 2.2. `GetDatasets`
+
+Viene inviata dal client quando desidera ricevere una lista dei dataset disponibili sul sever.
+
+Il formato è il seguente:
+* `requestType = 1`
+
+Il server proverà a elencare i dataset disponibili.
+
+Se il tutto avviene con successo il server risponde con la seguente risposta:
+* `requestType = 0`
+* `count`: `int`
+* `datasets`: `String[count]`, la lista dei dataset disponibili sul server
+
+altrimenti risponde con:
+* `responseType = 1`
+* `errorMessage`: `String`
+
+### 2.3. `NewClustering`
 
 Viene inviata dal client quando desidera estrarre un nuovo clustering.
 
@@ -137,7 +156,7 @@ altrimenti risponde con:
 * `responseType = 1`
 * `errorMessage`: `String`
 
-### 2.3. `LoadClustering`
+### 2.4. `LoadClustering`
 
 Viene inviata dal client quando desidera caricare un clustering salvato sul server.
 
@@ -155,7 +174,7 @@ altrimenti risponde con:
 * `responseType = 1`
 * `errorMessage`: `String`
 
-### 2.4. `GetExamples`
+### 2.5. `GetExamples`
 
 Viene inviata quando il client desidera ricevere degli esempi memorizzati nel dataset.
 
@@ -175,7 +194,7 @@ altrimenti risponde con:
 * `repsonseType = 1`
 * `errorMessage`: `String`
 
-### 2.5. `GetClusterDistanceMethods`
+### 2.6. `GetClusterDistanceMethods`
 
 Viene inviata quando il client desidera ricevere i metodi per il calcolo della distanza tra cluster che il server 
 mette a disposizione per l'estrazione di nuovi clustering.
@@ -190,7 +209,7 @@ Il server risponde con:
 * `count`: `int`
 * `clusterDistanceMethods`: `ClusterDistanceMethod[count]`
 
-### 2.6. `GetSavedClusterings`
+### 2.7. `GetSavedClusterings`
 
 Viene inviata quando il client desidera ricevere la lista dei nomi dei clustering salvati sul server.
 
@@ -206,7 +225,7 @@ altrimenti risponde con:
 * `responseType = 1`
 * `errorMessage`: `String`
 
-### 2.7. `CloseConnection`
+### 2.8. `CloseConnection`
 
 Viene inviata quando il client desidera chiudere la connessione.
 
