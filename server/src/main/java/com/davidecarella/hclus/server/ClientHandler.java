@@ -6,7 +6,9 @@ import com.davidecarella.hclus.common.exceptions.ExampleSizeMismatchException;
 import com.davidecarella.hclus.server.clustering.Dataset;
 import com.davidecarella.hclus.server.clustering.HierarchicalClustering;
 import com.davidecarella.hclus.common.Example;
+import com.davidecarella.hclus.server.database.DatabaseService;
 import com.davidecarella.hclus.server.distance.*;
+import com.davidecarella.hclus.server.exceptions.DatabaseConnectionException;
 import com.davidecarella.hclus.server.exceptions.InvalidClusterIndexException;
 import com.davidecarella.hclus.server.exceptions.InvalidDepthException;
 import com.davidecarella.hclus.server.exceptions.NoDataException;
@@ -16,6 +18,7 @@ import com.davidecarella.hclus.common.serialization.DataSerializer;
 import java.io.*;
 import java.net.Socket;
 import java.net.SocketException;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 
@@ -101,13 +104,15 @@ public class ClientHandler extends Thread {
                     var requestType = dataDeserializer.deserializeInt();
                     switch (requestType) {
                         case 0 -> loadDatasetRequest(dataDeserializer, dataSerializer);
-                        case 1 -> newClusteringRequest(dataDeserializer, dataSerializer);
-                        case 2 -> loadClusteringRequest(dataDeserializer, dataSerializer);
-                        case 3 -> getExamplesRequest(dataDeserializer, dataSerializer);
-                        case 4 -> getClusterDistanceMethodsRequest(dataDeserializer, dataSerializer);
-                        case 5 -> getSavedClusterings(dataDeserializer, dataSerializer);
-                        case 6 -> closeConnectionRequest(dataDeserializer, dataSerializer);
+                        case 1 -> getDatasetsRequest(dataDeserializer, dataSerializer);
+                        case 2 -> newClusteringRequest(dataDeserializer, dataSerializer);
+                        case 3 -> loadClusteringRequest(dataDeserializer, dataSerializer);
+                        case 4 -> getExamplesRequest(dataDeserializer, dataSerializer);
+                        case 5 -> getClusterDistanceMethodsRequest(dataDeserializer, dataSerializer);
+                        case 6 -> getSavedClusterings(dataDeserializer, dataSerializer);
+                        case 7 -> closeConnectionRequest(dataDeserializer, dataSerializer);
                         default -> {
+                            log(String.format("Richiesta non valida (%d)", requestType));
                             dataSerializer.serializeInt(ERROR);
                             dataSerializer.serializeString("Richiesta non valida");
                         }
@@ -136,6 +141,8 @@ public class ClientHandler extends Thread {
         String tableName = dataDeserializer.deserializeString();
         log(String.format("Ricevuta richiesta `LoadDataset(tableName=%s)`", tableName));
 
+        this.dataset = null;
+
         try {
             this.dataset = new Dataset(tableName);
             log(String.format("Richiesta `LoadDataset(tableName=%s)` eseguita con successo", tableName));
@@ -143,6 +150,31 @@ public class ClientHandler extends Thread {
             dataSerializer.serializeInt(this.dataset.getExampleCount());
         } catch (NoDataException exception) {
             log(String.format("Errore durante l'esecuzione della richiesta `LoadDataset(tableName=%s)`!", tableName));
+            dataSerializer.serializeInt(ERROR);
+            dataSerializer.serializeString(walkThrowable(exception));
+        }
+    }
+
+    /**
+     * Gestisce la richiesta {@code LoadData}.
+     *
+     * @param dataDeserializer il <i>deserializer</i> per ricevere dati dal client
+     * @param dataSerializer il <i>serializer</i> per inviare dati al client
+     * @throws IOException in caso di errori di I/O durante la comunicazione
+     */
+    private void getDatasetsRequest(DataDeserializer dataDeserializer, DataSerializer dataSerializer) throws IOException {
+        log("Ricevuta richiesta `GetDatasets`");
+
+        try {
+            var datasets = DatabaseService.getAvailableDatasets();
+            dataSerializer.serializeInt(SUCCESS);
+            dataSerializer.serializeInt(datasets.size());
+            for (var dataset : datasets) {
+                dataSerializer.serializeString(dataset);
+            }
+            log("Richiesta `GetDatasets` eseguita con successo");
+        } catch (DatabaseConnectionException | SQLException exception) {
+            log("Errore durante l'esecuzione della richiesta `GetDatasets`!");
             dataSerializer.serializeInt(ERROR);
             dataSerializer.serializeString(walkThrowable(exception));
         }

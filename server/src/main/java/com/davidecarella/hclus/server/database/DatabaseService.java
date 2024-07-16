@@ -97,4 +97,27 @@ public class DatabaseService {
             return examples;
         }
     }
+
+    /**
+     * <p>Restituisce la lista dei dataset memorizzati nel DBMS.
+     *
+     * <p>Ciò che restituisce è la lista delle tabelle presenti nel database {@code hclus_db}, dunque non c'è alcuna
+     * garanzia che le tabelle restituite siano dei dataset validi.
+     *
+     * @return la lista dei dataset memorizzati nel DBMS
+     * @throws DatabaseConnectionException se ci dovessero essere errori durante la connessione al database
+     * @throws SQLException se ci dovessero essere errori durante le interrogazioni al database
+     */
+    public static List<String> getAvailableDatasets() throws DatabaseConnectionException, SQLException {
+        try (var connection = getConnection();
+             var statement = connection.createStatement();
+             var resultSet = statement.executeQuery("SHOW TABLES"))
+        {
+            var datasets = new ArrayList<String>();
+            while (resultSet.next()) {
+                datasets.add(resultSet.getString(1));
+            }
+            return datasets;
+        }
+    }
 }

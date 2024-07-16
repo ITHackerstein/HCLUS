@@ -8,6 +8,7 @@ import com.davidecarella.hclus.common.serialization.DataSerializer;
 
 import java.io.IOException;
 import java.net.Socket;
+import java.sql.Array;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -112,6 +113,32 @@ public class ServerConnection {
     }
 
     /**
+     * Invia la richiesta {@code GetDatasets} al server.
+     *
+     * @return la lista dei dataset disponibili sul server
+     * @throws IOException in caso di errori durante l'esecuzione della richiesta
+     */
+    public List<String> getDatasets() throws IOException {
+        this.dataSerializer.serializeInt(1);
+
+        var responseType = this.dataDeserializer.deserializeInt();
+        if (responseType == 0) {
+            var count = this.dataDeserializer.deserializeInt();
+            var datasets = new ArrayList<String>();
+            while (count-- > 0) {
+                datasets.add(this.dataDeserializer.deserializeString());
+            }
+            return datasets;
+        }
+
+        if (responseType == 1) {
+            throw new IOException(this.dataDeserializer.deserializeString());
+        } else {
+            throw new IOException("Risposta non valida!");
+        }
+    }
+
+    /**
      * Invia la richiesta {@code NewClustering} al server con argomenti: {@code depth}, {@code distanceId} e
      * {@code name}, specificati come parametro.
      *
@@ -125,7 +152,7 @@ public class ServerConnection {
      *                                                   fra cluster disponibili sul server
      */
     public Clustering newClustering(int depth, int distanceId, String name) throws IOException {
-        this.dataSerializer.serializeInt(1);
+        this.dataSerializer.serializeInt(2);
         this.dataSerializer.serializeInt(depth);
         this.dataSerializer.serializeInt(distanceId);
         this.dataSerializer.serializeString(name);
@@ -150,7 +177,7 @@ public class ServerConnection {
      * @throws IOException in caso di errori durante l'esecuzione della richiesta
      */
     public Clustering loadClustering(String name) throws IOException {
-        this.dataSerializer.serializeInt(2);
+        this.dataSerializer.serializeInt(3);
         this.dataSerializer.serializeString(name);
 
         var responseType = this.dataDeserializer.deserializeInt();
@@ -173,7 +200,7 @@ public class ServerConnection {
      * @throws IOException in caso di errori durante l'esecuzione della richiesta
      */
     public List<Example> getExamples(List<Integer> indices) throws IOException {
-        this.dataSerializer.serializeInt(3);
+        this.dataSerializer.serializeInt(4);
         this.dataSerializer.serializeInt(indices.size());
         for (var index : indices) {
             this.dataSerializer.serializeInt(index);
@@ -202,7 +229,7 @@ public class ServerConnection {
      * @throws IOException in caso di errori durante l'esecuzione della richiesta
      */
     public List<ClusterDistanceMethod> getClusterDistanceMethods() throws IOException {
-        this.dataSerializer.serializeInt(4);
+        this.dataSerializer.serializeInt(5);
 
         var responseType = this.dataDeserializer.deserializeInt();
         if (responseType == 0) {
@@ -228,7 +255,7 @@ public class ServerConnection {
      * @throws IOException in caso di errori durante l'esecuzione della richiesta
      */
     public List<String> getSavedClusterings() throws IOException {
-        this.dataSerializer.serializeInt(5);
+        this.dataSerializer.serializeInt(6);
 
         var responseType = this.dataDeserializer.deserializeInt();
         if (responseType == 0) {
@@ -253,7 +280,7 @@ public class ServerConnection {
      * @throws IOException in caso di errori durante l'esecuzione della richiesta
      */
     public void closeConnection() throws IOException {
-        this.dataSerializer.serializeInt(6);
+        this.dataSerializer.serializeInt(7);
 
         var responseType = this.dataDeserializer.deserializeInt();
         if (responseType == 0) {

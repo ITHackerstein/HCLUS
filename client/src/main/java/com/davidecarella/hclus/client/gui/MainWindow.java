@@ -10,7 +10,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.IOException;
 import java.util.List;
-import java.util.Objects;
+import java.util.function.Consumer;
 
 /**
  * <p>La finestra principale del client.
@@ -75,9 +75,19 @@ public class MainWindow extends JFrame {
     private JLabel lbl_tableName;
 
     /**
+     * Il contenitore del nome della tabella.
+     */
+    private JPanel pnl_tableName;
+
+    /**
      * Il campo del nome della tabella.
      */
     private JTextField txt_tableName;
+
+    /**
+     * Il pulsante per mostrare i dataset disponibili sul server.
+     */
+    private JButton btn_showAvailableDatasets;
 
     /**
      * Il pulsante per caricare il dataset sul server.
@@ -267,13 +277,40 @@ public class MainWindow extends JFrame {
      */
     private void createDatasetTab() {
         this.lbl_tableName = new JLabel("Tabella");
+        this.pnl_tableName = new JPanel();
         this.txt_tableName = new JTextField();
+        this.btn_showAvailableDatasets = new JButton("...");
         this.btn_loadDataset = new JButton("Carica");
         this.lbl_loadedDataset = new JLabel("Attuale");
         this.lbl_loadedDataset.setVisible(false);
         this.lbl_loadedDatasetInfo = new JLabel();
         this.lbl_loadedDatasetInfo.setVisible(false);
         this.lbl_loadedDatasetInfo.setFont(new Font(Font.MONOSPACED, Font.PLAIN, this.lbl_loadedDatasetInfo.getFont().getSize()));
+
+        {
+            var layout = new GridBagLayout();
+            layout.columnWidths = new int[]{0, 0, 0};
+            layout.rowHeights = new int[]{0, 0};
+            layout.columnWeights = new double[]{1.0, 0.0, 1e-4};
+            layout.rowWeights = new double[]{0.0, 1e-4};
+            this.pnl_tableName.setLayout(layout);
+        }
+
+        this.pnl_tableName.add(this.txt_tableName, new GridBagConstraints(
+            0, 0, 1, 1, 0.0, 0.0,
+            GridBagConstraints.CENTER, GridBagConstraints.BOTH,
+            new Insets(0, 0, 0, 5), 0, 0
+        ));
+
+        this.pnl_tableName.add(this.btn_showAvailableDatasets, new GridBagConstraints(
+            1, 0, 1, 1, 0.0, 0.0,
+            GridBagConstraints.EAST, GridBagConstraints.VERTICAL,
+            new Insets(0, 0, 0, 0), 0, 0
+        ));
+
+        this.btn_showAvailableDatasets.setPreferredSize(new Dimension(
+            this.btn_showAvailableDatasets.getPreferredSize().width, this.txt_tableName.getPreferredSize().height
+        ));
 
         this.pnl_dataset = new JPanel();
         this.pnl_dataset.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
@@ -290,7 +327,7 @@ public class MainWindow extends JFrame {
             new Insets(0, 0, 5, 5), 0, 0
         ));
 
-        this.pnl_dataset.add(this.txt_tableName, new GridBagConstraints(
+        this.pnl_dataset.add(this.pnl_tableName, new GridBagConstraints(
             1, 0, 1, 1, 0.0, 0.0,
             GridBagConstraints.CENTER, GridBagConstraints.BOTH,
             new Insets(0, 0, 5, 0), 0, 0
@@ -430,6 +467,7 @@ public class MainWindow extends JFrame {
         this.tbp_controls.setEnabledAt(1, false);
         this.lbl_tableName.setEnabled(false);
         this.txt_tableName.setEnabled(false);
+        this.btn_showAvailableDatasets.setEnabled(false);
         this.btn_loadDataset.setEnabled(false);
         this.lbl_loadedDataset.setVisible(false);
         this.lbl_loadedDatasetInfo.setVisible(false);
@@ -510,12 +548,12 @@ public class MainWindow extends JFrame {
                     this.tbp_controls.setEnabledAt(1, true);
                     this.lbl_tableName.setEnabled(true);
                     this.txt_tableName.setEnabled(true);
+                    this.btn_showAvailableDatasets.setEnabled(true);
                     this.btn_loadDataset.setEnabled(true);
                     this.distanceModel.addAll(ServerConnection.the().getClusterDistanceMethods());
 
                     this.connectionStatusWidget.setStatus(ConnectionStatusWidget.Status.CONNECTED);
                 } catch (IOException exception) {
-                    exception.printStackTrace();
                     this.connectionStatusWidget.setStatus(ConnectionStatusWidget.Status.NOT_CONNECTED);
                     JOptionPane.showMessageDialog(this, String.format("Errore durante la connessione: %s!", exception.getMessage()), this.getTitle(), JOptionPane.ERROR_MESSAGE);
                 }
@@ -525,6 +563,31 @@ public class MainWindow extends JFrame {
                 this.lbl_port.setEnabled(true);
                 this.txt_port.setEnabled(true);
                 this.btn_connect.setEnabled(true);
+            }
+        });
+
+        this.btn_showAvailableDatasets.addActionListener(event -> {
+            this.btn_showAvailableDatasets.setEnabled(false);
+
+            try {
+                if (ServerConnection.the() == null) {
+                    JOptionPane.showMessageDialog(this, "Nessuna connessione al server!", this.getTitle(), JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+
+                try {
+                    var availableDatasets = ServerConnection.the().getDatasets();
+                    if (availableDatasets.isEmpty()) {
+                        JOptionPane.showMessageDialog(this, "Nessun dataset disponibile!", this.getTitle(), JOptionPane.INFORMATION_MESSAGE);
+                        return;
+                    }
+
+                    this.showSuggestionDialog(availableDatasets, this.txt_tableName::setText);
+                } catch (IOException exception) {
+                    JOptionPane.showMessageDialog(this, String.format("Errore durante la lettura dei dataset disponibili: %s!", exception.getMessage()), this.getTitle(), JOptionPane.ERROR_MESSAGE);
+                }
+            } finally {
+                this.btn_showAvailableDatasets.setEnabled(true);
             }
         });
 
@@ -540,6 +603,10 @@ public class MainWindow extends JFrame {
                 }
 
                 this.resetClusteringTab();
+
+                this.lbl_loadedDataset.setVisible(false);
+                this.lbl_loadedDatasetInfo.setVisible(false);
+                this.lbl_loadedDatasetInfo.setText("");
 
                 try {
                     var exampleCount = ServerConnection.the().loadDataset(this.txt_tableName.getText());
@@ -595,7 +662,13 @@ public class MainWindow extends JFrame {
                 }
 
                 try {
-                    this.showSavedClusteringsDialog(ServerConnection.the().getSavedClusterings());
+                    var savedClusterings = ServerConnection.the().getSavedClusterings();
+                    if (savedClusterings.isEmpty()) {
+                        JOptionPane.showMessageDialog(this, "Nessun clustering salvato sul server!", this.getTitle(), JOptionPane.INFORMATION_MESSAGE);
+                        return;
+                    }
+
+                    this.showSuggestionDialog(savedClusterings, this.txt_clusteringName::setText);
                 } catch (IOException exception) {
                     JOptionPane.showMessageDialog(this, String.format("Errore durante la lettura dei clustering salvati: %s!", exception.getMessage()), this.getTitle(), JOptionPane.ERROR_MESSAGE);
                 }
@@ -671,22 +744,21 @@ public class MainWindow extends JFrame {
     }
 
     /**
-     * <p>Mostra una finestra di dialogo che contiene la lista dei clustering salvati sul server {@code savedClusterings},
-     * specificata come parametro.
+     * Mostra una finestra di dialogo che contiene i suggerimenti per l'utente {@code suggestions}, specificati come
+     * parametro. Se viene selezionato uno dei suggerimenti allora viene richiamata la funzione {@code useSuggestion},
+     * specificata come parametro, con il suggerimento selezionato come argomento.
      *
-     * <p>Una volta selezionato il clustering, premendo il pulsante di conferma questo viene inserito nel campo del
-     * nome del clustering.
-     *
-     * @param savedClusterings la lista dei clustering salvati sul server
+     * @param suggestions la lista dei clustering salvati sul server
+     * @param useSuggestion la funzione che verrà richiamata una volta scelto il suggerimento
      */
-    private void showSavedClusteringsDialog(List<String> savedClusterings) {
-        var model = new DefaultListModel<String>();
-        model.addAll(savedClusterings);
-
-        if (model.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Nessun clustering salvato sul server", this.getTitle(), JOptionPane.INFORMATION_MESSAGE);
+    private void showSuggestionDialog(List<String> suggestions, Consumer<String> useSuggestion) {
+        if (suggestions.isEmpty()) {
+            useSuggestion.accept(null);
             return;
         }
+
+        var model = new DefaultListModel<String>();
+        model.addAll(suggestions);
 
         var list = new JList<>(model);
         list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
@@ -728,7 +800,7 @@ public class MainWindow extends JFrame {
                     return;
                 }
 
-                txt_clusteringName.setText(model.get(index));
+                useSuggestion.accept(model.get(index));
                 dialog.setVisible(false);
             }
         });
@@ -736,7 +808,7 @@ public class MainWindow extends JFrame {
         confirmButton.addActionListener(dialogEvent -> {
             var selection = list.getSelectedValue();
             if (selection != null) {
-                this.txt_clusteringName.setText(selection);
+                useSuggestion.accept(selection);
             }
 
             dialog.setVisible(false);
