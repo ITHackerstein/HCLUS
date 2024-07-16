@@ -21,12 +21,12 @@ public class DbAccess {
     /**
      * Il nome completamente qualificato della classe {@code Driver}.
      */
-	private final String DRIVER_CLASS_NAME = "org.mariadb.jdbc.Driver";
+	private final String DRIVER_CLASS_NAME = "org.mysql.jdbc.Driver";
 
     /**
      * Il prefisso della stringa di connessione che indica il DMBS utilizzato.
      */
-    private final String DBMS = "jdbc:mariadb";
+    private final String DBMS = "jdbc:mysql";
 
     /**
      * L'indirizzo del DBMS.

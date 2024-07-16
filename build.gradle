@@ -11,6 +11,7 @@ tasks.register('javadocAll', Javadoc) {
     options.addBooleanOption("-allow-script-in-comments", true)
     options.links "http://docs.oracle.com/javase/22/docs/api/"
     options.header "<script id=\"MathJax-script\" async src=\"https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js\"></script>"
+    options.showFromPrivate()
 }
 
 def dbmsRootPassword = new String(file("assets/dbms_root_password").readBytes()).strip()
@@ -19,7 +20,7 @@ tasks.register('installDatabase', Exec) {
     group = "other"
     description = "Configures the database to be used by the server."
 
-    commandLine "mariadb", "-u", "root", "--password=$dbmsRootPassword"
+    commandLine "mysql", "-u", "root", "--password=$dbmsRootPassword"
     standardInput = file("assets/install_database.sql").newInputStream()
 }
 
@@ -27,6 +28,6 @@ tasks.register('uninstallDatabase', Exec) {
     group = "other"
     description = "Removes the database used by the server and its user."
 
-    commandLine "mariadb", "-u", "root", "--password=$dbmsRootPassword"
+    commandLine "mysql", "-u", "root", "--password=$dbmsRootPassword"
     standardInput = file("assets/uninstall_database.sql").newInputStream()
 }
