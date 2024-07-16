@@ -112,6 +112,12 @@ public class Keyboard {
 		return token;
 	}
 
+	/**
+	 * Restituisce il prossimo token (se {@code skip} è {@code true} allora salta quello attuale).
+	 *
+	 * @param skip indica se saltare il token
+	 * @return il prossimo token
+	 */
 	private static String getNextInputToken(boolean skip) {
 		final String delimiters = " \t\n\r\f";
 		String token = null;

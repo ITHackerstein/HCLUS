@@ -299,6 +299,7 @@ public class ServerOneClient extends Thread {
      * degli altri errori/eccezioni che lo causano allora provvede a stampare anche loro.
      *
      * @param throwable l'errore/eccezione che si vuole stampare
+     * @return il messaggio dell'eccezione e gli eventuali messaggi delle eccezioni che contiene
      */
     private static String walkThrowable(Throwable throwable) {
         if (throwable.getCause() == null) {
