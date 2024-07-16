@@ -10,7 +10,7 @@ Per poter compilare il progetto c'è bisogno di un [JDK](https://www.oracle.com/
 * [GraalVM](https://www.graalvm.org/): consigliata per migliori performance
 * [OpenJDK](https://adoptium.net/)
 
-Il server avrà poi bisogno del DBMS [MariaDB](https://mariadb.org/), il fork open source di [MySQL](https://www.mysql.com/) sviluppato per essere un drop-in replacement.
+Il server avrà poi bisogno del DBMS [MySQL](https://mysql.com/) per memorizzare i dataset.
 
 ### Compilare il progetto
 
