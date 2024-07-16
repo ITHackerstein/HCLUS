@@ -27,7 +27,7 @@ public class DatabaseService {
     /**
      * La stringa di connessione utilizzata per connettersi al database.
      */
-    private static final String CONNECTION_STRING = "jdbc:mariadb://127.0.0.1:3306/hclus_db?user=hclus_user&password=";
+    private static final String CONNECTION_STRING = "jdbc:mysql://127.0.0.1:3306/hclus_db?user=hclus_user&password=";
 
     /**
      * La lista dei tipi numerici in SQL.

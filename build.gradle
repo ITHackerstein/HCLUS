@@ -20,7 +20,7 @@ tasks.register('installDatabase', Exec) {
     group = "other"
     description = "Configures the database to be used by the server."
 
-    commandLine "mariadb", "-u", "root", "--password=$dbmsRootPassword"
+    commandLine "mysql", "-u", "root", "--password=$dbmsRootPassword"
     standardInput = file("assets/install_database.sql").newInputStream()
 }
 
@@ -28,6 +28,6 @@ tasks.register('uninstallDatabase', Exec) {
     group = "other"
     description = "Removes the database used by the server and its user."
 
-    commandLine "mariadb", "-u", "root", "--password=$dbmsRootPassword"
+    commandLine "mysql", "-u", "root", "--password=$dbmsRootPassword"
     standardInput = file("assets/uninstall_database.sql").newInputStream()
 }
