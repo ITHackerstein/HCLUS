@@ -10,7 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Classe che rappresenta dei dati, ovvero una lista di esempi.
+ * Un dataset, ovvero una lista di esempi.
  */
 public class Dataset {
     /**
@@ -19,7 +19,7 @@ public class Dataset {
     private final List<Example> data = new ArrayList<>();
 
     /**
-     * Costruisce i dati usando le righe di una tabella (con nome {@code tableName} specificato come parametro) dal
+     * Costruisce il dataset usando le righe di una tabella (con nome {@code tableName} specificato come parametro) dal
      * database.
      *
      * @param tableName la tabella le cui righe si vogliono usare come esempi
@@ -53,11 +53,11 @@ public class Dataset {
     }
 
     /**
-     * <p>Calcola la matrice delle distanze tra coppie di esempi.
-     *
-     * <p>Ogni elemento in posizione \((i, j)\) contiene la distanza tra gli esempi in posizione \(i\) e \(j\).
+     * Calcola la matrice delle distanze tra coppie di esempi. Ogni elemento in posizione \((i, j)\) contiene
+     * la distanza tra gli esempi in posizione \(i\) e \(j\).
      *
      * @return la matrice delle distanze
+     * @throws ExampleSizeMismatchException in caso in cui gli esempi dovessero avere dimensione diversa
      */
     public double[][] computeDistanceMatrix() throws ExampleSizeMismatchException {
         var distances = new double[this.data.size()][this.data.size()];

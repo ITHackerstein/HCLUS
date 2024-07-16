@@ -1,7 +1,7 @@
 package com.davidecarella.hclus.common;
 
 /**
- * Un record che rappresenta un metodo per calcolare la distanza.
+ * Un metodo per calcolare la distanza fra cluster.
  *
  * @param id l'identificatore numerico del metodo
  * @param displayName il nome del metodo

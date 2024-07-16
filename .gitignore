@@ -5,6 +5,7 @@ build/
 !**/src/test/**/build/
 docs/javadoc/
 assets/dbms_root_password
+clusterings/
 
 ### IntelliJ IDEA ###
 .idea/modules.xml

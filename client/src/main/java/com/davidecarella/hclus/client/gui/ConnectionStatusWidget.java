@@ -6,7 +6,7 @@ import java.awt.*;
 /**
  * <p>Widget per la visualizzazione dello stato della connessione con il server.
  *
- * <p>È un piccolo {@link JPanel <i>panel</i>} che mostra un cerchio il cui colore indica lo stato della connessione:
+ * <p>È un piccolo contenitore che mostra un cerchio il cui colore indica lo stato della connessione:
  * <ul>
  *     <li>Rosso: il client non è connesso al server;</li>
  *     <li>Giallo: un tentativo di connessione al server è in corso;</li>

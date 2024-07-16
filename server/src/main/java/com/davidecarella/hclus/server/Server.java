@@ -4,8 +4,7 @@ import java.io.IOException;
 import java.net.ServerSocket;
 
 /**
- * Il server vero e proprio che si occuperà di mettersi in ascolto su una porta specificata e creare un gestore per ogni
- * client.
+ * Il server HCLUS che accetterà connessione da diversi client gestisti ognuno con un thread diverso.
  *
  * @see ClientHandler
  */
@@ -25,8 +24,8 @@ public class Server {
     }
 
     /**
-     * Metodo che mette in ascolto il server per connessioni da parte di altri client. Per ogni nuova connessione
-     * creerà un'istanza di {@link ClientHandler} per gestire le sue richieste.
+     * Il ciclo principale del server. Si mette in ascolto per connessione da parte di altri client e per ciascuna di
+     * essa crea un'istanza di un {@link ClientHandler} per gestire le sue richieste.
      */
     public void loop() {
         try (var serverSocket = new ServerSocket(this.port)) {

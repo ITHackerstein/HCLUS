@@ -1,7 +1,7 @@
 package com.davidecarella.hclus.common;
 
 /**
- * Record che rappresenta un passaggio avvenuto durante il processo di estrazione dei dati.
+ * Un passo del clustering.
  *
  * @param firstClusterIndex l'indice del primo cluster che viene unito
  * @param secondClusterIndex l'indice del second cluster che viene unito

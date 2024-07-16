@@ -13,14 +13,14 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * <p>Classe che gestisce la connessione al DBMS da cui vengono letti i dati.
+ * <p>Gestisce le operazioni da eseguire sul DBMS.
  *
- * <p>Il DBMS in questo caso conterrà un database con nome {@code MapDB} al cui interno troviamo le tabelle su cui
- * effettuare il mining.
+ * <p>La classe si connette al DBMS con l'utente {@code hclus_user} utilizzando il database {@code hclus_db} che vengono
+ * creati in fasi di configurazione del server.
  */
 public class DatabaseService {
     /**
-     * Costruttore di default nascosto per evitare la costruzione della classe
+     * Costruttore di default nascosto per evitare la costruzione della classe.
      */
     private DatabaseService() {}
 
@@ -46,6 +46,7 @@ public class DatabaseService {
     /**
      * Restituisce una connessione al database.
      *
+     * @return la connessione al database
      * @throws DatabaseConnectionException se la connessione al database fallisce
      */
     private static Connection getConnection() throws DatabaseConnectionException {
@@ -61,7 +62,6 @@ public class DatabaseService {
      *
      * @param tableName il nome della tabella da cui si vuole leggere la lista di esempi
      * @return la lista di esempi contenuti nella tabella
-     *
      * @throws DatabaseConnectionException se ci dovessero essere errori durante la connessione al database
      * @throws SQLException se ci dovessero essere errori durante le interrogazioni al database
      * @throws MissingNumberException se la tabella dovesse contenere degli attributi non numerici
@@ -77,7 +77,7 @@ public class DatabaseService {
 
             for (int i = 0; i < columnCount; i++) {
                 if (!NUMERIC_TYPES.contains(metadata.getColumnType(i + 1))) {
-                    throw new MissingNumberException("La tabella contiene attributi non numerici!");
+                    throw new MissingNumberException("La tabella contiene attributi non numerici");
                 }
             }
 
@@ -91,7 +91,7 @@ public class DatabaseService {
             }
 
             if (examples.isEmpty()) {
-                throw new EmptySetException("La tabella è vuota!");
+                throw new EmptySetException("La tabella è vuota");
             }
 
             return examples;

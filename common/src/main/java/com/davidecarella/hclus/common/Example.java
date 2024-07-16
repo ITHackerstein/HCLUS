@@ -7,7 +7,7 @@ import java.util.Iterator;
 import java.util.List;
 
 /**
- * Classe che rappresenta un esempio, ovvero una lista di numeri reali.
+ * Un esempio, ovvero una lista di numeri reali.
  */
 public class Example implements Iterable<Double> {
     /**
@@ -23,7 +23,7 @@ public class Example implements Iterable<Double> {
     }
 
     /**
-     * Restituisce la dimensione dell'esempio
+     * Restituisce la dimensione dell'esempio.
      *
      * @return la dimensione dell'esempio
      */
@@ -43,6 +43,7 @@ public class Example implements Iterable<Double> {
      *
      * @param other l'altro esempio con il quale si vuole calcolare la distanza
      * @return la distanza euclidea tra l'esempio e {@code other}
+     * @throws ExampleSizeMismatchException in caso in cui gli esempi dovessero avere dimensione diversa
      */
     public double distance(Example other) throws ExampleSizeMismatchException {
         if (this.getSize() != other.getSize()) {

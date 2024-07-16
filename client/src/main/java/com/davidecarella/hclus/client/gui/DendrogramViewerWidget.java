@@ -12,20 +12,72 @@ import java.awt.geom.AffineTransform;
 import java.awt.geom.NoninvertibleTransformException;
 import java.util.List;
 
+/**
+ * <p>Widget per la visualizzazione di un dendrogramma associato a un clustering.
+ *
+ * <p>Per ogni cluster viene mostrato un cerchio colorato da cui partono le eventuali connessioni verso altri cluster,
+ * ognuno di questi cluster può essere cliccato con il tasto sinistro del mouse e verrà mostrato un tooltip che contiene
+ * la lista degli esempi contenuti in esso.
+ *
+ * <p>L'utente può navigare il dendrogramma spostandolo (tenendo premuto la rotellina del mouse e muovendolo) e zoomando
+ * (tenendo premuto {@code CTRL} sulla tastiera e scorrendo con la rotellina del mouse).
+ *
+ * @see Dendrogram
+ */
 public class DendrogramViewerWidget extends JPanel implements MouseListener, MouseMotionListener, MouseWheelListener, ComponentListener {
+    /**
+     * Il dendrogramma che si sta visualizzando.
+     */
     private Dendrogram dendrogram = null;
+
+    /**
+     * L'eventuale indice del cluster selezionato dall'utente.
+     */
     private int selectedClusterIndex = -1;
+
+    /**
+     * L'eventuale indice del cluster su cui si trova il mouse.
+     */
     private int hoveredClusterIndex = -1;
+
+    /**
+     * L'eventuale lista degli indici degli esempi contenuti nel cluster selezionato.
+     */
     private List<Integer> selectedClusterExampleIndices = null;
+
+    /**
+     * L'eventuale lista degli esempi contenuti nel cluster selezionato.
+     */
     private List<Example> selectedClusterExamples = null;
+
+    /**
+     * L'eventuale indice del primo esempio che si sta visualizzando nel tooltip del cluster selezionato.
+     */
     private int selectedClusterFirstExampleIndex = -1;
+
+    /**
+     * L'eventuale errore mostrato nel tooltip del cluster selezionato.
+     */
     private String clusterTooltipError = null;
 
+    /**
+     * La matrice di trasformazione dell'area di visualizzazione del dendrogramma.
+     */
     private AffineTransform transform = null;
 
+    /**
+     * La posizione precedente del mouse.
+     */
     private Point lastMousePosition = new Point();
+
+    /**
+     * La bitmask dei pulsanti del mouse premuti.
+     */
     private int pressedMouseButtons = 0;
 
+    /**
+     * Costruisce il widget per la visualizzazione del dendrogramma.
+     */
     public DendrogramViewerWidget() {
         this.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(), "Dendrogramma"));
         this.addMouseListener(this);
@@ -34,6 +86,11 @@ public class DendrogramViewerWidget extends JPanel implements MouseListener, Mou
         this.addComponentListener(this);
     }
 
+    /**
+     * Imposta il clustering di cui si vuole visualizzare il dendrogramma.
+     *
+     * @param clustering il clustering di cui si vuole visualizzare il dendrogramma
+     */
     public void setClustering(Clustering clustering) {
         this.dendrogram = clustering == null ? null : new Dendrogram(clustering);
         this.selectedClusterIndex = -1;
@@ -45,6 +102,12 @@ public class DendrogramViewerWidget extends JPanel implements MouseListener, Mou
         this.repaint();
     }
 
+    /**
+     * Applica l'inversa della matrice di trasformazione al punto {@code point}, specificato come parametro.
+     *
+     * @param point il punto su cui si vuole applicare l'inversa della matrice di trasformazione
+     * @return il punto trasformato
+     */
     private Point inverseTransformPoint(Point point) {
         Point result = new Point();
         try {
@@ -204,10 +267,27 @@ public class DendrogramViewerWidget extends JPanel implements MouseListener, Mou
         g2d.setClip(oldClip);
     }
 
+    /**
+     * Mostra un cerchio con centro in posizione con posizione {@code (x, y)} e raggio {@code radius}, specificati come
+     * parametro.
+     *
+     * @param g2d il contesto per il rendering 2D
+     * @param x l'ascissa del centro del cerchio
+     * @param y l'ordinata del centro del cerchio
+     * @param radius il raggio del cerchio
+     */
     private void fillCenteredCircle(Graphics2D g2d, int x, int y, int radius) {
         g2d.fillArc(x - radius, y - radius, radius * 2, radius * 2, 0, 360);
     }
 
+    /**
+     * Restituisce il rettangolo del tooltip del cluster selezionato, includendo il bordo.
+     *
+     * @param canvasRectangle il rettangolo dell'area di visualizzazione
+     * @param width la larghezza del contenuto del tooltip
+     * @param height l'altezza del contenuto del tooltip
+     * @return il rettangolo del tooltip del cluster selezionato, includendo il bordo
+     */
     private Rectangle getTooltipRectangleWithBorder(Rectangle canvasRectangle, int width, int height) {
         var widthWithBorderAndPadding = width + (Dendrogram.TOOLTIP_PADDING + Dendrogram.TOOLTIP_BORDER_SIZE) * 2;
         var heightWithBorderAndPadding = height + (Dendrogram.TOOLTIP_PADDING + Dendrogram.TOOLTIP_BORDER_SIZE) * 2;
@@ -220,6 +300,14 @@ public class DendrogramViewerWidget extends JPanel implements MouseListener, Mou
         );
     }
 
+    /**
+     * Restituisce il rettangolo del tooltip del cluster selezionato, senza il bordo.
+     *
+     * @param canvasRectangle il rettangolo dell'area di visualizzazione
+     * @param width la larghezza del contenuto del tooltip
+     * @param height l'altezza del contenuto del tooltip
+     * @return il rettangolo del tooltip del cluster selezionato, senza il bordo
+     */
     private Rectangle getTooltipRectangle(Rectangle canvasRectangle, int width, int height) {
         var widthWithPadding = width + Dendrogram.TOOLTIP_PADDING * 2;
         var heightWithPadding = height + Dendrogram.TOOLTIP_PADDING * 2;
@@ -232,6 +320,14 @@ public class DendrogramViewerWidget extends JPanel implements MouseListener, Mou
         );
     }
 
+    /**
+     * <p>Gestisce l'evento di <i>dragging</i> del mouse mentre si sta tenendo premuta la rotellina del mouse.
+     *
+     * <p>In particolare effettua una traslazione sulla matrice di trasformazione con una quantità pari a quella
+     * dello spostamento del mouse.
+     *
+     * @param event l'evento da processare
+     */
     @Override
     public void mouseDragged(MouseEvent event) {
         if (this.dendrogram == null || !this.isEnabled() || this.pressedMouseButtons != MouseEvent.BUTTON2) {
@@ -248,6 +344,13 @@ public class DendrogramViewerWidget extends JPanel implements MouseListener, Mou
         this.repaint();
     }
 
+    /**
+     * <p>Gestisce l'evento di spostamento del mouse.
+     *
+     * <p>Controlla se il mouse si trova su un cluster e in tal caso lo mostra con un colore più luminoso.
+     *
+     * @param event l'evento da processare
+     */
     @Override
     public void mouseMoved(MouseEvent event) {
         this.lastMousePosition = event.getPoint();
@@ -274,6 +377,14 @@ public class DendrogramViewerWidget extends JPanel implements MouseListener, Mou
         this.repaint();
     }
 
+    /**
+     * <p>Gestisce l'evento di spostamento del mouse.
+     *
+     * <p>Controlla se l'utente clicca un cluster e in tal caso lo mostra con un colore più luminoso e mostra il tooltip
+     * di informazioni sul cluster selezionato.
+     *
+     * @param event l'evento da processare
+     */
     @Override
     public void mouseClicked(MouseEvent event) {
         if (this.dendrogram == null || !this.isEnabled() || event.getButton() != MouseEvent.BUTTON1) {
@@ -319,6 +430,11 @@ public class DendrogramViewerWidget extends JPanel implements MouseListener, Mou
         this.repaint();
     }
 
+    /**
+     * Aggiorna la bitmask dei pulsanti del mouse premuti in base al pulsante premuto dall'utente.
+     *
+     * @param event l'evento da processare
+     */
     @Override
     public void mousePressed(MouseEvent event) {
         if (this.dendrogram == null || !this.isEnabled()) {
@@ -328,6 +444,11 @@ public class DendrogramViewerWidget extends JPanel implements MouseListener, Mou
         this.pressedMouseButtons |= event.getButton();
     }
 
+    /**
+     * Aggiorna la bitmask dei pulsanti del mouse premuti in base al pulsante rilasciato dall'utente.
+     *
+     * @param event l'evento da processare
+     */
     @Override
     public void mouseReleased(MouseEvent event) {
         if (this.dendrogram == null || !this.isEnabled()) {
@@ -345,6 +466,14 @@ public class DendrogramViewerWidget extends JPanel implements MouseListener, Mou
     public void mouseExited(MouseEvent event) {
     }
 
+    /**
+     * <p>Gestisce l'evento di scorrimento della rotellina del mouse.
+     *
+     * <p>Se nel frattempo si tiene premuto {@code CTRL} sulla tastiera allora viene applicata una scalatura attorno
+     * alla posizione del mouse, altrimenti viene scrollato il tooltip di informazioni sul cluster selezionato.
+     *
+     * @param event l'evento da processare
+     */
     @Override
     public void mouseWheelMoved(MouseWheelEvent event) {
         if (this.dendrogram == null || !this.isEnabled()) {
@@ -364,7 +493,6 @@ public class DendrogramViewerWidget extends JPanel implements MouseListener, Mou
         } else {
             this.selectedClusterFirstExampleIndex += (int) Math.signum(event.getWheelRotation());
         }
-
 
         this.repaint();
     }

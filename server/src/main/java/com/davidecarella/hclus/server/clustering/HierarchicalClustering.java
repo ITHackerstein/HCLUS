@@ -14,8 +14,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 
 /**
- * Classe che si occupa di effettuare l'operazione di estrazione, ovvero di creare il dendrogramma a partire dai dati
- * forniti.
+ * Gestisce il clustering gerarchico provvedendo metodi per estrarre un clustering, salvarlo su un file e leggerlo
+ * da un file.
  */
 public class HierarchicalClustering {
     /**
@@ -24,15 +24,16 @@ public class HierarchicalClustering {
     private HierarchicalClustering() {}
 
     /**
-     * Crea il dendrogramma utilizzando il dataset ({@code dataset}), l'oggetto per calcolare la distanza
-     * ({@code distanceCalculator}) e la profondità ({@code depth}), forniti come parametro.
+     * Estrae un clustering di profondità massima {@code depth}, specificata come parametro, a partire da
+     * {@code dataset}, specificato come parametro, e utilizzando come metodo per il calcolo della distanza fra cluster
+     * {@code distanceCalculator}, specificato come parametro.
      *
      * @param dataset il dataset
-     * @param distanceCalculator l'oggetto per calcolare la distanza
-     * @param depth la profondità del dendrogramma
-     * @return il clustering creato sul dataset
-     * @throws InvalidDepthException quando la profondità del dendrogramma supera il numero di esempi in {@code data}
-     * @throws ExampleSizeMismatchException quando ci sono due esempi con lunghezze diverse
+     * @param distanceCalculator il metodo per il calcolo della distanza fra cluster
+     * @param depth la profondità del clustering
+     * @return il clustering estratto
+     * @throws InvalidDepthException in caso {@code depth} non sia positiva o superi il numero di esempi del {@code dataset}
+     * @throws ExampleSizeMismatchException in caso si provi a calcolare la distanza fra esempi di dimensione diversa
      */
     public static Clustering mine(Dataset dataset, ClusterDistance distanceCalculator, int depth) throws InvalidDepthException, ExampleSizeMismatchException {
         final int n = dataset.getExampleCount();
@@ -106,13 +107,14 @@ public class HierarchicalClustering {
     }
 
     /**
-     * Carica un clustering sui dati {@code dataset} dal file con nome {@code fileName}, specificati come parametri.
+     * Carica un clustering estratto su {@code dataset}, specificato come parametro, dal file con nome {@code fileName},
+     * specificato come parametro.
      *
      * @param fileName il nome del file da cui caricare il clustering
      * @param dataset il dataset a cui fa riferimento il clustering
      * @return il clustering caricato dal file
      * @throws IOException in caso di errori di I/O durante la lettura dal file
-     * @throws InvalidDepthException in caso la profondità non sia valida
+     * @throws InvalidDepthException in caso {@code depth} non sia positiva o superi il numero di esempi del {@code dataset}
      * @throws InvalidClusterIndexException in caso degli indici dei cluster non siano validi
      */
     public static Clustering load(String fileName, Dataset dataset) throws IOException, InvalidDepthException, InvalidClusterIndexException {
@@ -121,7 +123,7 @@ public class HierarchicalClustering {
         {
             var depth = dataDeserializer.deserializeInt();
             if (depth <= 0 || depth > dataset.getExampleCount()) {
-                throw new InvalidDepthException("Profondità non valida!");
+                throw new InvalidDepthException("La profondità del dendrogramma deve essere al massimo pari al numero di esempi nel dataset");
             }
 
             var steps = new ClusteringStep[depth - 1];
@@ -131,7 +133,7 @@ public class HierarchicalClustering {
                 if (step.firstClusterIndex() < 0 || step.firstClusterIndex() > i + dataset.getExampleCount() - 1 ||
                     step.secondClusterIndex() < 0 || step.secondClusterIndex() > i + dataset.getExampleCount() - 1)
                 {
-                    throw new InvalidClusterIndexException("Indice del cluster non valido!");
+                    throw new InvalidClusterIndexException("Indice del cluster non valido");
                 }
                 steps[i] = step;
             }
@@ -141,7 +143,8 @@ public class HierarchicalClustering {
     }
 
     /**
-     * Salva il clustering {@code clustering} nel file con nome {@code fileName}, specificato come parametro.
+     * Salva {@code clustering}, specificato come parametro, nel file con nome {@code fileName}, specificato come
+     * parametro.
      *
      * @param clustering il clustering che si vuole salvare sul file
      * @param fileName il file su cui salvare il clustering

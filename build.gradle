@@ -11,6 +11,7 @@ tasks.register('javadocAll', Javadoc) {
     options.addBooleanOption("-allow-script-in-comments", true)
     options.links "http://docs.oracle.com/javase/22/docs/api/"
     options.header "<script id=\"MathJax-script\" async src=\"https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js\"></script>"
+    options.showFromPrivate()
 }
 
 def dbmsRootPassword = new String(file("assets/dbms_root_password").readBytes()).strip()

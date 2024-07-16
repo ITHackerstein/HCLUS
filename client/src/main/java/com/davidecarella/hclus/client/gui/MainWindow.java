@@ -11,39 +11,165 @@ import java.util.List;
 import java.util.Objects;
 
 /**
- * TODO: Fix comments all around the code
+ * <p>La finestra principale del client.
+ *
+ * <p>Possiede tre schede:
+ * <ol>
+ *     <li>la scheda di connessione: permette di connettersi al server;</li>
+ *     <li>la scheda del dataset: una volta connessi, permette di caricare un dataset sul server;</li>
+ *     <li>la scheda del clustering: una volta connessi e caricati i dati, permette di creare o caricare un clustering.</li>
+ * </ol>
+ * Al di sotto delle tre schede troviamo il {@link DendrogramViewerWidget widget per la visualizzazione del dendrogramma}.
  */
 public class MainWindow extends JFrame {
+    /**
+     * Il widget per la visualizzazione delle tre schede.
+     */
     private JTabbedPane tbp_controls;
+
+    /**
+     * Il contenitore della scheda di connessione.
+     */
     private JPanel pnl_connection;
+
+    /**
+     * L'etichetta per il campo dell'indirizzo.
+     */
     private JLabel lbl_address;
+
+    /**
+     * Il campo dell'indirizzo.
+     */
     private JTextField txt_address;
+
+    /**
+     * L'etichetta per il campo della porta.
+     */
     private JLabel lbl_port;
+
+    /**
+     * Il campo della porta.
+     */
     private JTextField txt_port;
+
+    /**
+     * Il widget per visualizzare lo stato della connessione.
+     */
     private ConnectionStatusWidget connectionStatusWidget;
+
+    /**
+     * Il pulsante per connettersi al server.
+     */
     private JButton btn_connect;
+
+    /**
+     * Il contenitore della scheda del dataset.
+     */
     private JPanel pnl_dataset;
+
+    /**
+     * L'etichetta per il campo del nome della tabella.
+     */
     private JLabel lbl_tableName;
+
+    /**
+     * Il campo del nome della tabella.
+     */
     private JTextField txt_tableName;
+
+    /**
+     * Il pulsante per caricare il dataset sul server.
+     */
     private JButton btn_loadDataset;
-    private JLabel lbl_loaddedDataset;
+
+    /**
+     * L'etichetta per le informazioni sul dataset caricato.
+     */
+    private JLabel lbl_loadedDataset;
+
+    /**
+     * L'etichetta che contiene le informazioni sul dataset caricato.
+     */
     private JLabel lbl_loadedDatasetInfo;
+
+    /**
+     * Il contenitore della scheda del clustering.
+     */
     private JPanel pnl_clustering;
+
+    /**
+     * L'etichetta per la checkbox del nuovo clustering.
+     */
     private JLabel lbl_newClustering;
+
+    /**
+     * La checkbox del nuovo clustering.
+     */
     private JCheckBox chk_newClustering;
+
+    /**
+     * L'etichetta per il nome del clustering.
+     */
     private JLabel lbl_clusteringName;
+
+    /**
+     * Il contenitore del nome del clustering.
+     */
     private JPanel pnl_clusteringName;
+
+    /**
+     * Il campo del nome del clustering.
+     */
     private JTextField txt_clusteringName;
+
+    /**
+     * Il pulsante per mostrare i clustering salvati sul server.
+     */
     private JButton btn_showSavedClusterings;
+
+    /**
+     * L'etichetta per il metodo del calcolo della distanza utilizzato.
+     */
     private JLabel lbl_distance;
+
+    /**
+     * Il modello dati per la combobox del metodo del calcolo della distanza.
+     */
     private DefaultComboBoxModel<ClusterDistanceMethod> distanceModel;
+
+    /**
+     * Il combobox del metodo del calcolo della distanza
+     */
     private JComboBox<ClusterDistanceMethod> cmb_distance;
+
+    /**
+     * L'etichetta per il campo della profondità.
+     */
     private JLabel lbl_depth;
+
+    /**
+     * IL modello dati per il campo della profondità.
+     */
     private SpinnerNumberModel depthModel;
+
+    /**
+     * Il campo della profondità.
+     */
     private JSpinner spn_depth;
+
+    /**
+     * Il pulsante per estrarre il clustering.
+     */
     private JButton btn_mine;
+
+    /**
+     * Il widget per la visualizzazione del dendrogramma.
+     */
     private DendrogramViewerWidget dendrogramViewerWidget;
 
+    /**
+     * Costruisce la finestra principale del programma.
+     */
     public MainWindow() {
         super("HCLUS - Client");
         this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -72,6 +198,9 @@ public class MainWindow extends JFrame {
         this.setVisible(true);
     }
 
+    /**
+     * Crea la scheda di connessione.
+     */
     private void createConnectionTab() {
         this.lbl_address = new JLabel("Indirizzo");
         this.txt_address = new JTextField();
@@ -130,12 +259,15 @@ public class MainWindow extends JFrame {
         ));
     }
 
+    /**
+     * Crea la scheda del dataset.
+     */
     private void createDatasetTab() {
         this.lbl_tableName = new JLabel("Tabella");
         this.txt_tableName = new JTextField();
         this.btn_loadDataset = new JButton("Carica");
-        this.lbl_loaddedDataset = new JLabel("Attuale");
-        this.lbl_loaddedDataset.setVisible(false);
+        this.lbl_loadedDataset = new JLabel("Attuale");
+        this.lbl_loadedDataset.setVisible(false);
         this.lbl_loadedDatasetInfo = new JLabel();
         this.lbl_loadedDatasetInfo.setVisible(false);
         this.lbl_loadedDatasetInfo.setFont(new Font(Font.MONOSPACED, Font.PLAIN, this.lbl_loadedDatasetInfo.getFont().getSize()));
@@ -167,7 +299,7 @@ public class MainWindow extends JFrame {
             new Insets(0, 0, 5, 0), 0, 0
         ));
 
-        this.pnl_dataset.add(this.lbl_loaddedDataset, new GridBagConstraints(
+        this.pnl_dataset.add(this.lbl_loadedDataset, new GridBagConstraints(
             0, 2, 1, 1, 0.0, 0.0,
             GridBagConstraints.EAST, GridBagConstraints.VERTICAL,
             new Insets(0, 0, 0, 5), 0, 0
@@ -180,6 +312,9 @@ public class MainWindow extends JFrame {
         ));
     }
 
+    /**
+     * Crea la scheda del clustering.
+     */
     private void createClusteringTab() {
         this.lbl_newClustering = new JLabel("Nuovo clustering");
         this.chk_newClustering = new JCheckBox();
@@ -285,6 +420,9 @@ public class MainWindow extends JFrame {
         ));
     }
 
+    /**
+     * Crea gli ascoltatori degli eventi.
+     */
     private void createEventListeners() {
         this.btn_connect.addActionListener(event -> {
             try {
@@ -347,7 +485,7 @@ public class MainWindow extends JFrame {
                 try {
                     var exampleCount = ServerConnection.the().loadDataset(this.txt_tableName.getText());
                     this.depthModel.setMaximum(exampleCount);
-                    this.lbl_loaddedDataset.setVisible(true);
+                    this.lbl_loadedDataset.setVisible(true);
                     this.lbl_loadedDatasetInfo.setText(String.format("%s - %d esempi", this.txt_tableName.getText(), exampleCount));
                     this.lbl_loadedDatasetInfo.setVisible(true);
                     this.tbp_controls.setEnabledAt(2, true);
@@ -450,6 +588,15 @@ public class MainWindow extends JFrame {
         });
     }
 
+    /**
+     * <p>Mostra una finestra di dialogo che contiene la lista dei clustering salvati sul server {@code savedClusterings},
+     * specificata come parametro.
+     *
+     * <p>Una volta selezionato il clustering, premendo il pulsante di conferma questo viene inserito nel campo del
+     * nome del clustering.
+     *
+     * @param savedClusterings la lista dei clustering salvati sul server
+     */
     private void showSavedClusteringsDialog(List<String> savedClusterings) {
         var model = new DefaultListModel<String>();
         model.addAll(savedClusterings);
@@ -499,6 +646,11 @@ public class MainWindow extends JFrame {
         dialog.setVisible(true);
     }
 
+    /**
+     * Metodo principale dell'applicazione.
+     *
+     * @param args argomenti passati a linea di comando
+     */
     public static void main(String[] args) {
         SwingUtilities.invokeLater(MainWindow::new);
     }

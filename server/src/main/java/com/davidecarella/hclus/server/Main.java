@@ -9,7 +9,7 @@ package com.davidecarella.hclus.server;
  */
 public class Main {
     /**
-     * Costruttore di default.
+     * Costruttore di default nascosto per evitare che venga costruita la classe.
      */
     private Main() {}
 

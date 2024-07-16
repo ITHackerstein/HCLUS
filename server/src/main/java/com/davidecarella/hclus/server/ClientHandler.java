@@ -22,9 +22,19 @@ import java.util.ArrayList;
  * Classe che gestisce la connessione con un client.
  */
 public class ClientHandler extends Thread {
+    /**
+     * Intero che rappresenta una risposta con esito positivo.
+     */
     private static final int SUCCESS = 0;
+
+    /**
+     * Intero che rappresenta una risposta con esito negativo.
+     */
     private static final int ERROR = 1;
 
+    /**
+     * La lista dei metodi per il calcolo della distanza fra cluster.
+     */
     private static final ClusterDistance[] AVAILABLE_DISTANCE_METHODS = new ClusterDistance[] {
         new AverageLinkDistance(),
         new CentroidLinkDistance(),
@@ -35,25 +45,35 @@ public class ClientHandler extends Thread {
         new WeightedAverageLinkDistance()
     };
 
+    /**
+     * La directory dove vengono salvati i clustering.
+     */
     private static final String CLUSTERINGS_DIRECTORY = "clusterings";
+
+    /**
+     * L'espressione regolare per il nome di un clustering.
+     */
     private static final String CLUSTERING_NAME_REGEX = "^[a-zA-Z0-9_]+$";
+
+    /**
+     * L'espressione regolare per il nome del file di un clustering.
+     */
     private static final String CLUSTERING_FILE_REGEX = "^[a-zA-Z0-9_]+\\.hclus$";
 
     /**
-     * Il socket per la connessione con il client.
+     * Il socket che gestisce la connessione con il client.
      */
     private final Socket clientSocket;
 
     /**
-     * I dati eventualmente caricati dal server.
+     * L'eventuale dataset caricato.
      */
     private Dataset dataset = null;
 
     /**
-     * Costruisce il gestore del client e lancia il thread associato a esso a partire da {@code clientSocket}, fornito
-     * come parametro.
+     * Costruisce il gestore del client e lancia il thread associato.
      *
-     * @param clientSocket il socket la connessione con il client
+     * @param clientSocket il socket che gestisce la connessione con il client
      */
     public ClientHandler(Socket clientSocket) {
         super(String.format("HCLUS-Client(%s, %d)",
@@ -66,7 +86,7 @@ public class ClientHandler extends Thread {
     }
 
     /**
-     * Metodo lanciato al lancio del thread che gestisce le richieste del client.
+     * Entry point del thread.
      */
     @Override
     public void run() {
@@ -105,10 +125,11 @@ public class ClientHandler extends Thread {
     }
 
     /**
-     * Gestisce la richiesta del caricamento dei dati.
+     * Gestisce la richiesta {@code LoadData}.
      *
-     * @param dataDeserializer il <i>deserializzatore</i> dei dati inviati dal client
-     * @param dataSerializer il <i>serializzatore</i> dei dati inviati dal server
+     * @param dataDeserializer il <i>deserializer</i> per ricevere dati dal client
+     * @param dataSerializer il <i>serializer</i> per inviare dati al client
+     * @throws IOException in caso di errori di I/O durante la comunicazione
      */
     private void loadDatasetRequest(DataDeserializer dataDeserializer, DataSerializer dataSerializer) throws IOException {
         String tableName = dataDeserializer.deserializeString();
@@ -124,10 +145,11 @@ public class ClientHandler extends Thread {
     }
 
     /**
-     * Gestisce la richiesta per la creazione di un nuovo clustering dei dati.
+     * Gestisce la richiesta {@code NewClustering}.
      *
-     * @param dataDeserializer il <i>deserializzatore</i> dei dati inviati dal client
-     * @param dataSerializer il <i>serializzatore</i> dei dati inviati dal server
+     * @param dataDeserializer il <i>deserializer</i> per ricevere dati dal client
+     * @param dataSerializer il <i>serializer</i> per inviare dati al client
+     * @throws IOException in caso di errori di I/O durante la comunicazione
      */
     private void newClusteringRequest(DataDeserializer dataDeserializer, DataSerializer dataSerializer) throws IOException {
         if (this.dataset == null) {
@@ -183,10 +205,11 @@ public class ClientHandler extends Thread {
     }
 
     /**
-     * Gestisce la richiesta di caricamento di un clustering da un file.
+     * Gestisce la richiesta {@code LoadClustering}.
      *
-     * @param dataDeserializer il <i>deserializzatore</i> dei dati inviati dal client
-     * @param dataSerializer il <i>serializzatore</i> dei dati inviati dal server
+     * @param dataDeserializer il <i>deserializer</i> per ricevere dati dal client
+     * @param dataSerializer il <i>serializer</i> per inviare dati al client
+     * @throws IOException in caso di errori di I/O durante la comunicazione
      */
     private void loadClusteringRequest(DataDeserializer dataDeserializer, DataSerializer dataSerializer) throws IOException {
         if (this.dataset == null) {
@@ -224,10 +247,11 @@ public class ClientHandler extends Thread {
     }
 
     /**
-     * Gestisce la richiesta di recupero degli esempi.
+     * Gestisce la richiesta {@code GetExamples}.
      *
-     * @param dataDeserializer il <i>deserializzatore</i> dei dati inviati dal client
-     * @param dataSerializer il <i>serializzatore</i> dei dati inviati dal server
+     * @param dataDeserializer il <i>deserializer</i> per ricevere dati dal client
+     * @param dataSerializer il <i>serializer</i> per inviare dati al client
+     * @throws IOException in caso di errori di I/O durante la comunicazione
      */
     private void getExamplesRequest(DataDeserializer dataDeserializer, DataSerializer dataSerializer) throws IOException {
         if (this.dataset == null) {
@@ -256,20 +280,27 @@ public class ClientHandler extends Thread {
     }
 
     /**
-     * Gestisce la richiesta di recupero dei metodi di distanze fra cluster.
+     * Gestisce la richiesta {@code GetClusterDistanceMethods}.
      *
-     * @param dataDeserializer il <i>deserializzatore</i> dei dati inviati dal client
-     * @param dataSerializer il <i>serializzatore</i> dei dati inviati dal server
-     * @throws IOException in caso di errori di I/O
+     * @param dataDeserializer il <i>deserializer</i> per ricevere dati dal client
+     * @param dataSerializer il <i>serializer</i> per inviare dati al client
+     * @throws IOException in caso di errori di I/O durante la comunicazione
      */
     private void getClusterDistanceMethodsRequest(DataDeserializer dataDeserializer, DataSerializer dataSerializer) throws IOException {
         dataSerializer.serializeInt(SUCCESS);
         dataSerializer.serializeInt(AVAILABLE_DISTANCE_METHODS.length);
         for (int i = 0; i < AVAILABLE_DISTANCE_METHODS.length; ++i) {
-            dataSerializer.serializeClusterDistance(new ClusterDistanceMethod(i, AVAILABLE_DISTANCE_METHODS[i].getName()));
+            dataSerializer.serializeClusterDistanceMethod(new ClusterDistanceMethod(i, AVAILABLE_DISTANCE_METHODS[i].getName()));
         }
     }
 
+    /**
+     * Gestisce la richiesta {@code GetSavedClusterings}.
+     *
+     * @param dataDeserializer il <i>deserializer</i> per ricevere dati dal client
+     * @param dataSerializer il <i>serializer</i> per inviare dati al client
+     * @throws IOException in caso di errori di I/O durante la comunicazione
+     */
     private void getSavedClusterings(DataDeserializer dataDeserializer, DataSerializer dataSerializer) throws IOException {
         var clusteringsDir = new File(CLUSTERINGS_DIRECTORY);
         if (!clusteringsDir.exists()) {
@@ -295,10 +326,11 @@ public class ClientHandler extends Thread {
     }
 
     /**
-     * Gestisce la richiesta di chiusura della connessione.
+     * Gestisce la richiesta {@code CloseConnection}.
      *
-     * @param dataDeserializer il <i>deserializzatore</i> dei dati inviati dal client
-     * @param dataSerializer il <i>serializzatore</i> dei dati inviati dal server
+     * @param dataDeserializer il <i>deserializer</i> per ricevere dati dal client
+     * @param dataSerializer il <i>serializer</i> per inviare dati al client
+     * @throws IOException in caso di errori di I/O durante la comunicazione
      */
     private void closeConnectionRequest(DataDeserializer dataDeserializer, DataSerializer dataSerializer) throws IOException {
         dataSerializer.serializeInt(SUCCESS);
@@ -318,10 +350,10 @@ public class ClientHandler extends Thread {
     }
 
     /**
-     * Semplice metodo per fare logging di eventuali messaggi (errore/informazione) che possono occorrere durante il
-     * ciclo di vita del thread.
+     * Si occupa di fare logging di eventuali messaggi (errore/informazione) che possono verificarsi durante il ciclo
+     * di vita del thread.
      *
-     * @param message il messaggio che si vuole stampare
+     * @param message il messaggio che si vuole loggare
      */
     synchronized private void log(String message) {
         System.out.printf("[%s] %s%n", this.getName(), message);
@@ -332,6 +364,7 @@ public class ClientHandler extends Thread {
      * degli altri errori/eccezioni che lo causano allora provvede a stampare anche loro.
      *
      * @param throwable l'errore/eccezione che si vuole stampare
+     * @return il messaggio dell'eccezione e gli eventuali messaggi delle eccezioni che contiene.
      */
     private static String walkThrowable(Throwable throwable) {
         if (throwable.getCause() == null) {

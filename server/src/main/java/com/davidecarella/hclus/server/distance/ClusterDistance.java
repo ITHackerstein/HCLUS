@@ -1,29 +1,24 @@
 package com.davidecarella.hclus.server.distance;
 
 /**
- * <p>Interfaccia funzionale per il calcolo generico della distanza tra due cluster.
- *
- * <p>Le due metriche fornite dal progetto sono
- * <ul>
- *     <li>{@link SingleLinkDistance}</li>
- *     <li>{@link AverageLinkDistance}</li>
- * </ul>
+ * Interfaccia funzionale per il calcolo della distanza fra cluster.
  */
 public interface ClusterDistance {
     /**
-     * Calcola la distanza tra il cluster \(i\) e il nuovo cluster \(xy\) ottenuto unendo i cluster \(x\) e \(y\).
+     * Considerati i cluster \(X\), \(Y\) e \(I\), calcola la distanza tra il cluster \(X \cup Y\) e \(I\).
      *
-     * @param dxi la distanza tra il cluster \(x\) e il cluster \(i\)
-     * @param dyi la distanza tra il cluster \(y\) e il cluster \(i\)
-     * @param dxy la distanza tra il cluster \(x\) e il cluster \(y\)
-     * @param xSize la dimensione del cluster \(x\)
-     * @param ySize la dimensione del cluster \(y\)
-     * @param iSize la dimensione del cluster \(i\)
+     * @param dxi la distanza tra il cluster \(X\) e il cluster \(I\)
+     * @param dyi la distanza tra il cluster \(Y\) e il cluster \(I\)
+     * @param dxy la distanza tra il cluster \(X\) e il cluster \(Y\)
+     * @param xSize la dimensione del cluster \(X\)
+     * @param ySize la dimensione del cluster \(Y\)
+     * @param iSize la dimensione del cluster \(I\)
+     * @return la distanza tra il cluster \(X \cup Y\) e \(I\)
      */
     double distance(double dxi, double dyi, double dxy, int xSize, int ySize, int iSize);
 
     /**
-     * Restituisce il nome del metodo di distanza fra cluster.
+     * Restituisce il nome del metodo per il calcolo della distanza fra cluster.
      *
      * @return il nome del metodo
      */
