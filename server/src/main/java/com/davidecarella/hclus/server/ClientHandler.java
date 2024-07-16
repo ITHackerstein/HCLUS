@@ -134,12 +134,15 @@ public class ClientHandler extends Thread {
      */
     private void loadDatasetRequest(DataDeserializer dataDeserializer, DataSerializer dataSerializer) throws IOException {
         String tableName = dataDeserializer.deserializeString();
+        log(String.format("Ricevuta richiesta `LoadDataset(tableName=%s)`", tableName));
 
         try {
             this.dataset = new Dataset(tableName);
+            log(String.format("Richiesta `LoadDataset(tableName=%s)` eseguita con successo", tableName));
             dataSerializer.serializeInt(SUCCESS);
             dataSerializer.serializeInt(this.dataset.getExampleCount());
         } catch (NoDataException exception) {
+            log(String.format("Errore durante l'esecuzione della richiesta `LoadDataset(tableName=%s)`!", tableName));
             dataSerializer.serializeInt(ERROR);
             dataSerializer.serializeString(walkThrowable(exception));
         }
@@ -153,22 +156,28 @@ public class ClientHandler extends Thread {
      * @throws IOException in caso di errori di I/O durante la comunicazione
      */
     private void newClusteringRequest(DataDeserializer dataDeserializer, DataSerializer dataSerializer) throws IOException {
+        var depth = dataDeserializer.deserializeInt();
+        var distanceId = dataDeserializer.deserializeInt();
+        var name = dataDeserializer.deserializeString();
+
+        log(String.format("Ricevuta richiesta `NewClustering(depth=%d, distanceId=%d, name=%s)`", depth, distanceId, name));
+
         if (this.dataset == null) {
+            log(String.format("Errore durante l'esecuzione della richiesta `NewClustering(depth=%d, distanceId=%d, name=%s)`!", depth, distanceId, name));
             dataSerializer.serializeInt(ERROR);
             dataSerializer.serializeString("I dati non sono stati ancora caricati");
             return;
         }
 
-        var depth = dataDeserializer.deserializeInt();
-        var distanceId = dataDeserializer.deserializeInt();
         if (distanceId < 0 || distanceId >= AVAILABLE_DISTANCE_METHODS.length) {
+            log(String.format("Errore durante l'esecuzione della richiesta `NewClustering(depth=%d, distanceId=%d, name=%s)`!", depth, distanceId, name));
             dataSerializer.serializeInt(ERROR);
             dataSerializer.serializeString("Tipo di distanza non valida");
             return;
         }
-        var name = dataDeserializer.deserializeString();
 
         if (!name.matches(CLUSTERING_NAME_REGEX)) {
+            log(String.format("Errore durante l'esecuzione della richiesta `NewClustering(depth=%d, distanceId=%d, name=%s)`!", depth, distanceId, name));
             dataSerializer.serializeInt(ERROR);
             dataSerializer.serializeString("Nome non valido");
             return;
@@ -178,6 +187,7 @@ public class ClientHandler extends Thread {
         try {
             clustering = HierarchicalClustering.mine(this.dataset, AVAILABLE_DISTANCE_METHODS[distanceId], depth);
         } catch (InvalidDepthException | ExampleSizeMismatchException exception) {
+            log(String.format("Errore durante l'esecuzione della richiesta `NewClustering(depth=%d, distanceId=%d, name=%s)`!", depth, distanceId, name));
             dataSerializer.serializeInt(ERROR);
             dataSerializer.serializeString(walkThrowable(exception));
             return;
@@ -196,11 +206,13 @@ public class ClientHandler extends Thread {
             var path = clusteringsDir.toPath().resolve(String.format("%s.hclus", name));
             HierarchicalClustering.save(clustering, path.toString());
         } catch (IOException exception) {
+            log(String.format("Errore durante l'esecuzione della richiesta `NewClustering(depth=%d, distanceId=%d, name=%s)`!", depth, distanceId, name));
             dataSerializer.serializeInt(ERROR);
             dataSerializer.serializeString(String.format("Errore durante il salvataggio del dendrogramma: %s", exception.getMessage()));
             return;
         }
 
+        log(String.format("Richiesta `NewClustering(depth=%d, distanceId=%d, name=%s)` eseguita con successo", depth, distanceId, name));
         dataSerializer.serializeInt(SUCCESS);
         dataSerializer.serializeClustering(clustering);
     }
@@ -213,14 +225,19 @@ public class ClientHandler extends Thread {
      * @throws IOException in caso di errori di I/O durante la comunicazione
      */
     private void loadClusteringRequest(DataDeserializer dataDeserializer, DataSerializer dataSerializer) throws IOException {
+        var name = dataDeserializer.deserializeString();
+
+        log(String.format("Ricevuta richiesta `LoadClustering(name=%s)`", name));
+
         if (this.dataset == null) {
+            log(String.format("Errore durante l'esecuzione della richiesta `LoadClustering(name=%s)`!", name));
             dataSerializer.serializeInt(ERROR);
             dataSerializer.serializeString("I dati non sono stati ancora caricati!");
             return;
         }
 
-        var name = dataDeserializer.deserializeString();
         if (!name.matches(CLUSTERING_NAME_REGEX)) {
+            log(String.format("Errore durante l'esecuzione della richiesta `LoadClustering(name=%s)`!", name));
             dataSerializer.serializeInt(ERROR);
             dataSerializer.serializeString("Nome non valido!");
             return;
@@ -230,19 +247,23 @@ public class ClientHandler extends Thread {
         try {
             clustering = HierarchicalClustering.load(String.format("%s/%s.hclus", CLUSTERINGS_DIRECTORY, name), this.dataset);
         } catch (FileNotFoundException exception) {
+            log(String.format("Errore durante l'esecuzione della richiesta `LoadClustering(name=%s)`!", name));
             dataSerializer.serializeInt(ERROR);
             dataSerializer.serializeString("Il file inserito non esiste");
             return;
         } catch (IOException exception) {
+            log(String.format("Errore durante l'esecuzione della richiesta `LoadClustering(name=%s)`!", name));
             dataSerializer.serializeInt(ERROR);
             dataSerializer.serializeString(String.format("Errore durante il caricamento del dendrogramma: %s", exception.getMessage()));
             return;
         } catch (InvalidDepthException | InvalidClusterIndexException exception) {
+            log(String.format("Errore durante l'esecuzione della richiesta `LoadClustering(name=%s)`!", name));
             dataSerializer.serializeInt(ERROR);
             dataSerializer.serializeString(exception.getMessage());
             return;
         }
 
+        log(String.format("Richiesta `LoadClustering(name=%s)` eseguita con successo", name));
         dataSerializer.serializeInt(SUCCESS);
         dataSerializer.serializeClustering(clustering);
     }
@@ -255,29 +276,35 @@ public class ClientHandler extends Thread {
      * @throws IOException in caso di errori di I/O durante la comunicazione
      */
     private void getExamplesRequest(DataDeserializer dataDeserializer, DataSerializer dataSerializer) throws IOException {
+        var indices = new ArrayList<Integer>();
+        var indexCount = dataDeserializer.deserializeInt();
+        while (indexCount-- > 0) {
+            indices.add(dataDeserializer.deserializeInt());
+        }
+
+        log(String.format("Ricevuta richiesta `GetExamples(indexCount=%d)`", indices.size()));
+
+        if (indices.stream().anyMatch(index -> index < 0 || index >= this.dataset.getExampleCount())) {
+            log(String.format("Errore durante l'esecuzione della richiesta `GetExamples(indexCount=%d)`!", indices.size()));
+            dataSerializer.serializeInt(ERROR);
+            dataSerializer.serializeString("Uno o più indici non validi!");
+            return;
+        }
+
         if (this.dataset == null) {
+            log(String.format("Errore durante l'esecuzione della richiesta `GetExamples(indexCount=%d)`!", indices.size()));
             dataSerializer.serializeInt(ERROR);
             dataSerializer.serializeString("I dati non sono stati ancora caricati!");
             return;
         }
 
-        var examples = new ArrayList<Example>();
-        var indexCount = dataDeserializer.deserializeInt();
-        while (indexCount-- > 0) {
-            var index = dataDeserializer.deserializeInt();
-            if (index < 0 || index >= dataset.getExampleCount()) {
-                dataSerializer.serializeInt(ERROR);
-                dataSerializer.serializeString("Uno o più indici non validi!");
-                return;
-            }
-
-            examples.add(dataset.getExample(index));
-        }
 
         dataSerializer.serializeInt(SUCCESS);
-        for (var example : examples) {
-            dataSerializer.serializeExample(example);
+        for (var index : indices) {
+            dataSerializer.serializeExample(dataset.getExample(index));
         }
+
+        log(String.format("Richiesta `GetExamples(indexCount=%d)` eseguita con successo", indices.size()));
     }
 
     /**
@@ -288,11 +315,15 @@ public class ClientHandler extends Thread {
      * @throws IOException in caso di errori di I/O durante la comunicazione
      */
     private void getClusterDistanceMethodsRequest(DataDeserializer dataDeserializer, DataSerializer dataSerializer) throws IOException {
+        log("Ricevuta richiesta `GetClusterDistanceMethods`");
+
         dataSerializer.serializeInt(SUCCESS);
         dataSerializer.serializeInt(AVAILABLE_DISTANCE_METHODS.length);
         for (int i = 0; i < AVAILABLE_DISTANCE_METHODS.length; ++i) {
             dataSerializer.serializeClusterDistanceMethod(new ClusterDistanceMethod(i, AVAILABLE_DISTANCE_METHODS[i].getName()));
         }
+
+        log("Richiesta `GetClusterDistanceMethods` eseguita con successo");
     }
 
     /**
@@ -303,17 +334,26 @@ public class ClientHandler extends Thread {
      * @throws IOException in caso di errori di I/O durante la comunicazione
      */
     private void getSavedClusterings(DataDeserializer dataDeserializer, DataSerializer dataSerializer) throws IOException {
+        log("Ricevuta richiesta `GetClusterDistanceMethods`");
+
         var clusteringsDir = new File(CLUSTERINGS_DIRECTORY);
         if (!clusteringsDir.exists()) {
             if (!clusteringsDir.mkdirs()) {
-                throw new IOException("Non è stato possibile creare la directory per i clustering");
+                log("Errore durante l'esecuzione della richiesta `GetClusterDistanceMethods`!");
+                dataSerializer.serializeInt(ERROR);
+                dataSerializer.serializeString("Non è stato possibile creare la directory per i clustering");
+                return;
             }
         } else if (!clusteringsDir.isDirectory()) {
-            throw new IOException(String.format("Esiste già un file con nome '%s'", CLUSTERINGS_DIRECTORY));
+            log("Errore durante l'esecuzione della richiesta `GetClusterDistanceMethods`!");
+            dataSerializer.serializeInt(ERROR);
+            dataSerializer.serializeString(String.format("Esiste già un file con nome '%s'", CLUSTERINGS_DIRECTORY));
+            return;
         }
 
         var clusteringNames = clusteringsDir.list((dir, name) -> name.matches(CLUSTERING_FILE_REGEX));
         if (clusteringNames == null) {
+            log("Errore durante l'esecuzione della richiesta `GetClusterDistanceMethods`!");
             dataSerializer.serializeInt(ERROR);
             dataSerializer.serializeString("Errore durante la lettura dei clustering salvati");
             return;
@@ -325,6 +365,8 @@ public class ClientHandler extends Thread {
         for (var name : clusteringNames) {
             dataSerializer.serializeString(name.substring(0, name.indexOf(".hclus")));
         }
+
+        log("Richiesta `GetClusterDistanceMethods` eseguita con successo");
     }
 
     /**
@@ -335,6 +377,7 @@ public class ClientHandler extends Thread {
      * @throws IOException in caso di errori di I/O durante la comunicazione
      */
     private void closeConnectionRequest(DataDeserializer dataDeserializer, DataSerializer dataSerializer) throws IOException {
+        log("Ricevuta richiesta `CloseConnection`");
         dataSerializer.serializeInt(SUCCESS);
         tryCloseSocket();
     }
