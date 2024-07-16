@@ -45,24 +45,14 @@ public class ServerConnection {
     }
 
     /**
-     * <p>Apre la connessione con il server in ascolto sull'indirizzo, {@code address}, e porta, {@code port}, entrambi
+     * Apre la connessione con il server in ascolto sull'indirizzo, {@code address}, e porta, {@code port}, entrambi
      * specificati come parametro.
-     *
-     * <p>Se una connessione era già aperta allora la chiude e ne apre un'altra.
      *
      * @param address l'indirizzo del server
      * @param port la porta del server
      * @throws IOException in caso di errori di I/O durante la connessione
      */
     public static void open(String address, int port) throws IOException {
-        try {
-            if (instance != null) {
-                instance.closeConnection();
-            }
-        } finally {
-            instance = null;
-        }
-
         instance = new ServerConnection(address, port);
     }
 

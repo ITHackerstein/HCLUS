@@ -180,6 +180,7 @@ public class MainWindow extends JFrame {
         this.createDatasetTab();
         this.createClusteringTab();
         this.dendrogramViewerWidget = new DendrogramViewerWidget();
+        this.dendrogramViewerWidget.setEnabled(false);
 
         this.tbp_controls = new JTabbedPane();
         this.tbp_controls.addTab("Connessione", this.pnl_connection);
@@ -423,6 +424,38 @@ public class MainWindow extends JFrame {
     }
 
     /**
+     * Reimposta la scheda del dataset.
+     */
+    private void resetDatasetTab() {
+        this.tbp_controls.setEnabledAt(1, false);
+        this.lbl_tableName.setEnabled(false);
+        this.txt_tableName.setEnabled(false);
+        this.btn_loadDataset.setEnabled(false);
+        this.lbl_loadedDataset.setVisible(false);
+        this.lbl_loadedDatasetInfo.setVisible(false);
+        this.lbl_loadedDatasetInfo.setText("");
+    }
+
+    /**
+     * Reimposta la scheda del clustering.
+     */
+    private void resetClusteringTab() {
+        this.tbp_controls.setEnabledAt(2, false);
+        this.lbl_newClustering.setEnabled(false);
+        this.chk_newClustering.setEnabled(false);
+        this.lbl_clusteringName.setEnabled(false);
+        this.txt_clusteringName.setEnabled(false);
+        this.btn_showSavedClusterings.setEnabled(false);
+        this.lbl_distance.setEnabled(false);
+        this.cmb_distance.setEnabled(false);
+        this.lbl_depth.setEnabled(false);
+        this.spn_depth.setEnabled(false);
+        this.btn_mine.setEnabled(false);
+        this.dendrogramViewerWidget.setEnabled(false);
+        this.dendrogramViewerWidget.setClustering(null);
+    }
+
+    /**
      * Crea gli ascoltatori degli eventi.
      */
     private void createEventListeners() {
@@ -434,6 +467,24 @@ public class MainWindow extends JFrame {
                 this.txt_port.setEnabled(false);
                 this.btn_connect.setEnabled(false);
                 this.connectionStatusWidget.setStatus(ConnectionStatusWidget.Status.CONNECTING);
+
+                try {
+                    if (ServerConnection.the() != null) {
+                        ServerConnection.the().closeConnection();
+
+                        this.resetDatasetTab();
+                        this.resetClusteringTab();
+
+                        this.distanceModel.removeAllElements();
+                        this.depthModel.setMaximum(Integer.MAX_VALUE);
+
+                        this.connectionStatusWidget.setStatus(ConnectionStatusWidget.Status.NOT_CONNECTED);
+                    }
+                } catch (IOException exception) {
+                    JOptionPane.showMessageDialog(this, exception.getMessage(), this.getTitle(), JOptionPane.ERROR_MESSAGE);
+                    this.connectionStatusWidget.setStatus(ConnectionStatusWidget.Status.NOT_CONNECTED);
+                    return;
+                }
 
                 var address = this.txt_address.getText();
                 var portString = this.txt_port.getText();
@@ -455,12 +506,16 @@ public class MainWindow extends JFrame {
 
                 try {
                     ServerConnection.open(address, port);
-                    this.distanceModel.removeAllElements();
-                    this.distanceModel.addAll(ServerConnection.the().getClusterDistanceMethods());
-                    this.cmb_distance.setSelectedIndex(0);
-                    this.connectionStatusWidget.setStatus(ConnectionStatusWidget.Status.CONNECTED);
+
                     this.tbp_controls.setEnabledAt(1, true);
+                    this.lbl_tableName.setEnabled(true);
+                    this.txt_tableName.setEnabled(true);
+                    this.btn_loadDataset.setEnabled(true);
+                    this.distanceModel.addAll(ServerConnection.the().getClusterDistanceMethods());
+
+                    this.connectionStatusWidget.setStatus(ConnectionStatusWidget.Status.CONNECTED);
                 } catch (IOException exception) {
+                    exception.printStackTrace();
                     this.connectionStatusWidget.setStatus(ConnectionStatusWidget.Status.NOT_CONNECTED);
                     JOptionPane.showMessageDialog(this, String.format("Errore durante la connessione: %s!", exception.getMessage()), this.getTitle(), JOptionPane.ERROR_MESSAGE);
                 }
@@ -484,15 +539,28 @@ public class MainWindow extends JFrame {
                     return;
                 }
 
+                this.resetClusteringTab();
+
                 try {
                     var exampleCount = ServerConnection.the().loadDataset(this.txt_tableName.getText());
-                    this.depthModel.setMaximum(exampleCount);
                     this.lbl_loadedDataset.setVisible(true);
-                    this.lbl_loadedDatasetInfo.setText(String.format("%s - %d esempi", this.txt_tableName.getText(), exampleCount));
                     this.lbl_loadedDatasetInfo.setVisible(true);
+                    this.lbl_loadedDatasetInfo.setText(String.format("%s - %d esempi", this.txt_tableName.getText(), exampleCount));
+
                     this.tbp_controls.setEnabledAt(2, true);
+                    this.lbl_newClustering.setEnabled(true);
+                    this.chk_newClustering.setEnabled(true);
+                    this.lbl_clusteringName.setEnabled(true);
+                    this.txt_clusteringName.setEnabled(true);
+                    this.btn_showSavedClusterings.setEnabled(true);
+                    this.lbl_distance.setEnabled(true);
+                    this.cmb_distance.setEnabled(true);
+                    this.lbl_depth.setEnabled(true);
+                    this.spn_depth.setEnabled(true);
+                    this.depthModel.setMaximum(exampleCount);
+                    this.btn_mine.setEnabled(true);
+
                     JOptionPane.showMessageDialog(this, "Dataset caricato con successo!", this.getTitle(), JOptionPane.INFORMATION_MESSAGE);
-                    this.dendrogramViewerWidget.setClustering(null);
                 } catch (IOException exception) {
                     JOptionPane.showMessageDialog(this, String.format("Errore durante il caricamento del dataset: %s!", exception.getMessage()), this.getTitle(), JOptionPane.INFORMATION_MESSAGE);
                 }
@@ -527,7 +595,7 @@ public class MainWindow extends JFrame {
                 }
 
                 try {
-                    showSavedClusteringsDialog(ServerConnection.the().getSavedClusterings());
+                    this.showSavedClusteringsDialog(ServerConnection.the().getSavedClusterings());
                 } catch (IOException exception) {
                     JOptionPane.showMessageDialog(this, String.format("Errore durante la lettura dei clustering salvati: %s!", exception.getMessage()), this.getTitle(), JOptionPane.ERROR_MESSAGE);
                 }
@@ -546,6 +614,7 @@ public class MainWindow extends JFrame {
             this.lbl_depth.setEnabled(false);
             this.spn_depth.setEnabled(false);
             this.btn_mine.setEnabled(false);
+            this.dendrogramViewerWidget.setEnabled(false);
 
             try {
                 if (ServerConnection.the() == null) {
@@ -553,13 +622,19 @@ public class MainWindow extends JFrame {
                     return;
                 }
 
-                var depth = (int) this.depthModel.getValue();
-                var distanceId = ((ClusterDistanceMethod) Objects.requireNonNull(this.cmb_distance.getSelectedItem())).id();
-                var fileName = this.txt_clusteringName.getText();
-
                 try {
+                    var fileName = this.txt_clusteringName.getText();
+
                     Clustering clustering;
                     if (this.chk_newClustering.isSelected()) {
+                        var depth = (int) this.depthModel.getValue();
+                        var selectedDistance = this.cmb_distance.getSelectedItem();
+                        if (selectedDistance == null) {
+                            JOptionPane.showMessageDialog(this, "Bisogna selezionare un metodo per il calcolo della distanza!", this.getTitle(), JOptionPane.ERROR_MESSAGE);
+                            return;
+                        }
+                        var distanceId = ((ClusterDistanceMethod) selectedDistance).id();
+
                         clustering = ServerConnection.the().newClustering(depth, distanceId, fileName);
                     } else {
                         clustering = ServerConnection.the().loadClustering(fileName);
@@ -581,11 +656,16 @@ public class MainWindow extends JFrame {
                 this.chk_newClustering.setEnabled(true);
                 this.lbl_clusteringName.setEnabled(true);
                 this.txt_clusteringName.setEnabled(true);
-                this.lbl_distance.setEnabled(true);
-                this.cmb_distance.setEnabled(true);
-                this.lbl_depth.setEnabled(true);
-                this.spn_depth.setEnabled(true);
+
+                if (this.chk_newClustering.isSelected()) {
+                    this.lbl_distance.setEnabled(true);
+                    this.cmb_distance.setEnabled(true);
+                    this.lbl_depth.setEnabled(true);
+                    this.spn_depth.setEnabled(true);
+                }
+
                 this.btn_mine.setEnabled(true);
+                this.dendrogramViewerWidget.setEnabled(true);
             }
         });
     }

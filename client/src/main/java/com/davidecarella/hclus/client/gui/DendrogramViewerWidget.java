@@ -146,7 +146,7 @@ class DendrogramViewerWidget extends JPanel implements MouseListener, MouseMotio
 
             g2d.setColor(new Color(0, 0, 0, 40));
             g2d.fillRect(canvasRectangle.x, canvasRectangle.y, canvasRectangle.width, canvasRectangle.height);
-            g2d.setColor(Color.BLACK);
+            g2d.setColor(new Color(0, 0, 0, 80));
             g2d.drawString(text, x, y);
             return;
         }
