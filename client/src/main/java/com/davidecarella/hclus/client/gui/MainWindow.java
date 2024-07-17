@@ -6,13 +6,10 @@ import com.davidecarella.hclus.common.ClusterDistanceMethod;
 import com.davidecarella.hclus.common.Clustering;
 
 import javax.swing.*;
-import javax.swing.border.EmptyBorder;
 import java.awt.*;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
+import java.awt.event.*;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.List;
 import java.util.function.Consumer;
 
@@ -207,6 +204,7 @@ public class MainWindow extends JFrame {
         this.getContentPane().add(this.tbp_controls);
         this.getContentPane().add(this.dendrogramViewerWidget);
 
+        this.createMenuBar();
         this.createEventListeners();
 
         this.setMinimumSize(new Dimension(400, 600));
@@ -462,6 +460,33 @@ public class MainWindow extends JFrame {
             GridBagConstraints.CENTER, GridBagConstraints.BOTH,
             new Insets(0, 0, 0, 0), 0, 0
         ));
+    }
+
+    /**
+     * Crea la barra del menu dell'applicazione.
+     */
+    private void createMenuBar() {
+        var helpMenu = new JMenu("Aiuto");
+        helpMenu.setMnemonic(KeyEvent.VK_A);
+
+        var dendrogramKeybindings = new JMenuItem("Comandi dendrogramma");
+        dendrogramKeybindings.setMnemonic(KeyEvent.VK_C);
+
+        dendrogramKeybindings.addActionListener(event -> this.showKeybindingsDialog());
+
+        var about = new JMenuItem("Informazioni sull'applicazione");
+        about.setMnemonic(KeyEvent.VK_I);
+
+        about.addActionListener(event -> JOptionPane.showMessageDialog(this, "HCLUS - Client\nAutore: Davide Carella\nv1.0", this.getTitle(), JOptionPane.INFORMATION_MESSAGE));
+
+        helpMenu.add(dendrogramKeybindings);
+        helpMenu.addSeparator();
+        helpMenu.add(about);
+
+        var menuBar = new JMenuBar();
+        menuBar.add(helpMenu);
+
+        this.setJMenuBar(menuBar);
     }
 
     /**
@@ -897,6 +922,56 @@ public class MainWindow extends JFrame {
         dialog.pack();
         dialog.setLocationRelativeTo(this);
         dialog.setVisible(true);
+    }
+
+    /**
+     * Mostra una finestra di dialogo che contiene la lista dei keybindings per l'utilizzo del
+     * {@link DendrogramViewerWidget}.
+     */
+    private void showKeybindingsDialog() {
+        final String[][] keybindings = new String[][] {
+            new String[] {"Tasto sinistro del mouse", "Seleziona/deseleziona un cluster"},
+            new String[] {"Pressione della rotellina del mouse", "Muove il cluster"},
+            new String[] {"CTRL + Scroll della rotellina del mouse", "Zooma il cluster"},
+            new String[] {"Scroll della rotellina del mouse", "Scrolla il contenuto del tooltip"},
+            new String[] {"R", "Ruota il dendrogramma"}
+        };
+
+        var layout = new GridBagLayout();
+        layout.columnWidths = new int[]{0, 0, 0};
+        layout.rowHeights = new int[keybindings.length + 1];
+        Arrays.fill(layout.rowHeights, 0);
+
+        layout.columnWeights = new double[]{0.0, 0.0, 1e-4};
+        layout.rowWeights = new double[keybindings.length + 1];
+        Arrays.fill(layout.rowWeights, 0, keybindings.length, 0.0);
+        layout.rowWeights[keybindings.length] = 1e-4;
+
+        JPanel pnl_keybindings = new JPanel();
+        pnl_keybindings.setLayout(layout);
+
+        for (int i = 0; i < keybindings.length; ++i) {
+            var lbl_mnemonic = new JLabel(keybindings[i][0]);
+            lbl_mnemonic.setFont(new Font(Font.MONOSPACED, Font.PLAIN, lbl_mnemonic.getFont().getSize()));
+
+            var bottomInset = i < keybindings.length - 1 ? 10 : 0;
+
+            pnl_keybindings.add(lbl_mnemonic, new GridBagConstraints(
+                0, i, 1, 1, 0.0, 0.0,
+                GridBagConstraints.EAST, GridBagConstraints.VERTICAL,
+                new Insets(0, 0, bottomInset, 10), 0, 0
+            ));
+
+            var lbl_action = new JLabel(keybindings[i][1]);
+
+            pnl_keybindings.add(lbl_action, new GridBagConstraints(
+                1, i, 1, 1, 0.0, 0.0,
+                GridBagConstraints.WEST, GridBagConstraints.VERTICAL,
+                new Insets(0, 0, bottomInset, 0), 0, 0
+            ));
+        }
+
+        JOptionPane.showOptionDialog(this, pnl_keybindings, this.getTitle(), JOptionPane.DEFAULT_OPTION, JOptionPane.INFORMATION_MESSAGE, null, null, null);
     }
 
     /**
