@@ -296,7 +296,7 @@ public class ClientHandler extends Thread {
         } catch (FileNotFoundException exception) {
             log(String.format("Errore durante l'esecuzione della richiesta `LoadClustering(name=%s)`!", name));
             dataSerializer.serializeInt(ERROR);
-            dataSerializer.serializeString("Il file inserito non esiste!");
+            dataSerializer.serializeString("Il clustering non esiste!");
             dataSerializer.serializeString("");
             return;
         } catch (IOException exception) {
