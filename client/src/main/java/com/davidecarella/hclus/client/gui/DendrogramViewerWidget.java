@@ -158,7 +158,6 @@ class DendrogramViewerWidget extends JPanel implements KeyListener, MouseListene
             this.transform = AffineTransform.getTranslateInstance(canvasRectangle.width / 2.0, canvasRectangle.height / 2.0);
         }
 
-        var oldClip = g2d.getClip();
         g2d.setClip(canvasRectangle.x, canvasRectangle.y, canvasRectangle.width, canvasRectangle.height);
         g2d.clearRect(canvasRectangle.x, canvasRectangle.y, canvasRectangle.width, canvasRectangle.height);
         g2d.setTransform(this.transform);
@@ -271,8 +270,6 @@ class DendrogramViewerWidget extends JPanel implements KeyListener, MouseListene
                 g2d.drawString(exampleString, x, y);
             }
         }
-
-        g2d.setClip(oldClip);
     }
 
     /**
