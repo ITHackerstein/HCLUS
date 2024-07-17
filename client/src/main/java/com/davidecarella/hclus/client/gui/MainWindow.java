@@ -181,6 +181,11 @@ public class MainWindow extends JFrame {
     private DendrogramViewerWidget dendrogramViewerWidget;
 
     /**
+     * Il contenitore del widget per la visualizzazione del dendrogramma.
+     */
+    private JPanel pnl_dendrogramViewerWidget;
+
+    /**
      * Costruisce la finestra principale del programma.
      */
     public MainWindow() {
@@ -193,6 +198,12 @@ public class MainWindow extends JFrame {
         this.dendrogramViewerWidget = new DendrogramViewerWidget();
         this.dendrogramViewerWidget.setEnabled(false);
 
+        this.pnl_dendrogramViewerWidget = new JPanel();
+        this.pnl_dendrogramViewerWidget.setEnabled(false);
+        pnl_dendrogramViewerWidget.setLayout(new BorderLayout());
+        pnl_dendrogramViewerWidget.setBorder(BorderFactory.createTitledBorder("Dendrogramma"));
+        pnl_dendrogramViewerWidget.add(this.dendrogramViewerWidget, BorderLayout.CENTER);
+
         this.tbp_controls = new JTabbedPane();
         this.tbp_controls.addTab("Connessione", this.pnl_connection);
         this.tbp_controls.addTab("Dataset", this.pnl_dataset);
@@ -202,7 +213,7 @@ public class MainWindow extends JFrame {
 
         this.getContentPane().setLayout(new BoxLayout(this.getContentPane(), BoxLayout.PAGE_AXIS));
         this.getContentPane().add(this.tbp_controls);
-        this.getContentPane().add(this.dendrogramViewerWidget);
+        this.getContentPane().add(pnl_dendrogramViewerWidget);
 
         this.createMenuBar();
         this.createEventListeners();
@@ -520,6 +531,7 @@ public class MainWindow extends JFrame {
         this.btn_mine.setEnabled(false);
         this.dendrogramViewerWidget.setEnabled(false);
         this.dendrogramViewerWidget.setClustering(null);
+        this.pnl_dendrogramViewerWidget.setEnabled(false);
     }
 
     /**
@@ -724,6 +736,8 @@ public class MainWindow extends JFrame {
             this.spn_depth.setEnabled(false);
             this.btn_mine.setEnabled(false);
             this.dendrogramViewerWidget.setEnabled(false);
+            this.pnl_dendrogramViewerWidget.setEnabled(false);
+            this.dendrogramViewerWidget.setClustering(null);
 
             try {
                 if (ServerConnection.the() == null) {
@@ -750,6 +764,8 @@ public class MainWindow extends JFrame {
                     }
 
                     this.dendrogramViewerWidget.setClustering(clustering);
+                    this.dendrogramViewerWidget.setEnabled(true);
+                    this.pnl_dendrogramViewerWidget.setEnabled(true);
                     this.dendrogramViewerWidget.requestFocus();
                 } catch (ServerException exception) {
                     this.showErrorDialog(exception.getMessage(), exception.getDetails());
@@ -770,7 +786,6 @@ public class MainWindow extends JFrame {
                 }
 
                 this.btn_mine.setEnabled(true);
-                this.dendrogramViewerWidget.setEnabled(true);
             }
         });
 

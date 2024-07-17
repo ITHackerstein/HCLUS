@@ -80,7 +80,6 @@ class DendrogramViewerWidget extends JPanel implements KeyListener, MouseListene
      * Costruisce il widget per la visualizzazione del dendrogramma.
      */
     DendrogramViewerWidget() {
-        this.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(), "Dendrogramma"));
         this.setFocusable(true);
         this.addKeyListener(this);
         this.addMouseListener(this);
@@ -133,11 +132,13 @@ class DendrogramViewerWidget extends JPanel implements KeyListener, MouseListene
         super.paintComponent(g);
         var g2d = (Graphics2D) g;
 
-        var insets = this.getBorder().getBorderInsets(this);
-        var canvasRectangle = new Rectangle(insets.left, insets.top, getWidth() - insets.left - insets.right, getHeight() - insets.top - insets.bottom);
+        var canvasRectangle = new Rectangle(0, 0, getWidth(), getHeight());
 
         g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+
+        var oldClip = g2d.getClip();
+        g2d.setClip(canvasRectangle.x, canvasRectangle.y, canvasRectangle.width, canvasRectangle.height);
 
         if (this.dendrogram == null || !this.isEnabled()) {
             g2d.setFont(g2d.getFont().deriveFont(18.0f));
@@ -151,6 +152,7 @@ class DendrogramViewerWidget extends JPanel implements KeyListener, MouseListene
             g2d.fillRect(canvasRectangle.x, canvasRectangle.y, canvasRectangle.width, canvasRectangle.height);
             g2d.setColor(new Color(0, 0, 0, 80));
             g2d.drawString(text, x, y);
+            g2d.setClip(oldClip);
             return;
         }
 
@@ -158,7 +160,6 @@ class DendrogramViewerWidget extends JPanel implements KeyListener, MouseListene
             this.transform = AffineTransform.getTranslateInstance(canvasRectangle.width / 2.0, canvasRectangle.height / 2.0);
         }
 
-        g2d.setClip(canvasRectangle.x, canvasRectangle.y, canvasRectangle.width, canvasRectangle.height);
         g2d.clearRect(canvasRectangle.x, canvasRectangle.y, canvasRectangle.width, canvasRectangle.height);
         g2d.setTransform(this.transform);
 
@@ -270,6 +271,8 @@ class DendrogramViewerWidget extends JPanel implements KeyListener, MouseListene
                 g2d.drawString(exampleString, x, y);
             }
         }
+
+        g2d.setClip(oldClip);
     }
 
     /**
@@ -403,8 +406,10 @@ class DendrogramViewerWidget extends JPanel implements KeyListener, MouseListene
             }
         }
 
-        this.hoveredClusterIndex = -1;
-        this.repaint();
+        if (this.hoveredClusterIndex != -1) {
+            this.hoveredClusterIndex = -1;
+            this.repaint();
+        }
     }
 
     /**
