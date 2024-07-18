@@ -106,7 +106,7 @@ public class ClientHandler extends Thread {
                         case 3 -> loadClusteringRequest(dataDeserializer, dataSerializer);
                         case 4 -> getExamplesRequest(dataDeserializer, dataSerializer);
                         case 5 -> getClusterDistanceMethodsRequest(dataDeserializer, dataSerializer);
-                        case 6 -> getSavedClusterings(dataDeserializer, dataSerializer);
+                        case 6 -> getSavedClusteringsRequest(dataDeserializer, dataSerializer);
                         case 7 -> closeConnectionRequest(dataDeserializer, dataSerializer);
                         default -> {
                             log(String.format("Richiesta non valida (%d)!", requestType));
@@ -384,7 +384,7 @@ public class ClientHandler extends Thread {
      * @param dataSerializer il <i>serializer</i> per inviare dati al client
      * @throws IOException in caso di errori di I/O durante la comunicazione
      */
-    private void getSavedClusterings(DataDeserializer dataDeserializer, DataSerializer dataSerializer) throws IOException {
+    private void getSavedClusteringsRequest(DataDeserializer dataDeserializer, DataSerializer dataSerializer) throws IOException {
         log("Ricevuta richiesta `GetClusterDistanceMethods`");
 
         var clusteringsDir = new File(CLUSTERINGS_DIRECTORY);

@@ -87,7 +87,6 @@ class ConnectionStatusWidget extends JPanel {
     public void paintComponent(Graphics g) {
         super.paintComponent(g);
 
-        // NOTE: Makes the circle anti-aliased
         ((Graphics2D) g).setRenderingHints(new RenderingHints(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON));
 
         g.setColor(switch (this.status) {

@@ -293,6 +293,7 @@ public class ServerConnection {
 
         var responseType = this.dataDeserializer.deserializeInt();
         if (responseType == 0) {
+            this.socket.close();
             return;
         }
 
