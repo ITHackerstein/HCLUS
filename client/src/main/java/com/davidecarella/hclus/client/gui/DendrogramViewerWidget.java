@@ -95,6 +95,7 @@ class DendrogramViewerWidget extends JPanel implements KeyListener, MouseListene
      */
     void setClustering(Clustering clustering) {
         this.dendrogram = clustering == null ? null : new Dendrogram(clustering);
+        this.transform = null;
         this.selectedClusterIndex = -1;
         this.hoveredClusterIndex = -1;
         this.selectedClusterExampleIndices = null;
