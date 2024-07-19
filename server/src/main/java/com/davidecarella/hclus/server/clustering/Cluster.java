@@ -23,14 +23,14 @@ public class Cluster implements Iterable<Integer>, Cloneable, Serializable {
     /**
      * Costruttore di default che crea un cluster vuoto.
      */
-    public Cluster() {}
+    Cluster() {}
 
     /**
      * Aggiunge un nuovo indice esempio con indice {@code exampleIndex}, specificato come parametro, all'insieme.
      *
      * @param exampleIndex l'esempio da inserire all'insieme
      */
-    public void addData(int exampleIndex) {
+    void addData(int exampleIndex) {
         this.clusteredData.add(exampleIndex);
     }
 
@@ -66,7 +66,7 @@ public class Cluster implements Iterable<Integer>, Cloneable, Serializable {
      * @param other l'altro esempio con cui si vuole fare l'unione
      * @return un cluster che contiene l'insieme unione del cluster e {@code other}
      */
-    public Cluster mergeCluster(Cluster other) {
+    Cluster mergeCluster(Cluster other) {
         var merged = this.clone();
         merged.clusteredData.addAll(other.clusteredData);
         return merged;

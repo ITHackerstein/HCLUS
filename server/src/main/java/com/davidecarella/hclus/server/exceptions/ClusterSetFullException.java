@@ -1,9 +1,8 @@
 package com.davidecarella.hclus.server.exceptions;
 
-import com.davidecarella.hclus.server.clustering.ClusterSet;
 
 /**
- * Eccezione lanciata quando si raggiunge la capienza massima di un {@link ClusterSet}
+ * Eccezione lanciata quando si raggiunge la capienza massima di un cluster set.
  */
 public class ClusterSetFullException extends RuntimeException {
     /**

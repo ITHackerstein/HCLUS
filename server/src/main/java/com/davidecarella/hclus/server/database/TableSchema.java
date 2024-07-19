@@ -22,7 +22,7 @@ public class TableSchema {
     /**
      * Classe che rappresenta una colonna all'interno della tabella.
      */
-    public class Column {
+    public static class Column {
         /**
          * Il nome della colonna.
          */
@@ -40,7 +40,7 @@ public class TableSchema {
          * @param name il nome della colonna
          * @param type il tipo della colonna
          */
-        public Column(String name, String type) {
+        Column(String name, String type) {
             this.name = name;
             this.type = type;
         }

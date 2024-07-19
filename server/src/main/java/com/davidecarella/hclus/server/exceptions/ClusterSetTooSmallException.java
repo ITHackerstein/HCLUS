@@ -1,13 +1,7 @@
 package com.davidecarella.hclus.server.exceptions;
 
-import com.davidecarella.hclus.server.data.Data;
-import com.davidecarella.hclus.server.distance.ClusterDistance;
-import com.davidecarella.hclus.server.clustering.ClusterSet;
-import com.davidecarella.hclus.server.clustering.Cluster;
-
 /**
- * Eccezione lanciata quando si prova a eseguire {@link ClusterSet#mergeClosestClusters(ClusterDistance, Data)}
- * su un {@link ClusterSet} con meno di due {@link Cluster cluster}.
+ * Eccezione lanciata quando si prova ad unire i due cluster più vicini in un cluster set che contiene un solo cluster.
  */
 public class ClusterSetTooSmallException extends Exception {
     /**

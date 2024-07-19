@@ -11,7 +11,7 @@ import java.io.Serializable;
 /**
  * Classe che rappresenta un insieme di {@link Cluster cluster}.
  */
-public class ClusterSet implements Serializable {
+class ClusterSet implements Serializable {
     /**
      * L'insieme dei cluster.
      */
@@ -27,7 +27,7 @@ public class ClusterSet implements Serializable {
      *
      * @param maxSize la dimensione massima dell'insieme
      */
-    public ClusterSet(int maxSize) {
+    ClusterSet(int maxSize) {
         this.clusters = new Cluster[maxSize];
     }
 
@@ -36,7 +36,7 @@ public class ClusterSet implements Serializable {
      *
      * @param cluster il {@link Cluster cluster} da aggiungere all'insieme
      */
-    public void add(Cluster cluster) {
+    void add(Cluster cluster) {
         if (this.lastClusterIndex >= this.clusters.length) {
             throw new ClusterSetFullException("Il cluster set ha raggiunto la capienza massima");
         }
@@ -55,7 +55,7 @@ public class ClusterSet implements Serializable {
      * @param index l'indice del {@link Cluster cluster} da restituire
      * @return il {@link Cluster cluster} con indice {@code index}
      */
-    public Cluster get(int index) {
+    Cluster get(int index) {
         return this.clusters[index];
     }
 
@@ -71,7 +71,7 @@ public class ClusterSet implements Serializable {
      * @throws ClusterSetTooSmallException quando il cluster set ha meno di due {@link Cluster cluster}
      * @throws InvalidSizeException quando ci sono due esempi con lunghezze diverse
      */
-    public ClusterSet mergeClosestClusters(ClusterDistance distanceCalculator, Data data) throws ClusterSetTooSmallException, InvalidSizeException {
+    ClusterSet mergeClosestClusters(ClusterDistance distanceCalculator, Data data) throws ClusterSetTooSmallException, InvalidSizeException {
         if (this.lastClusterIndex < 2) {
             throw new ClusterSetTooSmallException("Ci devono essere almeno due cluster per poter effettuare l'unione");
         }

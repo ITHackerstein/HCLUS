@@ -8,7 +8,7 @@ import java.io.Serializable;
  * Classe che rappresenta un dendrogramma, ovvero un albero che rappresenta la composizione dei
  * {@link ClusterSet cluster set}.
  */
-public class Dendrogram implements Serializable {
+class Dendrogram implements Serializable {
     /**
      * La lista di ogni livello dell'albero.
      */
@@ -19,7 +19,7 @@ public class Dendrogram implements Serializable {
      *
      * @param depth la profondità del dendrogramma
      */
-    public Dendrogram(int depth) {
+    Dendrogram(int depth) {
         this.tree = new ClusterSet[depth];
     }
 
@@ -29,7 +29,7 @@ public class Dendrogram implements Serializable {
      * @param clusterSet il {@link ClusterSet cluster set} che si vuole inserire nel livello {@code level}
      * @param level il livello dell'albero dove si vuole inserire {@code clusterSet}
      */
-    public void setClusterSet(ClusterSet clusterSet, int level) {
+    void setClusterSet(ClusterSet clusterSet, int level) {
         this.tree[level] = clusterSet;
     }
 
@@ -39,7 +39,7 @@ public class Dendrogram implements Serializable {
      * @param level il livello del {@link ClusterSet cluster set} che si vuole ottenere
      * @return il {@link ClusterSet cluster set} al livello {@code level}
      */
-    public ClusterSet getClusterSet(int level) {
+    ClusterSet getClusterSet(int level) {
         return this.tree[level];
     }
 
@@ -48,7 +48,7 @@ public class Dendrogram implements Serializable {
      *
      * @return la profondità del dendrogramma
      */
-    public int getDepth() {
+    int getDepth() {
         return this.tree.length;
     }
 
