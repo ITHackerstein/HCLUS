@@ -29,6 +29,17 @@ $ ./gradlew build
 $ .\gradlew.bat build
 ```
 
+Se si ha intenzione di compilare solo il client o il server si può invece eseguire il seguente comando:
+* **Linux**
+```
+$ ./gradlew :<server-client>:build
+```
+* **Windows**
+```
+$ .\gradlew.bat :<server-client>:build
+```
+sostituendo a `<server-client>`, `server` o `client` in base a ciò che si desidera compilare.
+
 ## Documentazione
 
 ### Generazione del JavaDoc
