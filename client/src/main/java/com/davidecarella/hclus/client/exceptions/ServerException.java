@@ -10,7 +10,7 @@ public class ServerException extends Exception {
     private final String details;
 
     /**
-     * Costruisce l'eccezione con il messaggio, {@code message}, specificato come parametro
+     * Costruisce l'eccezione con il messaggio, {@code message}, specificato come parametro.
      *
      * @param message il messaggio d'errore dell'eccezione
      */

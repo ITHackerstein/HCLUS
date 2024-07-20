@@ -1,6 +1,6 @@
 # Protocollo HCLUS
 
-## Tabella dei contenuti
+## Indice
 
 * [1. Codifica dei dati](#1-codifica-dei-dati)
   * [1.1. `int`](#11-int)

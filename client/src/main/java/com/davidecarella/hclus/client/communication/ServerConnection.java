@@ -17,7 +17,7 @@ import java.util.List;
  * <p>La connessione con il server HCLUS.
  *
  * <p>È una classe <i>singleton</i> che permette di aprire una connessione con il metodo
- * {@link ServerConnection#open(String, int)} alla quale, una volta aperta, è possibile accedere all'istanza con il
+ * {@link ServerConnection#open(String, int)} alla quale, una volta aperta, è possibile accedere con il
  * metodo {@link ServerConnection#the()}.
  *
  * <p>Attraverso di essa è possibile inviare le richieste previste dal protocollo:

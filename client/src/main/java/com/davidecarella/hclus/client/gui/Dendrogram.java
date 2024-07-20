@@ -22,7 +22,7 @@ import java.util.Stack;
  * in ogni passo del clustering.
  *
  * <p>Le connessioni, invece, sono rappresentate con una matrice di dimensione \(2P \times 2\) infatti ogni cluster
- * non-foglia possiede due connessioni e per ciascuna di esse memorizziamo gli indici del cluster di partenza e di
+ * non-foglia possiede due connessioni e per ciascuna di essa memorizziamo gli indici del cluster di partenza e di
  * arrivo.
  *
  * @see DendrogramViewerWidget
