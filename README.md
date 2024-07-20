@@ -1,10 +1,24 @@
 # HCLUS
 
+## Indice
+
+* [1. Introduzione](#1-introduzione)
+* [2. Compilazione](#2-compilazione)
+  * [2.1. Prerequisiti](#21-prerequisiti)
+  * [2.2. Compilare il progetto](#22-compilare-il-progetto)
+* [3. Documentazione](#3-documentazione)
+  * [3.1. Diagramma delle classi](#31-diagramma-delle-classi)
+  * [3.2. Generazione del JavaDoc](#32-generazione-del-javadoc)
+  * [3.3. Istruzioni per l'uso](#33-istruzioni-per-luso)
+* [4. Contatti](#4-contatti)
+
+## 1. Introduzione
+
 Un sistema client-server per la scoperta di un dendrogramma di cluster con un algoritmo di [clustering agglomerativo](https://it.wikipedia.org/wiki/Clustering_gerarchico) scritto completamente in Java.
 
-## Compilazione
+## 2. Compilazione
 
-### Prerequisiti
+### 2.1. Prerequisiti
 
 Per poter compilare il progetto c'è bisogno di un [JDK](https://www.oracle.com/java/), di seguito alcune possibilità:
 * [GraalVM](https://www.graalvm.org/): consigliata per migliori performance
@@ -12,7 +26,7 @@ Per poter compilare il progetto c'è bisogno di un [JDK](https://www.oracle.com/
 
 Il server avrà poi bisogno del DBMS [MySQL](https://mysql.com/) per memorizzare i dataset.
 
-### Compilare il progetto
+### 2.2. Compilare il progetto
 
 Prima di iniziare a compilare il progetto va creato il file `dmbs_root_password` nella cartella `assets` che deve contere
 la password dell'utente `root` del DBMS.
@@ -40,9 +54,13 @@ $ .\gradlew.bat :<server-client>:build
 ```
 sostituendo a `<server-client>`, `server` o `client` in base a ciò che si desidera compilare.
 
-## Documentazione
+## 3. Documentazione
 
-### Generazione del JavaDoc
+### 3.1. Diagramma delle classi
+
+Si veda: [docs/diagramma_classi.png](docs/diagramma_classi.png).
+
+### 3.2. Generazione del JavaDoc
 
 È possibile generare la documentazione del sorgente con il seguente comando:
 * **Linux**
@@ -55,7 +73,7 @@ $ .\gradlew.bat javadocAll
 ```
 A questo punto la documentazione si troverà in `docs/javadoc` e sarà possibile visualizzarla aprendo il file `index.html` in un browser.
 
-### Istruzioni per l'uso
+### 3.3. Istruzioni per l'uso
 
 #### Server
 
@@ -68,7 +86,10 @@ $ ./gradlew installDatabase
 ```
 $ .\gradlew.bat installDatabase
 ```
-che configurerà il DBMS per poter essere utilizzato dal server.
+che configurerà il DBMS per poter essere utilizzato dal server, in particolare creerà un utente `hclus_user` il
+quale avrà accesso al database `hclus_db` che conterrà alcuni dataset di esempio:
+* `examples_1` e `examples_2`: due dataset molto piccoli e ridotti utilizzati inizialmente per testare l'algoritmo;
+* `empty_examples` e `no_numbers`: due dataset non validi per testare i casi di errore.
 
 Se, in futuro, si desidera portare il DBMS al suo stato iniziale si potrà eseguire il comando:
 * **Linux**
@@ -163,3 +184,8 @@ e ci viene chiesto di scegliere una delle due opzioni. A questo punto:
 * se inseriamo una qualsiasi altra sequenza di caratteri diversa da `1` o `2` verrà chiesto di reinserire la scelta fino a 
   quando questa non sarà valida
   ![Il client inserisce una scelta non valida nel menu dell'operazione](imgs/client_scelta_non_valida_menu_operazione.png)
+
+## 4. Contatti
+
+Il progetto è stato realizzato da:
+* [Davide Carella](https://github.com/ITHackerstein) (mail universitaria: d.carella12@studenti.uniba.it)
