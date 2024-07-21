@@ -166,6 +166,11 @@ public class ServerOneClient extends Thread {
 
             depth = (int) object;
 
+            if (depth <= 0) {
+                outputStream.writeObject("Profondità del dendrogramma non valida!");
+                return;
+            }
+
             object = inputStream.readObject();
             if (!(object instanceof Integer distanceType) || distanceType < 1 || distanceType > 2) {
                 outputStream.writeObject("Tipo di distanza non valida!");
