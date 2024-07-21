@@ -12,6 +12,8 @@ CREATE TABLE IF NOT EXISTS iris(sepal_length DOUBLE, sepal_width DOUBLE, petal_l
 INSERT INTO examples_1 VALUES (1, 2, 0), (0, 1, -1), (1, 3, 5), (1, 3, 4), (2, 2, 0);
 INSERT INTO examples_2 VALUES (1, 2, 0), (0, 1, -1), (1, 3, 5);
 INSERT INTO no_numbers VALUES ("a", 1), ("b", 2), ("c", 3);
+
+SET GLOBAL local_infile = 1;
 LOAD DATA LOCAL INFILE 'assets/iris.csv' INTO TABLE iris FIELDS TERMINATED BY ',' LINES TERMINATED BY '\n' IGNORE 1 ROWS;
 ALTER TABLE iris DROP COLUMN species;
 
