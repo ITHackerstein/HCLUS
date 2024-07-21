@@ -18,10 +18,11 @@ public class DbAccess {
      */
     public DbAccess() {}
 
+		// NOTA: Viene modificato a causa della versione del connector più recente.
     /**
      * Il nome completamente qualificato della classe {@code Driver}.
      */
-	private final String DRIVER_CLASS_NAME = "org.mysql.jdbc.Driver";
+    private final String DRIVER_CLASS_NAME = "com.mysql.cj.jdbc.Driver";
 
     /**
      * Il prefisso della stringa di connessione che indica il DMBS utilizzato.
