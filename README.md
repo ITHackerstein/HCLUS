@@ -114,6 +114,32 @@ Si veda: [docs/Protocollo.md](docs/Protocollo.md).
 
 Si veda: [docs/diagramma_classi.png](docs/diagramma_classi.png).
 
+Di seguito alcune sezioni del diagramma.
+
+#### Package `common`
+
+![Diagramma delle classi package common](docs/imgs/diagramma_classi_package_common.png)
+
+#### Package `database` e `clustering`
+
+![Diagramma delle classi package database e clustering](docs/imgs/diagramma_classi_package_database_clustering.png)
+
+#### Package `distance`
+
+![Diagramma delle classi package distance](docs/imgs/diagramma_classi_package_distance.png)
+
+#### Package `server`
+
+![Diagramma delle classi package server](docs/imgs/diagramma_classi_package_server.png)
+
+#### Package `gui`
+
+![Diagramma delle classi package gui](docs/imgs/diagramma_classi_package_gui.png)
+
+#### Package `communication`
+
+![Diagramma delle classi package communication](docs/imgs/diagramma_classi_package_communication.png)
+
 ### 3.4. Generazione del JavaDoc
 
 È possibile generare la documentazione del sorgente con il seguente comando:
