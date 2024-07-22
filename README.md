@@ -60,6 +60,36 @@ sostituendo a `<server-client>`, `server` o `client` in base a ciò che si desid
 
 Si veda: [docs/diagramma_classi.png](docs/diagramma_classi.png).
 
+Di seguito alcune sezioni del diagramma.
+
+#### Package `client`
+
+![Diagramma delle classi del package client](imgs/diagramma_classi_package_client.png)
+
+#### Package `data`
+
+![Diagramma delle classi del package data](imgs/diagramma_classi_package_data.png)
+
+#### Package `distance`
+
+![Diagramma delle classi del package distance](imgs/diagramma_classi_package_distance.png)
+
+#### Package `database`
+
+![Diagramma delle classi del package database](imgs/diagramma_classi_package_database.png)
+
+#### Package `clustering`
+
+![Diagramma delle classi del package clustering](imgs/diagramma_classi_package_clustering.png)
+
+#### Package `server`
+
+![Diagramma delle classi del package server](imgs/diagramma_classi_package_server.png)
+
+#### Package `exceptions`
+
+![Diagramma delle classi del package exceptions](imgs/diagramma_classi_package_exceptions.png)
+
 ### 3.2. Generazione del JavaDoc
 
 È possibile generare la documentazione del sorgente con il seguente comando:
